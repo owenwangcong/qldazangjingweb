@@ -1,0 +1,75 @@
+
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Test Page for D:\Projects\Cursor\SutraParser\output\books\0124.json</title>
+            <style>
+        
+            </style>
+            <script src="https://cdn.jsdelivr.net/npm/opencc-js@1.0.5/dist/umd/full.min.js"></script>
+            <script>
+                function convertToSimplified() {
+                    var converter = OpenCC.Converter({ from: 'tw', to: 'cn' });
+                    document.querySelectorAll('.convertible').forEach(function(element) {
+                        element.textContent = converter(element.textContent);
+                    });
+                }
+
+                function convertToTraditional() {
+                    var converter = OpenCC.Converter({ from: 'cn', to: 'tw' });
+                    document.querySelectorAll('.convertible').forEach(function(element) {
+                        element.textContent = converter(element.textContent);
+                    });
+                }
+
+                function changeFont() {
+                    var selectedFont = document.getElementById('fontSelector').value;
+                    document.getElementById('textParagraph').style.fontFamily = selectedFont;
+                }
+            </script>
+        </head>
+        <body>
+            <h1>Test Page for {json_file}</h1>
+            <button onclick="convertToSimplified()">Convert to Simplified</button>
+            <button onclick="convertToTraditional()">Convert to Traditional</button>
+            <select id="fontSelector" onchange="changeFont()">
+        
+            </select>
+            <p id="textParagraph" class="convertible" style="font-family: ''; white-space: pre-wrap;">{
+    "meta": {
+        "id": "0124",
+        "Bu": "大乘五大部外重译经·第0124部",
+        "title": "等集众德三昧经三卷",
+        "Arthur": "西晋三藏法师竺法护译",
+        "last_bu": {
+            "id": "0123",
+            "name": "上一部：乾隆大藏经·大乘五大部外重译经·金光明经四卷"
+        },
+        "next_bu": {
+            "id": "0125",
+            "name": "下一部：乾隆大藏经·大乘五大部外重译经·集一切福德三昧经三卷"
+        }
+    },
+    "juans": [
+        {
+            "id": "j0124-1",
+            "name": "等集众德三昧经卷上",
+            "chapters": []
+        },
+        {
+            "id": "j0124-2",
+            "name": "等集众德三昧经卷中",
+            "chapters": []
+        },
+        {
+            "id": "j0124-3",
+            "name": "等集众德三昧经卷下",
+            "chapters": []
+        }
+    ]
+}</p>
+        </body>
+        </html>
+        

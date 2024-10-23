@@ -1,0 +1,70 @@
+
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Test Page for D:\Projects\Cursor\SutraParser\output\books\0378.json</title>
+            <style>
+        
+            </style>
+            <script src="https://cdn.jsdelivr.net/npm/opencc-js@1.0.5/dist/umd/full.min.js"></script>
+            <script>
+                function convertToSimplified() {
+                    var converter = OpenCC.Converter({ from: 'tw', to: 'cn' });
+                    document.querySelectorAll('.convertible').forEach(function(element) {
+                        element.textContent = converter(element.textContent);
+                    });
+                }
+
+                function convertToTraditional() {
+                    var converter = OpenCC.Converter({ from: 'cn', to: 'tw' });
+                    document.querySelectorAll('.convertible').forEach(function(element) {
+                        element.textContent = converter(element.textContent);
+                    });
+                }
+
+                function changeFont() {
+                    var selectedFont = document.getElementById('fontSelector').value;
+                    document.getElementById('textParagraph').style.fontFamily = selectedFont;
+                }
+            </script>
+        </head>
+        <body>
+            <h1>Test Page for {json_file}</h1>
+            <button onclick="convertToSimplified()">Convert to Simplified</button>
+            <button onclick="convertToTraditional()">Convert to Traditional</button>
+            <select id="fontSelector" onchange="changeFont()">
+        
+            </select>
+            <p id="textParagraph" class="convertible" style="font-family: ''; white-space: pre-wrap;">{
+    "meta": {
+        "id": "0378",
+        "Bu": "大乘单译经·第0378部",
+        "title": "摩诃摩耶经一卷",
+        "Arthur": "箫齐沙门释昙景译",
+        "last_bu": {
+            "id": "0377",
+            "name": "上一部：乾隆大藏经·大乘单译经·成具光明定意经一卷"
+        },
+        "next_bu": {
+            "id": "0379",
+            "name": "下一部：乾隆大藏经·大乘单译经·诸德福田经一卷"
+        }
+    },
+    "juans": [
+        {
+            "id": "j0378-1",
+            "name": "摩诃摩耶经卷上(一名佛升忉利天为母说法)",
+            "chapters": []
+        },
+        {
+            "id": "j0378-2",
+            "name": "摩诃摩耶经卷下",
+            "chapters": []
+        }
+    ]
+}</p>
+        </body>
+        </html>
+        
