@@ -1,36 +1,28 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# qldazangjingweb
 
-## Getting Started
+## 项目概述
 
-First, run the development server:
+qldazangjingweb 是一个基于 Next.js 和 React 构建的网络应用，旨在为用户提供一个全面的佛教经文收藏库。该应用具有文本简繁体转换、自定义字体以及由 TailwindCSS 支持的响应式设计等功能。
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## 功能特性
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- **浏览经文**：浏览丰富的佛教文本库。
+- **文本转换**：轻松切换简体和繁体中文。
+- **自定义字体**：选择不同字体以提升阅读体验。
+- **响应式设计**：优化适配桌面和移动设备。
+- **高性能开发**：利用 Next.js 的服务端渲染功能提升性能。
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 技术栈
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- [Next.js](https://nextjs.org/)
+- [React](https://reactjs.org/)
+- [TypeScript](https://www.typescriptlang.org/)
+- [TailwindCSS](https://tailwindcss.com/)
+- [OpenCC](https://github.com/BYVoid/OpenCC) 用于文本转换
+- Radix UI 组件库
+- [JQuery](https://jquery.com/) 用于兼容性支持
 
-## Learn More
+## 安装指南
 
-To learn more about Next.js, take a look at the following resources:
+1. **克隆仓库**
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
