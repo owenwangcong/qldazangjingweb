@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useContext } from 'react';
 import { usePathname } from 'next/navigation';
-import { Settings, ChevronDown, ChevronUp, Heart, Book, Download, Home, Search, RefreshCcw, FileType } from 'lucide-react';
+import { Settings, ChevronDown, ChevronUp, Heart, Book, Download, Home, Search, RefreshCcw, FileType, Sun, Moon, Droplet, Circle, Zap } from 'lucide-react';
 import Link from "next/link";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -13,14 +13,14 @@ import { Button } from '@/components/ui/button';
 import { DialogClose } from '@/components/ui/dialog';
 import Text from './Text';
 import { useLanguage } from '../context/LanguageContext';
+import { useTheme, Theme } from '../context/ThemeContext';
 
 const Header: React.FC = () => {
+  const pathname = usePathname();
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const { selectedFont, setSelectedFont } = useContext(FontContext);
-  const pathname = usePathname();
-  
-  // Use LanguageContext to get isSimplified and toggleLanguage
   const { isSimplified, toggleLanguage } = useLanguage();
+  const { theme, setTheme } = useTheme();
 
   const toggleHeaderVisibility = () => {
     setIsHeaderVisible(!isHeaderVisible);
@@ -34,6 +34,10 @@ const Header: React.FC = () => {
     toggleLanguage();
   };
 
+  const handleThemeChange = (newTheme: Theme) => {
+    setTheme(newTheme);
+  };
+
   return (
     <div>
       <div className="fixed top-2 right-2 space-x-4">
@@ -45,7 +49,38 @@ const Header: React.FC = () => {
         >
           {isHeaderVisible ? <ChevronUp className="w-5 h-5" aria-hidden="true" /> : <ChevronDown className="w-5 h-5" aria-hidden="true" />}
         </button>
-        
+
+        <DropdownMenu.Root modal={false}>
+          <DropdownMenu.Trigger asChild>
+            <button
+              className="p-2 bg-gray-200 rounded-full shadow-md focus:outline-none"
+              aria-label="Select Theme"
+            >
+              <Sun className="w-5 h-5" />
+            </button>
+          </DropdownMenu.Trigger>
+          <DropdownMenu.Content className="bg-white dark:bg-gray-800 p-2 rounded-md shadow-lg">
+            <DropdownMenu.Item onSelect={() => handleThemeChange('lianchichanyun')} className="flex items-center px-2 py-1 cursor-pointer">
+              <Text>莲池禅韵</Text>
+            </DropdownMenu.Item>
+            <DropdownMenu.Item onSelect={() => handleThemeChange('zhulinyoujing')} className="flex items-center px-2 py-1 cursor-pointer">
+              <Text>竹林幽径</Text>
+            </DropdownMenu.Item>
+            <DropdownMenu.Item onSelect={() => handleThemeChange('yueyingqinghui')} className="flex items-center px-2 py-1 cursor-pointer">
+              <Text>月影清辉</Text>  
+            </DropdownMenu.Item>
+            <DropdownMenu.Item onSelect={() => handleThemeChange('sangaijingtu')} className="flex items-center px-2 py-1 cursor-pointer">
+              <Text>伞盖净土</Text>
+            </DropdownMenu.Item>
+            <DropdownMenu.Item onSelect={() => handleThemeChange('guchayese')} className="flex items-center px-2 py-1 cursor-pointer">
+              <Text>古刹夜色</Text>
+            </DropdownMenu.Item>
+            <DropdownMenu.Item onSelect={() => handleThemeChange('fagufanyin')} className="flex items-center px-2 py-1 cursor-pointer">
+              <Text>法鼓梵音</Text>
+            </DropdownMenu.Item>
+          </DropdownMenu.Content>
+        </DropdownMenu.Root>
+
         {/* {{ edit_3 }}
             Update the language toggle button to use handleToggleLanguage */}
         <button
@@ -128,6 +163,8 @@ const Header: React.FC = () => {
             </div>
           </DialogContent>
         </Dialog>
+        
+
       </div>  
 
       <div className={`transition-all duration-500 ${isHeaderVisible ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}`}>
@@ -140,22 +177,22 @@ const Header: React.FC = () => {
 
           <div className="flex justify-center text-md py-4 text-xl">
             <nav className="flex flex-wrap justify-center w-full gap-4">
-              <Link href="/" className="flex items-center px-4 py-2 rounded-md border border-gray-200 hover:bg-gray-100">
+              <Link href="/" className="flex items-center px-4 py-2 rounded-md border border-gray-200 hover:bg-primary-hover hover:text-primary-foreground-hover">
                 <Home className="w-5 h-5 mr-3" aria-hidden="true" /> <Text>首页</Text>
               </Link>
-              <Link href="/search" className="flex items-center px-4 py-2 rounded-md border border-gray-200 hover:bg-gray-100">
+              <Link href="/search" className="flex items-center px-4 py-2 rounded-md border border-gray-200 hover:bg-primary-hover hover:text-primary-foreground-hover">
                 <Search className="w-5 h-5 mr-3" aria-hidden="true" /> <Text>搜索</Text>
               </Link>
-              <Link href="/dicts" className="flex items-center px-4 py-2 rounded-md border border-gray-200 hover:bg-gray-100">
+              <Link href="/dicts" className="flex items-center px-4 py-2 rounded-md border border-gray-200 hover:bg-primary-hover hover:text-primary-foreground-hover">
                 <Book className="w-5 h-5 mr-3" aria-hidden="true" /> <Text>词典</Text>
               </Link>
-              <Link href="/favorites" className="flex items-center px-4 py-2 rounded-md border border-gray-200 hover:bg-gray-100">
+              <Link href="/favorites" className="flex items-center px-4 py-2 rounded-md border border-gray-200 hover:bg-primary-hover hover:text-primary-foreground-hover">
                 <Heart className="w-5 h-5 mr-3" aria-hidden="true" /> <Text>收藏</Text>
               </Link>
-              <Link href="/downloads" className="flex items-center px-4 py-2 rounded-md border border-gray-200 hover:bg-gray-100">
+              <Link href="/downloads" className="flex items-center px-4 py-2 rounded-md border border-gray-200 hover:bg-primary-hover hover:text-primary-foreground-hover">
                 <Download className="w-5 h-5 mr-3" aria-hidden="true" /> <Text>下载</Text>
               </Link>
-              <Link href="/settings" className="flex items-center px-4 py-2 rounded-md border border-gray-200 hover:bg-gray-100">
+              <Link href="/settings" className="flex items-center px-4 py-2 rounded-md border border-gray-200 hover:bg-primary-hover hover:text-primary-foreground-hover">
                 <Settings className="w-5 h-5 mr-3" aria-hidden="true" /> <Text>设置</Text>
               </Link>
             </nav>

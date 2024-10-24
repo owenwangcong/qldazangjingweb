@@ -7,17 +7,8 @@ import "./globals.css";
 import { FontProvider } from './context/FontContext';
 import { LanguageProvider } from './context/LanguageContext'; // Ensure LanguageProvider is imported
 import FontWrapper from './components/FontWrapper'; // Ensure FontWrapper is imported
+import { ThemeProvider } from './context/ThemeContext'; // Import ThemeProvider
 
-const geistSans = localFont({
-  src: "./fonts/GeistVF.woff",
-  variable: "--font-geist-sans",
-  weight: "100 900",
-});
-const geistMono = localFont({
-  src: "./fonts/GeistMonoVF.woff",
-  variable: "--font-geist-mono",
-  weight: "100 900",
-});
 const aakai = localFont({
     src: "./fonts/aaKaiTi_website_text.woff",
     variable: "--font-aakai",
@@ -71,14 +62,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="convertible">
-      <body className={`antialiased ${geistSans.variable} ${geistMono.variable} ${aakai.variable} ${aakaiSong.variable} ${lxgw.variable} ${hyfs.variable} ${qnlb.variable} ${rzykt.variable} ${twzk.variable} ${wqwh.variable}`}>
+    <html lang="en">
+      <body className={`antialiased ${aakai.variable} ${aakaiSong.variable} ${lxgw.variable} ${hyfs.variable} ${qnlb.variable} ${rzykt.variable} ${twzk.variable} ${wqwh.variable}`}>
         <Script src="https://cdn.jsdelivr.net/npm/opencc-js@1.0.5/dist/umd/full.min.js" strategy="beforeInteractive" />
         <FontProvider>
           <LanguageProvider>
-            <FontWrapper>
-              {children}
-            </FontWrapper>
+            <ThemeProvider> {/* Wrap with ThemeProvider */}
+              <FontWrapper>
+                {children}
+              </FontWrapper>
+            </ThemeProvider>
           </LanguageProvider>
         </FontProvider>
       </body>

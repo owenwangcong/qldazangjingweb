@@ -22,11 +22,15 @@ const config: Config = {
   			},
   			primary: {
   				DEFAULT: 'hsl(var(--primary))',
-  				foreground: 'hsl(var(--primary-foreground))'
+  				foreground: 'hsl(var(--primary-foreground))',
+  				hover: 'hsl(var(--primary-hover))',
+  				'foreground-hover': 'hsl(var(--primary-foreground-hover))'
   			},
   			secondary: {
   				DEFAULT: 'hsl(var(--secondary))',
-  				foreground: 'hsl(var(--secondary-foreground))'
+  				foreground: 'hsl(var(--secondary-foreground))',
+  				hover: 'hsl(var(--secondary-hover))',
+  				'foreground-hover': 'hsl(var(--primary-secondary-hover))'
   			},
   			muted: {
   				DEFAULT: 'hsl(var(--muted))',
@@ -49,13 +53,22 @@ const config: Config = {
   				'3': 'hsl(var(--chart-3))',
   				'4': 'hsl(var(--chart-4))',
   				'5': 'hsl(var(--chart-5))'
-  			}
+  			},
+  			green: {
+  				DEFAULT: 'hsl(var(--primary))',
+  			},
+  			blue: {
+  				DEFAULT: 'hsl(var(--primary))',
+  			},
+  			vibrant: {
+  				DEFAULT: 'hsl(var(--primary))',
+  			},
   		},
   		borderRadius: {
   			lg: 'var(--radius)',
   			md: 'calc(var(--radius) - 2px)',
   			sm: 'calc(var(--radius) - 4px)'
-  		}
+  		},
   	}
   },
   plugins: [require("tailwindcss-animate")],

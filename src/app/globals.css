@@ -1,3 +1,65 @@
+/* 
+
+任务描述：
+
+基于以下提供的 CSS 文件，设计6种适合在网页上长时间阅读的颜色主题。
+
+要求：
+
+主题命名： 每个主题的名称应为四个字，富有古典韵味和诗意，体现佛教的意境。名称需要与佛教相关（莲花，古刹，木红黑色的念珠，白色伞盖, 月亮，竹子等等）。各个主题之间尽量不要有重复的字。
+颜色搭配： 各种元素的颜色需要适合在电子屏幕上长时间阅读，避免过于鲜艳或刺眼。颜色应柔和、舒适，降低视觉疲劳。它们应彼此协调搭配，颜色反差不宜过大，营造极简、淡雅、宁静的感觉。
+美学偏好： 请多使用中国传统颜色，体现宋代的审美风格。
+主题类型： 请确保至少包含一个贴近白色（light）的主题和一个贴近黑色（dark）的主题，以满足不同的阅读环境和偏好。4个浅的，2个深的。
+CSS 实现： 为每个主题提供完整的 CSS 代码，包含必要的变量和样式定义,使其能够直接应用于给定的 CSS 文件中。
+
+按照以下原则和最佳实践进行设计：
+
+1. 设计原则：
+
+提高可读性：
+适当的文字与背景对比度： 确保文字与背景之间有足够的对比度，建议亮度对比度在 4.5:1 到 7:1 之间。避免使用纯黑（#000000）和纯白（#FFFFFF）的组合，改用深灰色和米白色以减少视觉疲劳。
+避免极端对比： 过高的对比度可能导致眼睛疲劳，应选择柔和的颜色组合。
+
+使用柔和的颜色：
+中性和自然色调： 采用米色、灰色、淡蓝色、浅绿色等，有助于眼睛放松，适合长时间阅读。
+避免高饱和度颜色： 高饱和度的颜色可能引起视觉疲劳，尽量避免在文字和背景中使用。
+
+一致的互动元素颜色：
+统一的悬停效果： 悬停时的颜色变化应适度，避免过于突兀。可以通过调整亮度或饱和度约 10% 来实现。
+保持整体风格一致： 互动元素的颜色应与整体主题协调，提供一致的视觉体验。
+
+考虑视觉疲劳：
+减少蓝光影响： 尽量减少纯蓝色的使用，或选择偏暖的蓝色调。提供护眼模式或暖色调主题，降低蓝光对眼睛的影响。
+提供明暗两种模式： 根据环境光线，提供浅色（Light）和深色（Dark）两种主题，方便用户选择。
+
+2. 最佳实践：
+
+文字和背景的颜色选择：
+
+浅色主题：
+背景颜色： 采用柔和的浅色，如米色（#F7F4E0）、浅灰色（#F0F0F0）。
+文字颜色： 使用深灰色（#4A4A4A）或深褐色（#5C4B51），避免纯黑色。
+
+深色主题：
+背景颜色： 选择深灰色（#2E2E2E）或深蓝灰色（#2B2B35）。
+文字颜色： 使用浅灰色（#CCCCCC）或米白色（#E0E0E0），避免纯白色。
+互动元素的颜色设计：
+
+链接和按钮：
+正常状态： 浅色主题可使用柔和的青色（#3A7CA5），深色主题可使用浅蓝色（#4DA1FF）。
+悬停状态： 在正常状态基础上略微加深或提亮颜色，变化应平滑自然。
+
+实现悬停效果：
+过渡效果： 使用 CSS 的 transition 属性，使颜色变化平滑，减轻视觉刺激。
+视觉反馈： 悬停时可适当调整元素的阴影或边框，增强交互体验。
+
+辅助元素的颜色：
+边框和分隔线： 浅色主题使用浅灰色（#E0E0E0），深色主题使用深灰色（#444444）。
+输入框和表单元素： 背景色应与整体风格一致，焦点状态下可调整边框颜色以提供视觉提示。
+
+请按照以上要求，为以下 CSS 文件设计6个主题。
+ */
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -78,7 +140,13 @@ html {
     --font-ruiziyunFont: 'RuiZiYun Font', sans-serif;
     --font-taiwanzhengkaiFont: 'TaiWanZhengKai Font', serif;
     --font-wenquanweiheiFont: 'WenQuanWeiHei Font', sans-serif;
+    /* Adjusted hover colors */
+    --primary-hover: 0 0% 11%; /* Slightly lighter */
+    --primary-foreground-hover: 0 0% 96%;
+    --secondary-hover: 0 0% 94%;
+    --secondary-foreground-hover: 0 0% 11%;
   }
+
   .dark {
     --background: 0 0% 3.9%;
     --foreground: 0 0% 98%;
@@ -115,14 +183,213 @@ html {
     --font-ruiziyunFont: 'RuiZiYun Font', sans-serif;
     --font-taiwanzhengkaiFont: 'TaiWanZhengKai Font', serif;
     --font-wenquanweiheiFont: 'WenQuanWeiHei Font', sans-serif;
+    /* Adjusted hover colors */
+    --primary-hover: 0 0% 96%; /* Slightly darker */
+    --primary-foreground-hover: 0 0% 11%;
+    --secondary-hover: 0 0% 17%; /* Slightly lighter */
+    --secondary-foreground-hover: 0 0% 96%;
+  }
+
+  .lianchichanyun {
+    --background: 85 15% 95%; /* 浅米绿色 */
+    --foreground: 85 10% 30%; /* 深米绿色文字 */
+    --card: 85 12% 93%;
+    --card-foreground: 85 10% 30%;
+    --popover: 85 12% 93%;
+    --popover-foreground: 85 10% 30%;
+    --primary: 90 20% 70%; /* 淡雅的绿色 */
+    --primary-foreground: 85 10% 25%;
+    --secondary: 80 15% 85%; /* 浅灰绿色 */
+    --secondary-foreground: 85 10% 30%;
+    --muted: 85 10% 90%; /* 浅灰色 */
+    --muted-foreground: 85 10% 40%;
+    --accent: 90 18% 75%; /* 柔和的浅绿色 */
+    --accent-foreground: 85 10% 30%;
+    --destructive: 0 30% 65%; /* 浅红色 */
+    --destructive-foreground: 85 10% 25%;
+    --border: 85 10% 85%;
+    --input: 85 10% 85%;
+    --ring: 85 10% 25%;
+    --chart-1: 90 20% 70%;
+    --chart-2: 80 15% 85%;
+    --chart-3: 85 10% 90%;
+    --chart-4: 90 18% 75%;
+    --chart-5: 0 30% 65%;
+    /* 悬停效果 */
+    --primary-hover: 90 20% 72%; /* 亮度增加 */
+    --primary-foreground-hover: 85 10% 25%;
+    --secondary-hover: 80 15% 83%; /* 亮度减少 */
+    --secondary-foreground-hover: 85 10% 30%;
+  }
+
+  .zhulinyoujing {
+    --background: 140 20% 95%; /* 浅竹绿色 */
+    --foreground: 140 15% 30%; /* 深竹绿色文字 */
+    --card: 140 18% 93%;
+    --card-foreground: 140 15% 30%;
+    --popover: 140 18% 93%;
+    --popover-foreground: 140 15% 30%;
+    --primary: 150 25% 70%; /* 淡雅的绿色 */
+    --primary-foreground: 140 15% 25%;
+    --secondary: 130 20% 85%; /* 浅灰绿色 */
+    --secondary-foreground: 140 15% 30%;
+    --muted: 140 15% 90%; /* 浅灰色 */
+    --muted-foreground: 140 15% 40%;
+    --accent: 150 22% 75%; /* 柔和的浅绿色 */
+    --accent-foreground: 140 15% 30%;
+    --destructive: 0 30% 65%; /* 浅红色 */
+    --destructive-foreground: 140 15% 25%;
+    --border: 140 15% 85%;
+    --input: 140 15% 85%;
+    --ring: 140 15% 25%;
+    --chart-1: 150 25% 70%;
+    --chart-2: 130 20% 85%;
+    --chart-3: 140 15% 90%;
+    --chart-4: 150 22% 75%;
+    --chart-5: 0 30% 65%;
+    /* 悬停效果 */
+    --primary-hover: 150 25% 72%; /* 亮度增加 */
+    --primary-foreground-hover: 140 15% 25%;
+    --secondary-hover: 130 20% 83%; /* 亮度减少 */
+    --secondary-foreground-hover: 140 15% 30%;
+  }
+
+  .yueyingqinghui {
+    --background: 220 10% 95%; /* 浅蓝灰色 */
+    --foreground: 220 5% 30%; /* 深蓝灰色文字 */
+    --card: 220 8% 93%;
+    --card-foreground: 220 5% 30%;
+    --popover: 220 8% 93%;
+    --popover-foreground: 220 5% 30%;
+    --primary: 230 15% 70%; /* 淡雅的蓝色 */
+    --primary-foreground: 220 5% 25%;
+    --secondary: 210 10% 85%; /* 浅灰蓝色 */
+    --secondary-foreground: 220 5% 30%;
+    --muted: 220 5% 90%; /* 浅青灰色 */
+    --muted-foreground: 220 5% 40%;
+    --accent: 230 12% 75%; /* 柔和的浅蓝色 */
+    --accent-foreground: 220 5% 30%;
+    --destructive: 0 30% 65%; /* 浅红色 */
+    --destructive-foreground: 220 5% 25%;
+    --border: 220 5% 85%;
+    --input: 220 5% 85%;
+    --ring: 220 5% 25%;
+    --chart-1: 230 15% 70%;
+    --chart-2: 210 10% 85%;
+    --chart-3: 220 5% 90%;
+    --chart-4: 230 12% 75%;
+    --chart-5: 0 30% 65%;
+    /* 悬停效果 */
+    --primary-hover: 230 15% 72%; /* 亮度增加 */
+    --primary-foreground-hover: 220 5% 25%;
+    --secondary-hover: 210 10% 83%; /* 亮度减少 */
+    --secondary-foreground-hover: 220 5% 30%;
+  }
+
+  .sangaijingtu {
+    --background: 200 10% 98%; /* 更浅的浅青灰色 */
+    --foreground: 200 5% 35%; /* 更浅的深青灰色文字 */
+    --card: 200 8% 96%; /* 更浅的卡片背景 */
+    --card-foreground: 200 5% 35%; /* 更浅的卡片文字 */
+    --popover: 200 8% 96%; /* 更浅的弹出层背景 */
+    --popover-foreground: 200 5% 35%; /* 更浅的弹出层文字 */
+    --primary: 210 15% 72%; /* 更浅的淡雅青色 */
+    --primary-foreground: 200 5% 28%; /* 更浅的主色文字 */
+    --secondary: 190 10% 83%; /* 更浅的浅灰青色 */
+    --secondary-foreground: 200 5% 35%; /* 更浅的次色文字 */
+    --muted: 200 5% 93%; /* 更浅的浅灰色 */
+    --muted-foreground: 200 5% 43%; /* 更浅的静音文字 */
+    --accent: 210 12% 78%; /* 更浅的柔和浅青色 */
+    --accent-foreground: 200 5% 35%; /* 更浅的强调文字 */
+    --destructive: 0 30% 68%; /* 更浅的浅红色 */
+    --destructive-foreground: 200 5% 28%; /* 更浅的破坏文字 */
+    --border: 200 5% 88%; /* 更浅的边框颜色 */
+    --input: 200 5% 88%; /* 更浅的输入框背景 */
+    --ring: 200 5% 28%; /* 更浅的环形颜色 */
+    --chart-1: 210 15% 72%; /* 更浅的图表颜色1 */
+    --chart-2: 190 10% 83%; /* 更浅的图表颜色2 */
+    --chart-3: 200 5% 93%; /* 更浅的图表颜色3 */
+    --chart-4: 210 12% 78%; /* 更浅的图表颜色4 */
+    --chart-5: 0 30% 68%; /* 更浅的图表颜色5 */
+
+    /* 悬停效果 */
+    --primary-hover: 210 15% 75%; /* 由74%增至75%，更浅 */
+    --primary-foreground-hover: 200 5% 28%; /* 保持不变 */
+    --secondary-hover: 190 10% 85%; /* 由81%增至85%，更浅 */
+    --secondary-foreground-hover: 200 5% 35%; /* 保持不变 */
+  }
+
+  .guchayese {
+    --background: 220 20% 15%; /* 深蓝灰色 */
+    --foreground: 220 15% 85%; /* 浅蓝灰色文字 */
+    --card: 220 18% 17%;
+    --card-foreground: 220 15% 85%;
+    --popover: 220 18% 17%;
+    --popover-foreground: 220 15% 85%;
+    --primary: 230 25% 40%; /* 深蓝色 */
+    --primary-foreground: 220 15% 90%;
+    --secondary: 210 20% 25%; /* 深青色 */
+    --secondary-foreground: 220 15% 85%;
+    --muted: 220 15% 20%; /* 深灰色 */
+    --muted-foreground: 220 15% 70%;
+    --accent: 230 22% 35%; /* 深蓝色 */
+    --accent-foreground: 220 15% 85%;
+    --destructive: 0 30% 50%; /* 暗红色 */
+    --destructive-foreground: 220 15% 90%;
+    --border: 220 15% 25%;
+    --input: 220 15% 25%;
+    --ring: 220 15% 85%;
+    --chart-1: 230 25% 40%;
+    --chart-2: 210 20% 25%;
+    --chart-3: 220 15% 20%;
+    --chart-4: 230 22% 35%;
+    --chart-5: 0 30% 50%;
+    /* 悬停效果 */
+    --primary-hover: 230 25% 42%; /* 亮度增加 */
+    --primary-foreground-hover: 220 15% 90%;
+    --secondary-hover: 210 20% 27%; /* 亮度增加 */
+    --secondary-foreground-hover: 220 15% 85%;
+  }
+
+  .fagufanyin {
+    --background: 20 25% 15%; /* 深棕灰色 */
+    --foreground: 20 20% 85%; /* 浅棕灰色文字 */
+    --card: 20 23% 17%;
+    --card-foreground: 20 20% 85%;
+    --popover: 20 23% 17%;
+    --popover-foreground: 20 20% 85%;
+    --primary: 30 30% 40%; /* 深棕色 */
+    --primary-foreground: 20 20% 90%;
+    --secondary: 10 25% 25%; /* 深褐色 */
+    --secondary-foreground: 20 20% 85%;
+    --muted: 20 20% 20%; /* 深灰色 */
+    --muted-foreground: 20 20% 70%;
+    --accent: 30 27% 35%; /* 深棕色 */
+    --accent-foreground: 20 20% 85%;
+    --destructive: 0 30% 50%; /* 暗红色 */
+    --destructive-foreground: 20 20% 90%;
+    --border: 20 20% 25%;
+    --input: 20 20% 25%;
+    --ring: 20 20% 85%;
+    --chart-1: 30 30% 40%;
+    --chart-2: 10 25% 25%;
+    --chart-3: 20 20% 20%;
+    --chart-4: 30 27% 35%;
+    --chart-5: 0 30% 50%;
+    /* 悬停效果 */
+    --primary-hover: 30 30% 42%; /* 亮度增加 */
+    --primary-foreground-hover: 20 20% 90%;
+    --secondary-hover: 10 25% 27%; /* 亮度增加 */
+    --secondary-foreground-hover: 20 20% 85%;
   }
 
   /* Define the dynamic font class */
   .font-current {
     font-family: var(--current-font);
   }
+  
 }
-
+  
 @layer base {
   * {
     @apply border-border;
