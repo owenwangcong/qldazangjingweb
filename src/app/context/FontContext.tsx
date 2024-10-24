@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 
 // Define a constant for the default font
 const DEFAULT_FONT = '--font-lxgw';
@@ -18,12 +18,12 @@ export const FontContext = createContext<FontContextProps>({
 });
 
 // FontProvider component to wrap around parts of the app that need access to the font context
-export const FontProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const FontProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   // Initialize selectedFont by attempting to load from localStorage first
-
-  const storedFont = localStorage.getItem('selectedFont');
+  const storedFont = typeof window !== 'undefined' ? localStorage.getItem('selectedFont') : null;
   const [selectedFont, setSelectedFont] = useState<string>(storedFont || DEFAULT_FONT);
 
+  // Effect to load the selected font from localStorage on client side
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const storedFont = localStorage.getItem('selectedFont');
@@ -36,19 +36,12 @@ export const FontProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
-  // Effect to load the selected font from localStorage on client side
-  useEffect(() => {
-    const storedFont = localStorage.getItem('selectedFont');
-    if (storedFont && storedFont !== selectedFont) {
-      console.log('Updating selectedFont from localStorage:', storedFont);
-      setSelectedFont(storedFont);
-    }
-  }, []);
-
   // Effect to update localStorage whenever selectedFont changes
   useEffect(() => {
-    console.log('Setting selectedFont in localStorage:', selectedFont);
-    localStorage.setItem('selectedFont', selectedFont);
+    if (typeof window !== 'undefined') {
+      console.log('Setting selectedFont in localStorage:', selectedFont);
+      localStorage.setItem('selectedFont', selectedFont);
+    }
   }, [selectedFont]);
 
   return (
@@ -57,4 +50,13 @@ export const FontProvider: React.FC<{ children: React.ReactNode }> = ({ children
       {children}
     </FontContext.Provider>
   );
+};
+
+// Custom hook to use the FontContext
+export const useFont = (): FontContextProps => {
+  const context = useContext(FontContext);
+  if (!context) {
+    throw new Error('useFont must be used within a FontProvider');
+  }
+  return context;
 };
