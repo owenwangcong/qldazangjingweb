@@ -4,9 +4,11 @@ import React, { useState, useEffect, useRef, useContext } from 'react';
 import { useParams } from 'next/navigation';
 import Header from '@/app/components/Header';
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
-import { FontProvider, FontContext } from '@/app/context/FontContext';
-import FontWrapper from '@/app/components/FontWrapper';
+import { FontContext } from '@/app/context/FontContext';
 import Text from '@/app/components/Text';
+import { ArrowLeft } from 'lucide-react';
+import classNames from 'classnames'; // Import classNames for conditional classes
+import { Recogito } from '@/app/scripts/recogito.min.js';
 
 const BookDetailPage: React.FC = () => {
   const { id } = useParams();
@@ -15,16 +17,71 @@ const BookDetailPage: React.FC = () => {
   const [contextMenuPosition, setContextMenuPosition] = useState<{ x: number, y: number } | null>(null);
   const contextMenuRef = useRef<HTMLDivElement>(null);
   const { selectedFont, setSelectedFont } = useContext(FontContext);
-
-  // This code block handles the text selection and context menu functionality for the book detail page.
-  // It sets the selected text and context menu position based on user interactions.
+ 
   const [menuLevel, setMenuLevel] = useState('main');
   const [selectedItem, setSelectedItem] = useState<string | null>(null);
-  const [contentData, setContentData] = useState(null);
+  const [contentData, setContentData] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   const [fontFamily, setFontFamily] = useState<string>('inherit');
+
+  const recogitoContainerRef = useRef<HTMLDivElement>(null); // <-- Added useRef for recogito-container
+
+  // Initialize Recogito when the component mounts or id/book changes
+  useEffect(() => {
+    // Only initialize Recogito when the book data is loaded
+    if (!book) {
+      console.log('Book data not loaded yet');
+      return;
+    }
+
+    let recogitoInstance: Recogito | null = null;
+
+    const initializeRecogito = () => {
+      if (!recogitoContainerRef.current) {
+        console.log('recogitoContainerRef.current is null');
+        return;
+      }
+
+      recogitoInstance = new Recogito({
+        content: recogitoContainerRef.current,
+        mode: 'html',
+        locale: 'zh',
+      });
+
+      console.log('Recogito instance created');
+    };
+
+    const onDocumentReady = () => {
+      initializeRecogito();
+    };
+
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+      initializeRecogito();
+    } else {
+      document.addEventListener('DOMContentLoaded', onDocumentReady);
+    }
+
+    return () => {
+      console.log('Returning from useEffect in recogitoContainer');
+
+      document.removeEventListener('DOMContentLoaded', onDocumentReady);
+
+      if (recogitoInstance) {
+        console.log('Destroying Recogito instance');
+        try {
+          recogitoInstance.destroy();
+        } catch (error) {
+          console.log('Error during Recogito instance destruction:', error);
+          // The node might have been removed already, so ignore the error
+        }
+      } else {
+        console.log('Recogito instance is null');
+      }
+    };
+  }, [id, book]); // Add 'book' to the dependency array
+  
 
   // Fetch the book data based on the id
   const fetchBookData = async (id: string) => {
@@ -79,9 +136,22 @@ const BookDetailPage: React.FC = () => {
     if (selection && selection.toString().trim()) {
       event.preventDefault();
       console.log('Context menu triggered at:', event.clientX, event.clientY); // Debug: Log context menu position
+
+      const clientX = event.clientX;
+      const clientY = event.clientY;
+      const MENU_HEIGHT = 300; // Estimated height of the dropdown menu in pixels
+
+      const dropdownBottom = clientY + MENU_HEIGHT;
+      const pageHeight = window.innerHeight;
+
+      let adjustedY = clientY;
+      if (dropdownBottom > pageHeight) {
+        adjustedY = clientY - MENU_HEIGHT;
+      }
+
       setContextMenuPosition({
-        x: event.clientX,
-        y: event.clientY,
+        x: clientX,
+        y: adjustedY,
       });
     } else {
       setContextMenuPosition(null);
@@ -96,7 +166,6 @@ const BookDetailPage: React.FC = () => {
     setMenuLevel('main');
     setSelectedItem(null);
     setContentData(null);
-
   };
 
   // Handle dropdown menu item clicks
@@ -123,7 +192,6 @@ const BookDetailPage: React.FC = () => {
       console.log('Look up dictionary for:', selectedText);
       // Implement dictionary lookup logic here
     }
-    //handleMenuClose();
   };
 
   const handleFavorite = () => {
@@ -141,7 +209,6 @@ const BookDetailPage: React.FC = () => {
       console.log('Convert to Bai Hua Wen:', selectedText);
       // Implement Bai Hua Wen conversion logic here
     }
-    //handleMenuClose();
   };
 
   // Define the handleShiYi function
@@ -151,7 +218,17 @@ const BookDetailPage: React.FC = () => {
       console.log('Interpretation for:', selectedText);
       // Implement interpretation logic here
     }
-    //handleMenuClose();
+  };
+
+  // Define the handleAnnotate function
+  const handleAnnotate = () => {
+    if (selectedText) {
+      console.log('Annotate:', selectedText);
+      const contentElement = document.getElementById('recogito-container');
+      const event = new Event('trigger-selection');
+      contentElement?.dispatchEvent(event);
+    }
+    handleMenuClose();
   };
 
   // This useEffect hook fetches the book data when the component mounts or when the id changes.
@@ -177,31 +254,40 @@ const BookDetailPage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (selectedItem) {
-      setLoading(true);
-      setError(null);
-  
-      // Replace this URL with your API endpoint
-      //const apiUrl = `https://api.example.com/data/${selectedItem}`;
-      const apiUrl = `https://httpbin.org/get?${selectedItem}`;
-  
-      fetch(apiUrl)
-        .then((response) => {
-          if (!response.ok) {
-            throw new Error('Network response was not ok');
-          }
-          return response.json();
-        })
-        .then((data) => {
-          setContentData(data);
-          setLoading(false);
-          setMenuLevel('content'); // Move to content view
-        })
-        .catch((error) => {
-          setError(error.message);
-          setLoading(false);
+    if (!selectedItem) return;
+
+    setMenuLevel('content'); // Move to content view
+    setLoading(true);
+    setError(null);
+
+    const fetchData = async () => {
+      try {
+        const response = await fetch('/api/translate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            prompt: `把这段文字翻译成白话文：${selectedText}`,
+          }),
         });
-    }
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Network response was not ok');
+        }
+
+        const data = await response.json();
+        setContentData(data.openai_response?.choices?.[0]?.message?.content);
+        console.log('Content data:', data);
+      } catch (error: any) {
+        setError(error.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
   }, [selectedItem]);
 
   // Fetch the font data when the selected font or id changes
@@ -228,19 +314,21 @@ const BookDetailPage: React.FC = () => {
 
   if (!book) {
     return (
-      <>
+      <div>  {/* Replaced fragment with a div */}
         <Header />
         <div className="flex justify-center items-center h-screen">
           <h1 className="text-3xl font-bold"><Text>Book not found</Text></h1>
         </div>
-      </>
+      </div>
     );
   }
 
   return (
-    <>
+    <div>  {/* Replaced fragment with a div */}
       <Header />
       <div
+        id="recogito-container"
+        ref={recogitoContainerRef}
         className="flex flex-col items-center min-h-screen p-8 pb-10 gap-10 sm:p-10"
         onMouseUp={handleTextSelection}
         onContextMenu={handleContextMenu}
@@ -272,9 +360,9 @@ const BookDetailPage: React.FC = () => {
         </div>
       </div>
 
-      {/* This div handles the context menu for text selection */}
+      {/* Context Menu */}
       <div onContextMenu={handleContextMenu} className="relative" ref={contextMenuRef}>
-        <DropdownMenu.Root open={!!contextMenuPosition}>
+        <DropdownMenu.Root open={!!contextMenuPosition} modal={false}>
           <DropdownMenu.Trigger asChild>
             <button className="hidden" />
           </DropdownMenu.Trigger>
@@ -285,92 +373,103 @@ const BookDetailPage: React.FC = () => {
               top: contextMenuPosition?.y,
               left: contextMenuPosition?.x,
             }}
-            className="bg-white shadow-lg rounded-md p-2"
-            onMouseLeave={handleMenuClose} // Close menu when mouse leaves
+            className={classNames(
+              "bg-white shadow-lg rounded-md p-2",
+              {
+                'w-64 h-64 overflow-auto font-sans': menuLevel === 'content' // Apply fixed height and overflow-auto only for 'content' menu
+              }
+            )}
           >
 
           {menuLevel === 'main' && (
             <>
               <DropdownMenu.Item
-                className="flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none focus:bg-accent focus:text-accent-foreground hover:bg-gray-200 whitespace-nowrap"
+                className="flex cursor-default select-none items-center rounded-sm px-3 py-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground whitespace-nowrap"
                 onSelect={handleCopy}
               >
                 <Text>复制</Text>
               </DropdownMenu.Item>
               <DropdownMenu.Separator className="h-px my-1 bg-gray-200" />
               <DropdownMenu.Item
-                className="flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none focus:bg-accent focus:text-accent-foreground hover:bg-gray-200 whitespace-nowrap"
+                className="flex cursor-default select-none items-center rounded-sm px-3 py-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground whitespace-nowrap"
                 onSelect={handleSearch}
               >
                 <Text>搜索</Text>
               </DropdownMenu.Item>
               <DropdownMenu.Separator className="h-px my-1 bg-gray-200" />
               <DropdownMenu.Item
-                className="flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none focus:bg-accent focus:text-accent-foreground hover:bg-gray-200 whitespace-nowrap"
+                className="flex cursor-default select-none items-center rounded-sm px-3 py-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground whitespace-nowrap"
                 onSelect={handleDictionary}
               >
                 <Text>字典</Text>
               </DropdownMenu.Item>
               <DropdownMenu.Separator className="h-px my-1 bg-gray-200" />
               <DropdownMenu.Item
-                className="flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none focus:bg-accent focus:text-accent-foreground hover:bg-gray-200 whitespace-nowrap"
+                className="flex cursor-default select-none items-center rounded-sm px-3 py-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground whitespace-nowrap"
                 onSelect={handleFavorite}
               >
                 <Text>收藏</Text> 
               </DropdownMenu.Item>
               <DropdownMenu.Separator className="h-px my-1 bg-gray-200" />
               <DropdownMenu.Item
-                className="flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none focus:bg-accent focus:text-accent-foreground hover:bg-gray-200 whitespace-nowrap"
+                className="flex cursor-default select-none items-center rounded-sm px-3 py-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground whitespace-nowrap"
                 onSelect={handleToModernChinese}
               >
                 <Text>今译</Text>
               </DropdownMenu.Item>
               <DropdownMenu.Separator className="h-px my-1 bg-gray-200" />
               <DropdownMenu.Item
-                className="flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none focus:bg-accent focus:text-accent-foreground hover:bg-gray-200 whitespace-nowrap"
+                className="flex cursor-default select-none items-center rounded-sm px-3 py-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground whitespace-nowrap"
                 onSelect={handleExplain}
               >
                 <Text>释义</Text>
+              </DropdownMenu.Item>
+              <DropdownMenu.Separator className="h-px my-1 bg-gray-200" />
+              <DropdownMenu.Item
+                className="flex cursor-default select-none items-center rounded-sm px-3 py-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground whitespace-nowrap"
+                onSelect={handleAnnotate}
+              >
+                <Text>注释</Text>
               </DropdownMenu.Item>
             </>
           )}
           {menuLevel === 'content' && (
             <>
               <DropdownMenu.Item
-                className="DropdownMenuItem"
+                className="flex items-center cursor-default select-none rounded-sm px-3 py-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground whitespace-nowrap"
                 onSelect={() => {
                   setMenuLevel('main');
                   setSelectedItem(null);
                   setContentData(null);
                 }}
               >
-                ← <Text>返回</Text>
+               <ArrowLeft className="w-5 h-5 mr-3" aria-hidden="true" /><Text>返回</Text>
               </DropdownMenu.Item>
-              <DropdownMenu.Separator className="DropdownMenuSeparator" />
-              {loading && (
-                <div className="LoadingContent">
-                  <p>Loading...</p>
-                </div>
-              )}
-              {error && (
-                <div className="ErrorContent">
-                  <p>Error: {error}</p>
-                </div>
-              )}
-              {contentData && (
-                <div className="ContentDisplay">
-                  <h3>title</h3>
-                  {/* @ts-ignore */}
-                  <p>{JSON.stringify(contentData.args)}</p>
-                </div>
-              )}
+              <DropdownMenu.Separator className="h-px my-1 bg-gray-200" />
+              <div className="flex flex-col items-start overflow-auto">
+                {loading && (
+                  <div className="LoadingContent">
+                    <p>加载中</p>
+                  </div>
+                )}
+                {error && (
+                  <div className="ErrorContent">
+                    <p>出现了一个错误：{error}</p>
+                  </div>
+                )}
+                {contentData && (
+                  <div className="ContentDisplay">
+                    <p>{JSON.stringify(contentData)}</p>
+                  </div>
+                )}
+              </div>
             </>
           )}
 
           </DropdownMenu.Content>
         </DropdownMenu.Root>
       </div>
-    </>
+    </div>
   );
 };
 

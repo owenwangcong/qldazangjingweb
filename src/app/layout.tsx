@@ -8,6 +8,7 @@ import { FontProvider } from './context/FontContext';
 import { LanguageProvider } from './context/LanguageContext'; // Ensure LanguageProvider is imported
 import FontWrapper from './components/FontWrapper'; // Ensure FontWrapper is imported
 import { ThemeProvider } from './context/ThemeContext'; // Import ThemeProvider
+import { useEffect } from 'react'; // Add this import
 
 const aakai = localFont({
     src: "./fonts/aaKaiTi_website_text.woff",
@@ -61,8 +62,22 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+
+  useEffect(() => { // Add this useEffect hook
+    const handleContextMenu = (event: MouseEvent) => {
+      event.preventDefault();
+    };
+    document.addEventListener('contextmenu', handleContextMenu);    
+    return () => {
+      document.removeEventListener('contextmenu', handleContextMenu);
+    };
+  }, []);
+
   return (
     <html lang="en">
+      <head>
+        <link rel="stylesheet" href="/styles/recogito.min.css" />
+      </head>
       <body className={`antialiased ${aakai.variable} ${aakaiSong.variable} ${lxgw.variable} ${hyfs.variable} ${qnlb.variable} ${rzykt.variable} ${twzk.variable} ${wqwh.variable}`}>
         <Script src="https://cdn.jsdelivr.net/npm/opencc-js@1.0.5/dist/umd/full.min.js" strategy="beforeInteractive" />
         <FontProvider>

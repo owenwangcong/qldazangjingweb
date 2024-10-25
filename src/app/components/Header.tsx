@@ -38,8 +38,7 @@ const Header: React.FC = () => {
 
   return (
     <div className="bg-background text-foreground">
-      <div className="fixed top-2 right-2 space-x-4">
-        
+      <div className="fixed top-2 right-2 space-x-4 z-50">
         <button
           onClick={toggleHeaderVisibility}
           className="p-2 bg-card rounded-full shadow-md focus:outline-none hover:bg-primary-hover hover:text-primary-foreground-hover"

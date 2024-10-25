@@ -64,7 +64,9 @@ CSS 实现： 为每个主题提供完整的 CSS 代码，包含必要的变量�
 @tailwind components;
 @tailwind utilities;
 
-/* Removed the Annotator import */
+a:hover, button:hover {
+  cursor: pointer;
+}
 
 body {
   /* Removed static font-family */
