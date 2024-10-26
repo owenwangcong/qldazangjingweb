@@ -46,13 +46,20 @@ const JuanDetailPage: React.FC = () => {
         <div className="w-full max-w-4xl">
           <ul className="space-y-4">
             {juan.bus.map((busItem) => (
-              <li key={busItem.id} className="p-4 border rounded-lg shadow-md hover:bg-gray-100 transition">
-                <a href={`/books/${busItem.id}`} className="flex justify-between items-center">
-                  <span className="text-xl font-medium text-gray-800 flex-grow" style={{ flexBasis: '55%' }}><Text>{busItem.title}</Text></span>
-                  <span className="text-md text-gray-600 flex-none text-center" style={{ flexBasis: '20%' }}><Text>{busItem.bu}</Text></span>
-                  <span className="text-md text-gray-600 flex-none text-center" style={{ flexBasis: '25%' }}><Text>{busItem.author}</Text></span>
-                </a>
-              </li>
+                  // Start of Selection
+                  <li key={busItem.id} className="p-4 border border-border rounded-lg shadow-md hover:bg-primary-hover transition">
+                    <a href={`/books/${busItem.id}`} className="flex justify-between items-center">
+                      <span className="text-xl font-medium text-foreground flex-grow" style={{ flexBasis: '55%' }}>
+                        <Text>{busItem.title}</Text>
+                      </span>
+                      <span className="text-md text-muted-foreground flex-none text-center" style={{ flexBasis: '20%' }}>
+                        <Text>{busItem.bu}</Text>
+                      </span>
+                      <span className="text-md text-muted-foreground flex-none text-center" style={{ flexBasis: '25%' }}>
+                        <Text>{busItem.author}</Text>
+                      </span>
+                    </a>
+                  </li>
             ))}
           </ul>
         </div>

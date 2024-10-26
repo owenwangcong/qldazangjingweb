@@ -20,14 +20,15 @@ export default function Home() {
           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-8 items-start"
         >
           {Object.entries(mlsData).map(([key, { id, name }]) => (
-            <Link
-              key={key}
-              href={`/juans/${id}`}
-              passHref
-              className="p-4 border rounded-lg shadow-md w-full max-w-md block hover:bg-gray-100"
-            >
-              <h2 className="text-xl font-semibold text-center"><Text>{name}</Text></h2>
-            </Link>
+                // Start of Selection
+                <Link
+                  key={key}
+                  href={`/juans/${id}`}
+                  passHref
+                  className="p-4 border border-border rounded-lg shadow-md w-full max-w-md block hover:bg-primary-hover transition-colors"
+                >
+                  <h2 className="text-xl font-semibold text-center text-foreground"><Text>{name}</Text></h2>
+                </Link>
           ))}
         </main>
         <footer className="flex gap-6 flex-wrap items-center justify-center">

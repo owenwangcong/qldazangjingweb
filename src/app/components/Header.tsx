@@ -59,33 +59,28 @@ const Header: React.FC = () => {
               <div className="w-5 h-5">色</div>
             </button>
           </DropdownMenu.Trigger>
-          <DropdownMenu.Content className="bg-card p-4 rounded-md shadow-lg">
-            <DropdownMenu.Item onSelect={() => handleThemeChange('lianchichanyun')} className="flex items-center px-4 py-2 cursor-pointer text-lg">
-              <Text>莲池禅韵</Text>
-            </DropdownMenu.Item>
-            <DropdownMenu.Separator className="my-2 h-px bg-border" />
-            <DropdownMenu.Item onSelect={() => handleThemeChange('zhulinyoujing')} className="flex items-center px-4 py-2 cursor-pointer text-lg">
-              <Text>竹林幽径</Text>
-            </DropdownMenu.Item>
-            <DropdownMenu.Separator className="my-2 h-px bg-border" />
-            <DropdownMenu.Item onSelect={() => handleThemeChange('yueyingqinghui')} className="flex items-center px-4 py-2 cursor-pointer text-lg">
-              <Text>月影清辉</Text>  
-            </DropdownMenu.Item>
-            <DropdownMenu.Separator className="my-2 h-px bg-border" />
-            <DropdownMenu.Item onSelect={() => handleThemeChange('sangaijingtu')} className="flex items-center px-4 py-2 cursor-pointer text-lg">
-              <Text>伞盖净土</Text>
-            </DropdownMenu.Item>
-            <DropdownMenu.Separator className="my-2 h-px bg-border" />
-            <DropdownMenu.Item onSelect={() => handleThemeChange('guchayese')} className="flex items-center px-4 py-2 cursor-pointer text-lg">
-              <Text>古刹夜色</Text>
-            </DropdownMenu.Item>
-            <DropdownMenu.Separator className="my-2 h-px bg-border" />
-            <DropdownMenu.Item onSelect={() => handleThemeChange('fagufanyin')} className="flex items-center px-4 py-2 cursor-pointer text-lg">
-              <Text>法鼓梵音</Text>
-            </DropdownMenu.Item>
-          </DropdownMenu.Content>
+                  <DropdownMenu.Content className="bg-popover p-4 rounded-md shadow-lg">
+                    {[
+                      { value: 'lianchichanyun', label: '莲池禅韵' },
+                      { value: 'zhulinyoujing', label: '竹林幽径' },
+                      { value: 'yueyingqinghui', label: '月影清辉' },
+                      { value: 'sangaijingtu', label: '伞盖净土' },
+                      { value: 'guchayese', label: '古刹夜色' },
+                      { value: 'fagufanyin', label: '法鼓梵音' },
+                    ].map((theme, index) => (
+                      <React.Fragment key={theme.value}>
+                        <DropdownMenu.Item
+                          onSelect={() => handleThemeChange(theme.value as Theme)}
+                              // Start of Selection
+                              className="flex items-center px-4 py-2 cursor-pointer text-lg hover:bg-primary-hover hover:text-primary-foreground-hover hover:border-none"
+                        >
+                          <Text>{theme.label}</Text>
+                        </DropdownMenu.Item>
+                        {index < 5 && <DropdownMenu.Separator className="my-2 h-px bg-border" />}
+                      </React.Fragment>
+                    ))}
+                  </DropdownMenu.Content>
         </DropdownMenu.Root>
-
 
         <button
           onClick={handleToggleLanguage}

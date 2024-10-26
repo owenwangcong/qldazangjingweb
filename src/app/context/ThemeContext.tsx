@@ -1,3 +1,5 @@
+"use client";
+
 import React, { createContext, useState, useContext, useEffect } from 'react';
 
 // Define and export the Theme type

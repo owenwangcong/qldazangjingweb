@@ -108,7 +108,7 @@ const BookDetailPage: React.FC = () => {
         '--font-wqwh': 'wqwMiHei',
       };
 
-      const selectedFontName = fontMapping[selectedFontFamilyName] || 'DefaultFont';
+      const selectedFontName = fontMapping[selectedFontFamilyName] || 'lxgw';
       const response = await import(`@/app/fonts/book_fonts/${selectedFontName}_${bookId}.woff`);
       console.log('Font URL:', response.default);
       return response.default;
@@ -139,7 +139,7 @@ const BookDetailPage: React.FC = () => {
 
       const clientX = event.clientX;
       const clientY = event.clientY;
-      const MENU_HEIGHT = 300; // Estimated height of the dropdown menu in pixels
+      const MENU_HEIGHT = 320; // Estimated height of the dropdown menu in pixels
 
       const dropdownBottom = clientY + MENU_HEIGHT;
       const pageHeight = window.innerHeight;
@@ -317,7 +317,7 @@ const BookDetailPage: React.FC = () => {
       <div>  {/* Replaced fragment with a div */}
         <Header />
         <div className="flex justify-center items-center h-screen">
-          <h1 className="text-3xl font-bold"><Text>Book not found</Text></h1>
+          <h1 className="text-3xl font-bold">{/* <Text>Book not found</Text> */}</h1>
         </div>
       </div>
     );
@@ -374,9 +374,9 @@ const BookDetailPage: React.FC = () => {
               left: contextMenuPosition?.x,
             }}
             className={classNames(
-              "bg-white shadow-lg rounded-md p-2",
+              "bg-popover shadow-lg rounded-md p-2",
               {
-                'w-64 h-64 overflow-auto font-sans': menuLevel === 'content' // Apply fixed height and overflow-auto only for 'content' menu
+                'w-64 h-64 overflow-auto font-sans': menuLevel === 'content'
               }
             )}
           >
@@ -384,49 +384,49 @@ const BookDetailPage: React.FC = () => {
           {menuLevel === 'main' && (
             <>
               <DropdownMenu.Item
-                className="flex cursor-default select-none items-center rounded-sm px-3 py-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground whitespace-nowrap"
+                className="flex cursor-pointer select-none items-center rounded-sm px-3 py-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground whitespace-nowrap"
                 onSelect={handleCopy}
               >
                 <Text>复制</Text>
               </DropdownMenu.Item>
-              <DropdownMenu.Separator className="h-px my-1 bg-gray-200" />
+              <DropdownMenu.Separator className="h-px my-1 bg-border" />
               <DropdownMenu.Item
-                className="flex cursor-default select-none items-center rounded-sm px-3 py-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground whitespace-nowrap"
+                className="flex cursor-pointer select-none items-center rounded-sm px-3 py-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground whitespace-nowrap"
                 onSelect={handleSearch}
               >
                 <Text>搜索</Text>
               </DropdownMenu.Item>
-              <DropdownMenu.Separator className="h-px my-1 bg-gray-200" />
+              <DropdownMenu.Separator className="h-px my-1 bg-border" />
               <DropdownMenu.Item
-                className="flex cursor-default select-none items-center rounded-sm px-3 py-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground whitespace-nowrap"
+                className="flex cursor-pointer select-none items-center rounded-sm px-3 py-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground whitespace-nowrap"
                 onSelect={handleDictionary}
               >
                 <Text>字典</Text>
               </DropdownMenu.Item>
-              <DropdownMenu.Separator className="h-px my-1 bg-gray-200" />
+              <DropdownMenu.Separator className="h-px my-1 bg-border" />
               <DropdownMenu.Item
-                className="flex cursor-default select-none items-center rounded-sm px-3 py-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground whitespace-nowrap"
+                className="flex cursor-pointer select-none items-center rounded-sm px-3 py-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground whitespace-nowrap"
                 onSelect={handleFavorite}
               >
                 <Text>收藏</Text> 
               </DropdownMenu.Item>
-              <DropdownMenu.Separator className="h-px my-1 bg-gray-200" />
+              <DropdownMenu.Separator className="h-px my-1 bg-border" />
               <DropdownMenu.Item
-                className="flex cursor-default select-none items-center rounded-sm px-3 py-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground whitespace-nowrap"
+                className="flex cursor-pointer select-none items-center rounded-sm px-3 py-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground whitespace-nowrap"
                 onSelect={handleToModernChinese}
               >
                 <Text>今译</Text>
               </DropdownMenu.Item>
-              <DropdownMenu.Separator className="h-px my-1 bg-gray-200" />
+              <DropdownMenu.Separator className="h-px my-1 bg-border" />
               <DropdownMenu.Item
-                className="flex cursor-default select-none items-center rounded-sm px-3 py-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground whitespace-nowrap"
+                className="flex cursor-pointer select-none items-center rounded-sm px-3 py-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground whitespace-nowrap"
                 onSelect={handleExplain}
               >
                 <Text>释义</Text>
               </DropdownMenu.Item>
-              <DropdownMenu.Separator className="h-px my-1 bg-gray-200" />
+              <DropdownMenu.Separator className="h-px my-1 bg-border" />
               <DropdownMenu.Item
-                className="flex cursor-default select-none items-center rounded-sm px-3 py-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground whitespace-nowrap"
+                className="flex cursor-pointer select-none items-center rounded-sm px-3 py-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground whitespace-nowrap"
                 onSelect={handleAnnotate}
               >
                 <Text>注释</Text>
@@ -436,16 +436,16 @@ const BookDetailPage: React.FC = () => {
           {menuLevel === 'content' && (
             <>
               <DropdownMenu.Item
-                className="flex items-center cursor-default select-none rounded-sm px-3 py-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground whitespace-nowrap"
+                className="flex items-center cursor-pointer select-none rounded-sm px-3 py-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground whitespace-nowrap"
                 onSelect={() => {
                   setMenuLevel('main');
                   setSelectedItem(null);
                   setContentData(null);
                 }}
               >
-               <ArrowLeft className="w-5 h-5 mr-3" aria-hidden="true" /><Text>返回</Text>
+                <ArrowLeft className="w-5 h-5 mr-3" aria-hidden="true" /><Text>返回</Text>
               </DropdownMenu.Item>
-              <DropdownMenu.Separator className="h-px my-1 bg-gray-200" />
+              <DropdownMenu.Separator className="h-px my-1 bg-border" />
               <div className="flex flex-col items-start overflow-auto">
                 {loading && (
                   <div className="LoadingContent">
