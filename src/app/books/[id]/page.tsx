@@ -24,7 +24,7 @@ const BookDetailPage: React.FC = () => {
   const [selectedText, setSelectedText] = useState<string>('');
   const [contextMenuPosition, setContextMenuPosition] = useState<{ x: number, y: number } | null>(null);
   const contextMenuRef = useRef<HTMLDivElement>(null);
-  const { selectedFont, setSelectedFont } = useContext(FontContext);
+  const { selectedFont, fontSize, selectedWidth } = useContext(FontContext);
  
   const [menuLevel, setMenuLevel] = useState('main');
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
@@ -291,10 +291,14 @@ const BookDetailPage: React.FC = () => {
         }
 
         const data = await response.json();
-        setContentData(data.openai_response?.choices?.[0]?.message?.content);
-        console.log('Content data:', data);
+        if(data.openai_response?.error?.message){
+          setContentData("大语言模型接口出现了一个问题。请联系管理员");
+        }else{
+          setContentData(data.openai_response?.choices?.[0]?.message?.content);
+        }
       } catch (error: any) {
         setError(error.message);
+        console.error('Error fetching data:', error);
       } finally {
         setLoading(false);
       }
@@ -339,24 +343,25 @@ const BookDetailPage: React.FC = () => {
   return (
     <div>  {/* Replaced fragment with a div */}
       <Header />
-      <div
+      <div  
         id="recogito-container"
         ref={recogitoContainerRef}
-        className="flex flex-col items-center min-h-screen p-8 pb-10 gap-10 sm:p-10"
+            className={`flex flex-col items-center justify-center min-h-screen p-8 pb-10 gap-10 sm:p-10`}
+        style={{ fontFamily }}
         onMouseUp={handleTextSelection}
         onContextMenu={handleContextMenu}
       >
         <h1 className="text-3xl font-bold"><Text>{book.meta.title}</Text></h1>
         <h2 className="text-xl"><Text>{book.meta.Arthur}</Text></h2>
-        <div className="w-full max-w-4xl" style={{ fontFamily }}>
+        <div className={`${fontSize} ${selectedWidth}`} style={{ fontFamily }}>
           {book.juans.map((juan: any, juanIndex: number) => (
             <div key={juan.id || `juan-${juanIndex}`} className="mb-8">
-              <h3 className="text-2xl font-semibold"><Text>{juan.name}</Text></h3>
+              <h3 className="font-semibold"><Text>{juan.name}</Text></h3>
               {juan.chapters.map((chapter: any, chapterIndex: number) => (
                 <div key={chapter.id || `chapter-${juanIndex}-${chapterIndex}`} className="mt-4">
-                  <h4 className="text-xl font-medium"><Text>{chapter.name}</Text></h4>
+                  <h4 className="font-medium"><Text>{chapter.name}</Text></h4>
                   {chapter.paragraphs.map((paragraph: string, paragraphIndex: number) => (
-                    <p key={`paragraph-${juanIndex}-${chapterIndex}-${paragraphIndex}`} className="text-lg mt-2">
+                    <p key={`paragraph-${juanIndex}-${chapterIndex}-${paragraphIndex}`} className="mt-5 mb-5 leading-normal">
                       {paragraph.split('”').map((part, index, array) => (
                         <React.Fragment key={index}>
                           <Text>{part}</Text>

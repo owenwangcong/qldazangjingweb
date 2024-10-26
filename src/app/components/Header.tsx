@@ -2,14 +2,15 @@
 
 import React, { useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { Settings, ChevronDown, ChevronUp, Heart, Book, Download, Home, Search, Sun } from 'lucide-react';
+import { Settings, ChevronDown, ChevronUp, Heart, Book, Download, Home, Search, Sun, Maximize } from 'lucide-react';
 import Link from "next/link";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose } from "@/components/ui/dialog";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Button } from '@/components/ui/button';
-import { DialogClose } from '@/components/ui/dialog';
+import * as Slider from '@radix-ui/react-slider';
+
 import Text from './Text';
 import { useLanguage } from '../context/LanguageContext';
 import { useTheme, Theme } from '../context/ThemeContext';
@@ -18,7 +19,7 @@ import { useFont, FontContext } from '../context/FontContext';
 const Header: React.FC = () => {
   const pathname = usePathname();
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
-  const { selectedFont, setSelectedFont} = useFont();
+  const { selectedFont, setSelectedFont, fontSize, setFontSize, selectedWidth, setSelectedWidth } = useFont();
   const { isSimplified, toggleLanguage } = useLanguage();
   const { theme, setTheme } = useTheme();
 
@@ -36,9 +37,32 @@ const Header: React.FC = () => {
     setTheme(newTheme);
   };
 
+  // Helper functions to map between font size classes and slider values
+  const fontSizeOptions = ['text-base', 'text-lg', 'text-xl', 'text-2xl', 'text-3xl', 'text-4xl', "text-5xl"];
+
+  const fontSizeToNumber = (fontSizeClass: string): number => {
+    return fontSizeOptions.indexOf(fontSizeClass);
+  };
+
+  const numberToFontSize = (value: number): string => {
+    return fontSizeOptions[value] || 'text-base';
+  };
+
+  // Define width options
+  const widthOptions = ['max-w-2xl', 'max-w-3xl', 'max-w-4xl', 'max-w-5xl', 'max-w-6xl', 'max-w-7xl'];
+  
+  const widthToNumber = (widthClass: string): number => {
+    return widthOptions.indexOf(widthClass);
+  };
+
+  const numberToWidth = (value: number): string => {
+    return widthOptions[value] || 'max-w-4xl';
+  };
+
   return (
     <div className="bg-background text-foreground">
-      <div className="fixed top-2 right-2 space-x-4 z-50">
+        <div className="fixed top-2 right-2 space-y-4 z-50 flex flex-col">
+
         <button
           onClick={toggleHeaderVisibility}
           className="p-2 bg-card rounded-full shadow-md focus:outline-none hover:bg-primary-hover hover:text-primary-foreground-hover"
@@ -50,111 +74,166 @@ const Header: React.FC = () => {
           }
         </button>
 
-        <DropdownMenu.Root modal={false}>
-          <DropdownMenu.Trigger asChild>
-            <button
-              className="p-2 bg-card rounded-full shadow-md focus:outline-none hover:bg-primary-hover hover:text-primary-foreground-hover"
-              aria-label="Select Theme"
-            >
-              <div className="w-5 h-5">色</div>
-            </button>
-          </DropdownMenu.Trigger>
-                  <DropdownMenu.Content className="bg-popover p-4 rounded-md shadow-lg">
-                    {[
-                      { value: 'lianchichanyun', label: '莲池禅韵' },
-                      { value: 'zhulinyoujing', label: '竹林幽径' },
-                      { value: 'yueyingqinghui', label: '月影清辉' },
-                      { value: 'sangaijingtu', label: '伞盖净土' },
-                      { value: 'guchayese', label: '古刹夜色' },
-                      { value: 'fagufanyin', label: '法鼓梵音' },
-                    ].map((theme, index) => (
-                      <React.Fragment key={theme.value}>
-                        <DropdownMenu.Item
-                          onSelect={() => handleThemeChange(theme.value as Theme)}
-                              // Start of Selection
+        {isHeaderVisible && (
+          <>
+            <DropdownMenu.Root modal={false}>
+              <DropdownMenu.Trigger asChild>
+                <button
+                  className="p-2 bg-card rounded-full shadow-md focus:outline-none hover:bg-primary-hover hover:text-primary-foreground-hover"
+                  aria-label="Select Theme"
+                >
+                  <div className="w-5 h-5">色</div>
+                </button>
+              </DropdownMenu.Trigger>
+                      <DropdownMenu.Content className="bg-popover p-4 rounded-md shadow-lg">
+                        {[
+                          { value: 'lianchichanyun', label: '莲池禅韵' },
+                          { value: 'zhulinyoujing', label: '竹林幽径' },
+                          { value: 'yueyingqinghui', label: '月影清辉' },
+                          { value: 'sangaijingtu', label: '伞盖净土' },
+                          { value: 'guchayese', label: '古刹夜色' },
+                          { value: 'fagufanyin', label: '法鼓梵音' },
+                        ].map((theme, index) => (
+                          <React.Fragment key={theme.value}>
+                            <DropdownMenu.Item
+                              onSelect={() => handleThemeChange(theme.value as Theme)}
                               className="flex items-center px-4 py-2 cursor-pointer text-lg hover:bg-primary-hover hover:text-primary-foreground-hover hover:border-none"
-                        >
-                          <Text>{theme.label}</Text>
-                        </DropdownMenu.Item>
-                        {index < 5 && <DropdownMenu.Separator className="my-2 h-px bg-border" />}
-                      </React.Fragment>
-                    ))}
-                  </DropdownMenu.Content>
-        </DropdownMenu.Root>
+                            >
+                              <Text>{theme.label}</Text>
+                            </DropdownMenu.Item>
+                            {index < 5 && <DropdownMenu.Separator className="my-2 h-px bg-border" />}
+                          </React.Fragment>
+                        ))}
+                      </DropdownMenu.Content>
+            </DropdownMenu.Root>
 
-        <button
-          onClick={handleToggleLanguage}
-          className="p-2 bg-card rounded-full shadow-md focus:outline-none hover:bg-primary-hover hover:text-primary-foreground-hover"
-          aria-label={isSimplified ? "Switch to Traditional Chinese" : "Switch to Simplified Chinese"}
-        >
-          {isSimplified ? (
-            <div className="w-5 h-5">繁</div>
-          ) : (
-            <div className="w-5 h-5">简</div>
-          )}
-        </button>
-        
-        <Dialog modal={false}>
-          <DialogTrigger asChild>
             <button
+              onClick={handleToggleLanguage}
               className="p-2 bg-card rounded-full shadow-md focus:outline-none hover:bg-primary-hover hover:text-primary-foreground-hover"
-              aria-label="Select Font"
+              aria-label={isSimplified ? "Switch to Traditional Chinese" : "Switch to Simplified Chinese"}
             >
-              <div className="w-5 h-5">字</div>
+              {isSimplified ? (
+                <div className="w-5 h-5">繁</div>
+              ) : (
+                <div className="w-5 h-5">简</div>
+              )}
             </button>
-          </DialogTrigger>
-          <DialogContent className="p-6 bg-card">
-            <DialogHeader>
-              <DialogTitle><Text>选择字体</Text></DialogTitle>
-              <DialogDescription>
-                <Text>请选择一种字体</Text>
-              </DialogDescription>
-            </DialogHeader>
-            <RadioGroup value={selectedFont} onValueChange={setSelectedFont} className="mt-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="--font-aakai" id="aakai-font" />
-                  <Label className="text-2xl" style={{ fontFamily: `var(--font-aakai)` }} htmlFor="aakai-font">Aa楷体</Label>
+            
+            <Dialog modal={false}>
+              <DialogTrigger asChild>
+                <button
+                  className="p-2 bg-card rounded-full shadow-md focus:outline-none hover:bg-primary-hover hover:text-primary-foreground-hover"
+                  aria-label="Select Font and Width"
+                >
+                  <div className="w-5 h-5 flex items-center justify-center">
+                  <div className="w-5 h-5">字</div>
+                  </div>
+                </button>
+              </DialogTrigger>
+              <DialogContent className="p-6 bg-card max-w-md md:max-w-lg lg:max-w-xl mx-auto max-h-[80vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle><Text>选择字体和宽度</Text></DialogTitle>
+                  <DialogDescription>
+                    <Text>请选择一种字体、字体大小和内容宽度</Text>
+                  </DialogDescription>
+                </DialogHeader>
+                <RadioGroup value={selectedFont} onValueChange={setSelectedFont} className="mt-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="--font-aakai" id="aakai-font" />
+                      <Label className="text-2xl" style={{ fontFamily: `var(--font-aakai)` }} htmlFor="aakai-font">Aa楷体</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="--font-aakaiSong" id="aaKaiSongFont" />
+                      <Label className="text-2xl" style={{ fontFamily: `var(--font-aakaiSong)` }} htmlFor="aaKaiSongFont">Aa楷宋</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="--font-hyfs" id="hyfangsongFont" />
+                      <Label className="text-2xl" style={{ fontFamily: `var(--font-hyfs)` }} htmlFor="hyfangsongFont">汉仪仿宋</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="--font-lxgw" id="lxgwFont" />
+                      <Label className="text-2xl" style={{ fontFamily: `var(--font-lxgw)` }} htmlFor="lxgwFont">落霞孤鹜</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="--font-qnlb" id="qingniaolibianFont" />
+                      <Label className="text-2xl" style={{ fontFamily: `var(--font-qnlb)` }} htmlFor="qingniaolibianFont">青鸟隶变</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="--font-rzykt" id="ruiziyunFont" />
+                      <Label className="text-2xl" style={{ fontFamily: `var(--font-rzykt)` }} htmlFor="ruiziyunFont">锐字云楷体</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="--font-twzk" id="taiwanzhengkaiFont" />
+                      <Label className="text-2xl" style={{ fontFamily: `var(--font-twzk)` }} htmlFor="taiwanzhengkaiFont">台湾正楷体</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="--font-wqwh" id="wenquanweiheiFont" />
+                      <Label className="text-2xl" style={{ fontFamily: `var(--font-wqwh)` }} htmlFor="wenquanweiheiFont">文泉微黑</Label>
+                    </div>
+                  </div>
+                </RadioGroup>
+                
+                <div className="mt-6">
+                  <label className="text-sm font-medium mb-2">
+                    <Text>字体大小</Text>
+                  </label>
+                  <Slider.Root
+                    className="relative flex items-center select-none touch-none w-full h-5"
+                    value={[fontSizeToNumber(fontSize)]}
+                    min={0}
+                    max={fontSizeOptions.length - 1}
+                    step={1}
+                    onValueChange={(value) => setFontSize(numberToFontSize(value[0]))}
+                    aria-label="Font Size Slider"
+                  >
+                    <Slider.Track className="bg-secondary relative flex-1 h-1 rounded-full">
+                      <Slider.Range className="absolute bg-primary h-full rounded-full" />
+                    </Slider.Track>
+                    <Slider.Thumb className="block w-4 h-4 bg-primary rounded-full focus:outline-none" />
+                  </Slider.Root>
+                  <div className="flex justify-between text-sm mt-2">
+                    <span className="text-sm"><Text>小</Text></span>
+                    <span className="text-xl"><Text>大</Text></span>
+                  </div>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="--font-aakaiSong" id="aaKaiSongFont" />
-                  <Label className="text-2xl" style={{ fontFamily: `var(--font-aakaiSong)` }} htmlFor="aaKaiSongFont">Aa楷宋</Label>
+
+                <div className="mt-6">
+                  <label className="text-sm font-medium mb-2">
+                    <Text>内容宽度</Text>
+                  </label>
+                  <Slider.Root
+                    className="relative flex items-center select-none touch-none w-full h-5"
+                    value={[widthToNumber(selectedWidth)]}
+                    min={0}
+                    max={widthOptions.length - 1}
+                    step={1}
+                    onValueChange={(value) => setSelectedWidth(numberToWidth(value[0]))}
+                    aria-label="Content Width Slider"
+                  >
+                    <Slider.Track className="bg-secondary relative flex-1 h-1 rounded-full">
+                      <Slider.Range className="absolute bg-primary h-full rounded-full" />
+                    </Slider.Track>
+                    <Slider.Thumb className="block w-4 h-4 bg-primary rounded-full focus:outline-none" />
+                  </Slider.Root>
+                  <div className="flex justify-between text-sm mt-2">
+                    <span className="text-base"><Text>窄</Text></span>
+                    <span className="text-base"><Text>宽</Text></span>
+                  </div>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="--font-hyfs" id="hyfangsongFont" />
-                  <Label className="text-2xl" style={{ fontFamily: `var(--font-hyfs)` }} htmlFor="hyfangsongFont">汉仪仿宋</Label>
+
+                <div className="mt-6 flex justify-end">
+                  <DialogClose asChild>
+                    <Button className="hover:bg-primary-hover hover:text-primary-foreground-hover">
+                      <Text>确定</Text>
+                    </Button>
+                  </DialogClose>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="--font-lxgw" id="lxgwFont" />
-                  <Label className="text-2xl" style={{ fontFamily: `var(--font-lxgw)` }} htmlFor="lxgwFont">落霞孤鹜</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="--font-qnlb" id="qingniaolibianFont" />
-                  <Label className="text-2xl" style={{ fontFamily: `var(--font-qnlb)` }} htmlFor="qingniaolibianFont">青鸟隶变</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="--font-rzykt" id="ruiziyunFont" />
-                  <Label className="text-2xl" style={{ fontFamily: `var(--font-rzykt)` }} htmlFor="ruiziyunFont">锐字云楷体</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="--font-twzk" id="taiwanzhengkaiFont" />
-                  <Label className="text-2xl" style={{ fontFamily: `var(--font-twzk)` }} htmlFor="taiwanzhengkaiFont">台湾正楷体</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="--font-wqwh" id="wenquanweiheiFont" />
-                  <Label className="text-2xl" style={{ fontFamily: `var(--font-wqwh)` }} htmlFor="wenquanweiheiFont">文泉微黑</Label>
-                </div>
-              </div>
-            </RadioGroup>
-            <div className="mt-4 flex justify-end">
-              <DialogClose asChild>
-                <Button className="hover:bg-primary-hover hover:text-primary-foreground-hover">
-                  <Text>确定</Text>
-                </Button>
-              </DialogClose>
-            </div>
-          </DialogContent>
-        </Dialog>
+              </DialogContent>
+            </Dialog>
+          </>
+        )}
+
       </div>  
 
       <div className={`transition-all duration-500 ${isHeaderVisible ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}`}>
