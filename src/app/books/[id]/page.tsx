@@ -9,6 +9,14 @@ import Text from '@/app/components/Text';
 import { ArrowLeft } from 'lucide-react';
 import classNames from 'classnames'; // Import classNames for conditional classes
 import { Recogito } from '@/app/scripts/recogito.min.js';
+import ReactMarkdown from 'react-markdown';
+
+// Define the MenuItem enum
+export enum MenuItem {
+  LookupDictionary = "lookupdictionary",
+  ToModernChinese = "tomodernchinese",
+  Explain = "explain"
+}
 
 const BookDetailPage: React.FC = () => {
   const { id } = useParams();
@@ -19,7 +27,7 @@ const BookDetailPage: React.FC = () => {
   const { selectedFont, setSelectedFont } = useContext(FontContext);
  
   const [menuLevel, setMenuLevel] = useState('main');
-  const [selectedItem, setSelectedItem] = useState<string | null>(null);
+  const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
   const [contentData, setContentData] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -187,7 +195,7 @@ const BookDetailPage: React.FC = () => {
   };
 
   const handleDictionary = () => {
-    setSelectedItem("lookup dictionary")
+    setSelectedItem(MenuItem.LookupDictionary)
     if (selectedText) {
       console.log('Look up dictionary for:', selectedText);
       // Implement dictionary lookup logic here
@@ -204,7 +212,7 @@ const BookDetailPage: React.FC = () => {
 
   // Define the handleBaiHuaWen function
   const handleToModernChinese = () => {
-    setSelectedItem("to modern chinese")
+    setSelectedItem(MenuItem.ToModernChinese)
     if (selectedText) {
       console.log('Convert to Bai Hua Wen:', selectedText);
       // Implement Bai Hua Wen conversion logic here
@@ -213,7 +221,7 @@ const BookDetailPage: React.FC = () => {
 
   // Define the handleShiYi function
   const handleExplain = () => {
-    setSelectedItem("explain")
+    setSelectedItem(MenuItem.Explain)
     if (selectedText) {
       console.log('Interpretation for:', selectedText);
       // Implement interpretation logic here
@@ -261,15 +269,20 @@ const BookDetailPage: React.FC = () => {
     setError(null);
 
     const fetchData = async () => {
+
+      const payload = {
+        text: selectedText,
+        action: selectedItem.toString()
+      };
+      console.log('payload to send:', JSON.stringify(payload));
+
       try {
-        const response = await fetch('/api/translate', {
+        const response = await fetch('/api/tochatgpt/', {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json',
+            'Content-Type': 'application/json'
           },
-          body: JSON.stringify({
-            prompt: `把这段文字翻译成白话文：${selectedText}`,
-          }),
+          body: JSON.stringify(payload),
         });
 
         if (!response.ok) {
@@ -376,7 +389,7 @@ const BookDetailPage: React.FC = () => {
             className={classNames(
               "bg-popover shadow-lg rounded-md p-2",
               {
-                'w-64 h-64 overflow-auto font-sans': menuLevel === 'content'
+                'w-80 h-64 overflow-auto font-sans': menuLevel === 'content'
               }
             )}
           >
@@ -436,7 +449,7 @@ const BookDetailPage: React.FC = () => {
           {menuLevel === 'content' && (
             <>
               <DropdownMenu.Item
-                className="flex items-center cursor-pointer select-none rounded-sm px-3 py-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground whitespace-nowrap"
+                className="flex items-center cursor-pointer select-none rounded-sm px-3 py-1 text-sm outline-none focus:bg-accent focus:text-accent-foreground whitespace-nowrap"
                 onSelect={() => {
                   setMenuLevel('main');
                   setSelectedItem(null);
@@ -459,7 +472,11 @@ const BookDetailPage: React.FC = () => {
                 )}
                 {contentData && (
                   <div className="ContentDisplay">
-                    <p>{JSON.stringify(contentData)}</p>
+                    {contentData ? (
+                      <ReactMarkdown className="prose" children={contentData} />
+                    ) : (
+                      <p>没有内容</p>
+                    )}
                   </div>
                 )}
               </div>
