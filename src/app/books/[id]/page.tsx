@@ -8,14 +8,21 @@ import { FontContext } from '@/app/context/FontContext';
 import Text from '@/app/components/Text';
 import { ArrowLeft } from 'lucide-react';
 import classNames from 'classnames'; // Import classNames for conditional classes
-import { Recogito } from '@/app/scripts/recogito.min.js';
+  import { Annotation, Recogito } from '@/app/scripts/recogito.min.js';
 import ReactMarkdown from 'react-markdown';
+import { AnnotationProvider, useAnnotations } from '@/app/context/AnnotationContext';
 
 // Define the MenuItem enum
-export enum MenuItem {
+enum MenuItem {
   LookupDictionary = "lookupdictionary",
   ToModernChinese = "tomodernchinese",
   Explain = "explain"
+}
+
+// Define a new type that extends the existing Annotation type
+interface ExtendedAnnotation extends Annotation {
+  text: string; // Add the missing 'text' property
+  bookId: string; // Add the 'bookId' property
 }
 
 const BookDetailPage: React.FC = () => {
@@ -35,6 +42,8 @@ const BookDetailPage: React.FC = () => {
   const [fontFamily, setFontFamily] = useState<string>('inherit');
 
   const recogitoContainerRef = useRef<HTMLDivElement>(null); // <-- Added useRef for recogito-container
+
+  const { annotations, addAnnotation, removeAnnotation } = useAnnotations();
 
   // Initialize Recogito when the component mounts or id/book changes
   useEffect(() => {
@@ -59,6 +68,28 @@ const BookDetailPage: React.FC = () => {
       });
 
       console.log('Recogito instance created');
+
+      // Load existing annotations
+      annotations.forEach(annotation => {
+        if (annotation.bookId === id) {
+          recogitoInstance?.addAnnotation(annotation);
+        }
+      });
+
+      // Type assertion to bypass TypeScript error
+      (recogitoInstance as any).on('createAnnotation', (annotation: ExtendedAnnotation) => {
+        console.log('Adding annotation:', annotation);
+        const bookId = Array.isArray(id) ? id[0] : id; // Ensure 'bookId' is a string
+        addAnnotation(annotation, bookId);
+      });
+
+      // Type assertion to bypass TypeScript error
+      (recogitoInstance as any).on('deleteAnnotation', (annotation: ExtendedAnnotation) => {
+        console.log('Removing annotation:', annotation);
+        const bookId = Array.isArray(id) ? id[0] : id; // Ensure 'bookId' is a string
+        removeAnnotation(annotation.id, bookId); // Pass annotation.id directly
+      });
+
     };
 
     const onDocumentReady = () => {
@@ -88,7 +119,7 @@ const BookDetailPage: React.FC = () => {
         console.log('Recogito instance is null');
       }
     };
-  }, [id, book]); // Add 'book' to the dependency array
+  }, [id, book]); // Updated dependencies
   
 
   // Fetch the book data based on the id
@@ -495,4 +526,8 @@ const BookDetailPage: React.FC = () => {
   );
 };
 
-export default BookDetailPage;
+export default () => (
+  <AnnotationProvider>
+    <BookDetailPage />
+  </AnnotationProvider>
+);
