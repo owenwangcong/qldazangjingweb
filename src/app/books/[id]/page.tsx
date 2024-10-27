@@ -8,7 +8,7 @@ import { FontContext } from '@/app/context/FontContext';
 import Text from '@/app/components/Text';
 import { ArrowLeft } from 'lucide-react';
 import classNames from 'classnames'; // Import classNames for conditional classes
-  import { Annotation, Recogito } from '@/app/scripts/recogito.min.js';
+import { Annotation, Recogito } from '@/app/scripts/recogito.min.js';
 import ReactMarkdown from 'react-markdown';
 import { AnnotationProvider, useAnnotations } from '@/app/context/AnnotationContext';
 
@@ -37,13 +37,18 @@ const BookDetailPage: React.FC = () => {
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
   const [contentData, setContentData] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
   const [fontFamily, setFontFamily] = useState<string>('inherit');
 
-  const recogitoContainerRef = useRef<HTMLDivElement>(null); // <-- Added useRef for recogito-container
+  const recogitoContainerRef = useRef<HTMLDivElement>(null); // Existing ref
 
   const { annotations, addAnnotation, removeAnnotation } = useAnnotations();
+
+  // Ref to store long-press timer
+  const longPressTimerRef = useRef<number | null>(null);
+
+  const LONG_PRESS_DURATION = 500; // Duration in ms for long press
 
   // Initialize Recogito when the component mounts or id/book changes
   useEffect(() => {
@@ -167,30 +172,56 @@ const BookDetailPage: React.FC = () => {
     }
   };
 
-  const handleContextMenu = (event: React.MouseEvent) => {
-    const selection = window.getSelection();
-    if (selection && selection.toString().trim()) {
-      event.preventDefault();
-      console.log('Context menu triggered at:', event.clientX, event.clientY); // Debug: Log context menu position
+  const handleContextMenu = (event: React.MouseEvent | React.TouchEvent) => {
+    if (event.nativeEvent instanceof MouseEvent) {
+      // Existing mouse event handling
+      const selection = window.getSelection();
+      if (selection && selection.toString().trim()) {
+        event.preventDefault();
+        const clientX = event.nativeEvent.clientX;
+        const clientY = event.nativeEvent.clientY;
+        const MENU_HEIGHT = 320;
 
-      const clientX = event.clientX;
-      const clientY = event.clientY;
-      const MENU_HEIGHT = 320; // Estimated height of the dropdown menu in pixels
+        const dropdownBottom = clientY + MENU_HEIGHT;
+        const pageHeight = window.innerHeight;
 
-      const dropdownBottom = clientY + MENU_HEIGHT;
-      const pageHeight = window.innerHeight;
+        let adjustedY = clientY;
+        if (dropdownBottom > pageHeight) {
+          adjustedY = clientY - MENU_HEIGHT;
+        }
 
-      let adjustedY = clientY;
-      if (dropdownBottom > pageHeight) {
-        adjustedY = clientY - MENU_HEIGHT;
+        setContextMenuPosition({
+          x: clientX,
+          y: adjustedY,
+        });
+      } else {
+        setContextMenuPosition(null);
       }
+    } else if (event.nativeEvent instanceof TouchEvent) {
+      // New touch event handling
+      const touch = event.nativeEvent.touches[0];
+      const selection = window.getSelection();
+      if (selection && selection.toString().trim()) {
+        event.preventDefault();
+        const clientX = touch.clientX;
+        const clientY = touch.clientY;
+        const MENU_HEIGHT = 320;
 
-      setContextMenuPosition({
-        x: clientX,
-        y: adjustedY,
-      });
-    } else {
-      setContextMenuPosition(null);
+        const dropdownBottom = clientY + MENU_HEIGHT;
+        const pageHeight = window.innerHeight;
+
+        let adjustedY = clientY;
+        if (dropdownBottom > pageHeight) {
+          adjustedY = clientY - MENU_HEIGHT;
+        }
+
+        setContextMenuPosition({
+          x: clientX,
+          y: adjustedY,
+        });
+      } else {
+        setContextMenuPosition(null);
+      }
     }
   };
 
@@ -238,7 +269,7 @@ const BookDetailPage: React.FC = () => {
     handleMenuClose();
   };
 
-  // Define the handleBaiHuaWen function
+  // Define the handleToModernChinese function
   const handleToModernChinese = () => {
     setSelectedItem(MenuItem.ToModernChinese)
     if (selectedText) {
@@ -247,7 +278,7 @@ const BookDetailPage: React.FC = () => {
     }
   };
 
-  // Define the handleShiYi function
+  // Define the handleExplain function
   const handleExplain = () => {
     setSelectedItem(MenuItem.Explain)
     if (selectedText) {
@@ -267,6 +298,24 @@ const BookDetailPage: React.FC = () => {
     handleMenuClose();
   };
 
+  // Long press handlers
+
+  const handleTouchStart = (event: React.TouchEvent) => {
+    const touch = event.touches[0];
+    longPressTimerRef.current = window.setTimeout(() => {
+      if (selectedText.trim()) {
+        setContextMenuPosition({ x: touch.clientX, y: touch.clientY });
+      }
+    }, LONG_PRESS_DURATION);
+  };
+
+  const handleTouchEnd = () => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  };
+
   // This useEffect hook fetches the book data when the component mounts or when the id changes.
   useEffect(() => {
     if (id) {
@@ -275,6 +324,13 @@ const BookDetailPage: React.FC = () => {
   }, [id]);
 
   useEffect(() => {
+
+    document.addEventListener('contextmenu', (e) => {
+      console.log('right click!');
+      e.preventDefault();//===added this===
+      return false;
+    });
+
     const handleSelectionChange = () => {
       const selection = window.getSelection();
       const selectedText = selection?.toString() || '';
@@ -336,7 +392,7 @@ const BookDetailPage: React.FC = () => {
         const data = await response.json();
         if(data.openai_response?.error?.message){
           setContentData("大语言模型接口出现了一个问题。请联系管理员");
-        }else{
+        } else {
           setContentData(data.openai_response?.choices?.[0]?.message?.content);
         }
       } catch (error: any) {
@@ -372,9 +428,18 @@ const BookDetailPage: React.FC = () => {
     }
   }, [selectedFont, id]);
 
+  // Cleanup for long press timer on unmount
+  useEffect(() => {
+    return () => {
+      if (longPressTimerRef.current) {
+        clearTimeout(longPressTimerRef.current);
+      }
+    };
+  }, []);
+
   if (!book) {
     return (
-      <div>  {/* Replaced fragment with a div */}
+      <div>
         <Header />
         <div className="flex justify-center items-center h-screen">
           <h1 className="text-3xl font-bold">{/* <Text>Book not found</Text> */}</h1>
@@ -384,14 +449,17 @@ const BookDetailPage: React.FC = () => {
   }
 
   return (
-    <div>  {/* Replaced fragment with a div */}
+    <div>
       <Header />
       <div  
         id="recogito-container"
         ref={recogitoContainerRef}
-            className={`flex flex-col items-center justify-center min-h-screen p-8 pb-10 gap-10 sm:p-10`}
+        className={`flex flex-col items-center justify-center min-h-screen p-8 pb-10 gap-10 sm:p-10`}
         style={{ fontFamily }}
         onMouseUp={handleTextSelection}
+        onTouchStart={handleTouchStart}      
+        onTouchEnd={handleTouchEnd}          
+        onTouchMove={handleTouchEnd}         
         onContextMenu={handleContextMenu}
       >
         <h1 className="text-3xl font-bold"><Text>{book.meta.title}</Text></h1>
