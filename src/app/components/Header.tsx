@@ -253,7 +253,7 @@ const Header: React.FC = () => {
                 <Search className="w-5 h-5 mr-3" aria-hidden="true" /> <Text>搜索</Text>
               </Link>
               <Link href="/dicts" className={`flex items-center px-4 py-2 rounded-md border border-border hover:bg-primary-hover hover:text-primary-foreground-hover`}>
-                <Book className="w-5 h-5 mr-3" aria-hidden="true" /> <Text>词典</Text>
+                <Book className="w-5 h-5 mr-3" aria-hidden="true" /> <Text>辞典</Text>
               </Link>
               <Link href="/favorites" className={`flex items-center px-4 py-2 rounded-md border border-border hover:bg-primary-hover hover:text-primary-foreground-hover`}>
                 <Heart className="w-5 h-5 mr-3" aria-hidden="true" /> <Text>收藏</Text>
