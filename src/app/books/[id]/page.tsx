@@ -9,6 +9,7 @@ import Text from '@/app/components/Text';
 import { ArrowLeft } from 'lucide-react';
 import classNames from 'classnames'; // Import classNames for conditional classes
 import { Annotation, Recogito } from '@/app/scripts/recogito.min.js';
+
 import ReactMarkdown from 'react-markdown';
 import { AnnotationProvider, useAnnotations } from '@/app/context/AnnotationContext';
 
@@ -52,6 +53,7 @@ const BookDetailPage: React.FC = () => {
 
   // Initialize Recogito when the component mounts or id/book changes
   useEffect(() => {
+
     // Only initialize Recogito when the book data is loaded
     if (!book) {
       console.log('Book data not loaded yet');
@@ -129,8 +131,12 @@ const BookDetailPage: React.FC = () => {
   // Fetch the book data based on the id
   const fetchBookData = async (id: string) => {
     try {
-      const response = await import(`@/app/data/books/${id}.json`);
-      return response.default;
+      const response = await fetch(`/data/books/${id}.json`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch book data: ${response.statusText}`);
+      }
+      const bookData = await response.json();
+      return bookData;
     } catch (error) {
       console.error("Error fetching book data:", error);
       return null;
@@ -152,9 +158,14 @@ const BookDetailPage: React.FC = () => {
       };
 
       const selectedFontName = fontMapping[selectedFontFamilyName] || 'lxgw';
-      const response = await import(`@/app/fonts/book_fonts/${selectedFontName}_${bookId}.woff`);
-      console.log('Font URL:', response.default);
-      return response.default;
+      const response = await fetch(`/data/book_fonts/${selectedFontName}_${bookId}.woff`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch font: ${response.statusText}`);
+      }
+      const fontBlob = await response.blob();
+      const fontUrl = URL.createObjectURL(fontBlob);
+      console.log('Font URL:', fontUrl);
+      return fontUrl;
     } catch (error) {
       console.error("Error fetching font data:", error);
       return null;

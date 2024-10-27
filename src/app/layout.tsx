@@ -77,12 +77,13 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <link rel="stylesheet" href="/styles/recogito.min.css" />
+        <link rel="preload" href="/scripts/opencc.min.js" as="script" />
       </head>
       <body className={`antialiased ${aakai.variable} ${aakaiSong.variable} ${lxgw.variable} ${hyfs.variable} ${qnlb.variable} ${rzykt.variable} ${twzk.variable} ${wqwh.variable}`}>
-        <Script src="https://cdn.jsdelivr.net/npm/opencc-js@1.0.5/dist/umd/full.min.js" strategy="beforeInteractive" />
+        <Script src="/scripts/opencc.min.js" strategy="beforeInteractive" />
         <FontProvider>
           <LanguageProvider>
-            <ThemeProvider> {/* Wrap with ThemeProvider */}
+            <ThemeProvider>
               <FontWrapper>
                 {children}
               </FontWrapper>

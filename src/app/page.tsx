@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Header from './components/Header';
-import mlsData from './data/mls.json';
+import mlsData from '../../public/data/mls.json';
 import Link from 'next/link';
 import { FontContext } from './context/FontContext';
 import Text from '@/app/components/Text';

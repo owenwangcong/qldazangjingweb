@@ -3,8 +3,9 @@
 import React from 'react';
 import { useParams } from 'next/navigation';
 import Header from '@/app/components/Header';
-import mlsData from '@/app/data/mls.json';
+import mlsData from '../../../../public/data/mls.json';
 import Text from '@/app/components/Text';
+import Link from 'next/link';
 
 // Define a type for the structure of mlsData
 type JuanData = {
@@ -46,9 +47,8 @@ const JuanDetailPage: React.FC = () => {
         <div className="w-full max-w-4xl">
           <ul className="space-y-4">
             {juan.bus.map((busItem) => (
-                  // Start of Selection
                   <li key={busItem.id} className="p-4 border border-border rounded-lg shadow-md hover:bg-primary-hover transition">
-                    <a href={`/books/${busItem.id}`} className="flex justify-between items-center">
+                    <Link href={`/books/${busItem.id}`} className="flex justify-between items-center">
                       <span className="text-xl font-medium text-foreground flex-grow" style={{ flexBasis: '55%' }}>
                         <Text>{busItem.title}</Text>
                       </span>
@@ -58,7 +58,7 @@ const JuanDetailPage: React.FC = () => {
                       <span className="text-md text-muted-foreground flex-none text-center" style={{ flexBasis: '25%' }}>
                         <Text>{busItem.author}</Text>
                       </span>
-                    </a>
+                    </Link>
                   </li>
             ))}
           </ul>
