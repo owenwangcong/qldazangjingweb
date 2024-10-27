@@ -1,7 +1,9 @@
 // next.config.js
 const path = require('path');
 
-module.exports = {
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  output: 'export',
   webpack: (config) => {
     config.module.rules.push({
       test: /\.(woff|woff2|eot|ttf|otf)$/,
@@ -18,3 +20,5 @@ module.exports = {
     return config;
   },
 };
+
+module.exports = nextConfig;

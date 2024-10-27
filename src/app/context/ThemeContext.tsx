@@ -34,7 +34,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
 
   // Load the persisted theme from localStorage on mount
   useEffect(() => {
-    const savedTheme = localStorage.getItem('theme');
+    const savedTheme = typeof window !== 'undefined' ? localStorage.getItem('theme') : null;
     if (savedTheme && ['lianchichanyun', 'zhulinyoujing', 'yueyingqinghui', 'sangaijingtu', 'guchayese', 'fagufanyin'].includes(savedTheme)) {
       setTheme(savedTheme as Theme);
       document.body.classList.add(savedTheme);
@@ -50,7 +50,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     document.body.classList.add(newTheme);
 
     // Persist the theme to localStorage
-    localStorage.setItem('theme', newTheme);
+    typeof window !== 'undefined' ? localStorage.setItem('theme', newTheme) : null;
   };
 
   return (
