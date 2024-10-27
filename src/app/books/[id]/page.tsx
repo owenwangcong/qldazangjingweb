@@ -121,7 +121,6 @@ const BookDetailPage: React.FC = () => {
     };
   }, [id, book]); // Updated dependencies
   
-
   // Fetch the book data based on the id
   const fetchBookData = async (id: string) => {
     try {
@@ -162,10 +161,8 @@ const BookDetailPage: React.FC = () => {
     if (selection && selection.toString().trim()) {
       const selected = selection.toString();
       console.log('Selected text:', selected); // Debug: Log selected text
-      setSelectedText(selected);
     } else {
       console.log('No text selected'); // Debug: Log when no text is selected
-      setSelectedText("");
       setContextMenuPosition(null);
     }
   };
@@ -276,6 +273,21 @@ const BookDetailPage: React.FC = () => {
       fetchBookData(id as string).then(setBook);
     }
   }, [id]);
+
+  useEffect(() => {
+    const handleSelectionChange = () => {
+      const selection = window.getSelection();
+      const selectedText = selection?.toString() || '';
+      setSelectedText(selectedText);
+      console.log('Selection Changed! - ', selectedText);
+    };
+
+    document.addEventListener('selectionchange', handleSelectionChange);
+
+    return () => {
+      document.removeEventListener('selectionchange', handleSelectionChange);
+    };
+  }, []);
 
   // This useEffect hook adds an event listener to handle clicks outside the context menu and closes the menu when a click outside is detected.
   useEffect(() => {
