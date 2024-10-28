@@ -20,21 +20,20 @@ const LanguageContext = createContext<LanguageContextProps>({
 export const useLanguage = () => useContext(LanguageContext);
 
 export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const storedLanguage = typeof window !== 'undefined' ? localStorage.getItem('isSimplified') : null;
-
-  const [isSimplified, setIsSimplified] = useState<boolean>(storedLanguage === 'true' || DEFAULT_LANGUAGE);
+  const [isSimplified, setIsSimplified] = useState<boolean>(DEFAULT_LANGUAGE);
 
   // Load the persisted language preference from localStorage on mount
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      setIsSimplified(storedLanguage === 'true');    
+      const storedLanguage = localStorage.getItem('isSimplified');
+      const storedLanguageToApply = storedLanguage === null ? DEFAULT_LANGUAGE : storedLanguage === 'true';
+      setIsSimplified(storedLanguageToApply);
     }
   }, []);
 
   // Effect to update localStorage whenever language changes
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      console.log('Setting language in localStorage:', isSimplified);
       localStorage.setItem('isSimplified', isSimplified.toString());
     }
   }, [isSimplified]);
@@ -45,12 +44,7 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
 
   // Update toggleLanguage to persist the new state to localStorage
   const toggleLanguage = () => {
-    console.log("toggleLanguage");
-    setIsSimplified((prev) => {
-      const newValue = !prev;
-      localStorage.setItem('isSimplified', newValue.toString());
-      return newValue;
-    });
+    setIsSimplified((prev) => !prev);
   };
 
   const convertText = (text: string): string => {
