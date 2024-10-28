@@ -2,6 +2,8 @@
 
 import React, { createContext, useState, useContext, useEffect } from 'react';
 
+const DEFAULT_THEME: Theme = 'sangaijingtu';
+
 // Define and export the Theme type
 export type Theme = 'lianchichanyun' | 'zhulinyoujing' | 'yueyingqinghui' | 'sangaijingtu' | 'guchayese' | 'fagufanyin';
 
@@ -30,17 +32,30 @@ interface ThemeProviderProps {
 
 // Create a provider component
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
-  const [theme, setTheme] = useState<Theme>('sangaijingtu'); // Default theme
+  const storedTheme = typeof window !== 'undefined' ? localStorage.getItem('theme') : null;
+  const validThemes: Theme[] = ['lianchichanyun', 'zhulinyoujing', 'yueyingqinghui', 'sangaijingtu', 'guchayese', 'fagufanyin'];
+  const initialTheme = validThemes.includes(storedTheme as Theme) ? (storedTheme as Theme) : DEFAULT_THEME;
+  const [theme, setTheme] = useState<Theme>(initialTheme); // Default theme
 
   // Load the persisted theme from localStorage on mount
   useEffect(() => {
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme && ['lianchichanyun', 'zhulinyoujing', 'yueyingqinghui', 'sangaijingtu', 'guchayese', 'fagufanyin'].includes(savedTheme)) {
-      setTheme(savedTheme as Theme);
-      document.body.classList.add(savedTheme);
+    if (typeof window !== 'undefined') {
+      const storedTheme = localStorage.getItem('theme');
+      if (storedTheme && validThemes.includes(storedTheme as Theme)) {
+        setTheme(storedTheme as Theme);
+        document.body.classList.add(storedTheme);
+      }
     }
   }, []);
 
+  // Effect to update localStorage whenever theme changes
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      console.log('Setting theme in localStorage:', theme);
+      localStorage.setItem('theme', theme);
+    }
+  }, [theme]);
+  
   const handleSetTheme = (newTheme: Theme) => {
     console.log(`Theme changed to: ${newTheme}`);
     setTheme(newTheme);

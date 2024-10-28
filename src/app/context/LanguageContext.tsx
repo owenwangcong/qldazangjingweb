@@ -3,6 +3,8 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
 import { Converter } from 'opencc-js';
 
+const DEFAULT_LANGUAGE = true;
+
 interface LanguageContextProps {
   isSimplified: boolean;
   toggleLanguage: () => void;
@@ -18,15 +20,27 @@ const LanguageContext = createContext<LanguageContextProps>({
 export const useLanguage = () => useContext(LanguageContext);
 
 export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [isSimplified, setIsSimplified] = useState(true);
+  const storedLanguage = typeof window !== 'undefined' ? localStorage.getItem('isSimplified') : null;
+
+  const [isSimplified, setIsSimplified] = useState<boolean>(storedLanguage === 'true' || DEFAULT_LANGUAGE);
 
   // Load the persisted language preference from localStorage on mount
   useEffect(() => {
-    const savedLanguage = localStorage.getItem('isSimplified');
-    if (savedLanguage !== null) {
-      setIsSimplified(savedLanguage === 'true');
+    if (typeof window !== 'undefined') {
+      const storedLanguage = localStorage.getItem('isSimplified');
+      if (storedLanguage !== null) {
+        setIsSimplified(storedLanguage === 'true');
+      }
     }
   }, []);
+
+  // Effect to update localStorage whenever language changes
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      console.log('Setting language in localStorage:', isSimplified);
+      localStorage.setItem('isSimplified', isSimplified.toString());
+    }
+  }, [isSimplified]);
 
   // Initialize converters
   const toTraditional = Converter({ from: 'cn', to: 'tw' });
