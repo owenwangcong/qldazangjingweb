@@ -42,31 +42,13 @@ export const FontProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   useEffect(() => {
     if (typeof window !== 'undefined') {
       // Load the font from localStorage
-      const storedFont = localStorage.getItem('selectedFont');
-      if (storedFont) {
-        console.log('Loaded font from localStorage:', storedFont);
-        setSelectedFont(storedFont);
-      } else {
-        console.log('No font found in localStorage, using default:', DEFAULT_FONT);
-      }
+      setSelectedFont(storedFont || DEFAULT_FONT);
 
       // Load the font size from localStorage
-      const storedFontSize = localStorage.getItem('fontSize');
-      if (storedFontSize) {
-        console.log('Loaded fontSize from localStorage:', storedFontSize);
-        setFontSize(storedFontSize);
-      } else {
-        console.log('No fontSize found in localStorage, using default:', DEFAULT_FONT_SIZE);
-      }
+      setFontSize(storedFontSize || DEFAULT_FONT_SIZE);
 
       // Load the width from localStorage
-      const storedWidth = localStorage.getItem('selectedWidth');
-      if (storedWidth) {
-        console.log('Loaded selectedWidth from localStorage:', storedWidth);
-        setSelectedWidth(storedWidth);
-      } else {
-        console.log('No selectedWidth found in localStorage, using default:', DEFAULT_WIDTH);
-      }
+      setSelectedWidth(storedWidth || DEFAULT_WIDTH);
     }
   }, []);
 

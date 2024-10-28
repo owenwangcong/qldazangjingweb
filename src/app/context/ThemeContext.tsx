@@ -40,11 +40,9 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   // Load the persisted theme from localStorage on mount
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const storedTheme = localStorage.getItem('theme');
-      if (storedTheme && validThemes.includes(storedTheme as Theme)) {
-        setTheme(storedTheme as Theme);
-        document.body.classList.add(storedTheme);
-      }
+      const themeToApply = storedTheme || DEFAULT_THEME;
+      setTheme(themeToApply as Theme);
+      document.body.classList.add(themeToApply);
     }
   }, []);
 

@@ -27,10 +27,7 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
   // Load the persisted language preference from localStorage on mount
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const storedLanguage = localStorage.getItem('isSimplified');
-      if (storedLanguage !== null) {
-        setIsSimplified(storedLanguage === 'true');
-      }
+      setIsSimplified(storedLanguage === 'true');    
     }
   }, []);
 
