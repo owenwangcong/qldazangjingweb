@@ -11,42 +11,42 @@ import { ThemeProvider } from './context/ThemeContext'; // Import ThemeProvider
 import { useEffect } from 'react'; // Add this import
 
 const aakai = localFont({
-    src: "./fonts/aaKaiTi_website_text.woff",
+    src: "../../public/website_fonts/aaKaiTi_website_text.woff",
     variable: "--font-aakai",
     weight: "100 900",
 });
 const aakaiSong = localFont({
-    src: "./fonts/aaKaiSong_website_text.woff",
+    src: "../../public/website_fonts/aaKaiSong_website_text.woff",
     variable: "--font-aakaiSong",
     weight: "100 900",
 });
 const lxgw = localFont({
-    src: "./fonts/lxgw_website_text.woff",
+    src: "../../public/website_fonts/lxgw_website_text.woff",
     variable: "--font-lxgw",
     weight: "100 900",
 });
 const hyfs = localFont({
-    src: "./fonts/hyFangSong_website_text.woff",
+    src: "../../public/website_fonts/hyFangSong_website_text.woff",
     variable: "--font-hyfs",
     weight: "200 1000",
 });
 const qnlb = localFont({
-    src: "./fonts/qnBianLi_website_text.woff",
+    src: "../../public/website_fonts/qnBianLi_website_text.woff",
     variable: "--font-qnlb",
     weight: "100 900",
 });
 const rzykt = localFont({
-    src: "./fonts/rzyKaiTi_website_text.woff",
+    src: "../../public/website_fonts/rzyKaiTi_website_text.woff",
     variable: "--font-rzykt",
     weight: "100 900",
 });
 const twzk = localFont({
-    src: "./fonts/twZhengKai_website_text.woff",
+    src: "../../public/website_fonts/twZhengKai_website_text.woff",
     variable: "--font-twzk",
     weight: "100 900",
 });
 const wqwh = localFont({
-    src: "./fonts/wqwMiHei_website_text.woff",
+    src: "../../public/website_fonts/wqwMiHei_website_text.woff",
     variable: "--font-wqwh",
     weight: "100 900",
 });
