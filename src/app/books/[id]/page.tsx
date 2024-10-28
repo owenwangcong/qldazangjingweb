@@ -452,7 +452,7 @@ const BookDetailPage: React.FC = () => {
     return (
       <div>
         <Header />
-        <div className="flex justify-center items-center h-screen">
+        <div className="flex items-center h-screen">
           <h1 className="text-3xl font-bold">{/* <Text>Book not found</Text> */}</h1>
         </div>
       </div>
@@ -465,7 +465,7 @@ const BookDetailPage: React.FC = () => {
       <div  
         id="recogito-container"
         ref={recogitoContainerRef}
-        className={`flex flex-col items-center justify-center min-h-screen p-8 pb-10 gap-10 sm:p-10`}
+        className={`flex flex-col items-center min-h-screen p-8 pb-10 gap-10 sm:p-10`}
         style={{ fontFamily }}
         onMouseUp={handleTextSelection}
         onTouchStart={handleTouchStart}      
