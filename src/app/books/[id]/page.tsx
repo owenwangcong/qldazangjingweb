@@ -51,6 +51,35 @@ const BookDetailPage: React.FC = () => {
 
   const LONG_PRESS_DURATION = 500; // Duration in ms for long press
 
+  // Fetch the font data when the selected font or id changes
+  useEffect(() => {
+    if (selectedFont && id) {
+      fetchFontData(selectedFont as string, id as string).then((fontUrl) => {
+        if (fontUrl) {
+          const fontName = `custom-font-${selectedFont}-${id}`;
+          const newStyle = document.createElement('style');
+          newStyle.innerHTML = `
+            @font-face {
+              font-family: '${fontName}';
+              src: url('${fontUrl}') format('woff');
+              font-weight: normal;
+              font-style: normal;
+            }
+          `;
+          document.head.appendChild(newStyle);
+          setFontFamily(fontName);
+        }
+      });
+    }
+  }, [selectedFont, id]);
+
+  // This useEffect hook fetches the book data when the component mounts or when the id changes.
+  useEffect(() => {
+    if (id) {
+      fetchBookData(id as string).then(setBook);
+    }
+  }, [id]);
+  
   // Initialize Recogito when the component mounts or id/book changes
   useEffect(() => {
 
@@ -106,13 +135,13 @@ const BookDetailPage: React.FC = () => {
     if (document.readyState === 'complete' || document.readyState === 'interactive') {
       initializeRecogito();
     } else {
-      document.addEventListener('DOMContentLoaded', onDocumentReady);
+      document.addEventListener('load', onDocumentReady);
     }
 
     return () => {
       console.log('Returning from useEffect in recogitoContainer');
 
-      document.removeEventListener('DOMContentLoaded', onDocumentReady);
+      document.removeEventListener('load', onDocumentReady);
 
       if (recogitoInstance) {
         console.log('Destroying Recogito instance');
@@ -327,13 +356,6 @@ const BookDetailPage: React.FC = () => {
     }
   };
 
-  // This useEffect hook fetches the book data when the component mounts or when the id changes.
-  useEffect(() => {
-    if (id) {
-      fetchBookData(id as string).then(setBook);
-    }
-  }, [id]);
-
   useEffect(() => {
 
     document.addEventListener('contextmenu', (e) => {
@@ -417,27 +439,6 @@ const BookDetailPage: React.FC = () => {
     fetchData();
   }, [selectedItem]);
 
-  // Fetch the font data when the selected font or id changes
-  useEffect(() => {
-    if (selectedFont && id) {
-      fetchFontData(selectedFont as string, id as string).then((fontUrl) => {
-        if (fontUrl) {
-          const fontName = `custom-font-${selectedFont}-${id}`;
-          const newStyle = document.createElement('style');
-          newStyle.innerHTML = `
-            @font-face {
-              font-family: '${fontName}';
-              src: url('${fontUrl}') format('woff');
-              font-weight: normal;
-              font-style: normal;
-            }
-          `;
-          document.head.appendChild(newStyle);
-          setFontFamily(fontName);
-        }
-      });
-    }
-  }, [selectedFont, id]);
 
   // Cleanup for long press timer on unmount
   useEffect(() => {
