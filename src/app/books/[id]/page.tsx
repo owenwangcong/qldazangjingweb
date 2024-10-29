@@ -11,6 +11,7 @@ import classNames from 'classnames'; // Import classNames for conditional classe
 import { Annotation, Recogito } from '@/app/scripts/recogito.min.js';
 
 import ReactMarkdown from 'react-markdown';
+import { convertResultsToMarkdown } from '@/app/utils/convertResultsToMarkdown';
 import { AnnotationProvider, useAnnotations } from '@/app/context/AnnotationContext';
 
 // Define the MenuItem enum
@@ -293,12 +294,8 @@ const BookDetailPage: React.FC = () => {
     handleMenuClose();
   };
 
-  const handleDictionary = () => {
-    setSelectedItem(MenuItem.LookupDictionary)
-    if (selectedText) {
-      console.log('Look up dictionary for:', selectedText);
-      // Implement dictionary lookup logic here
-    }
+  const handleDictionary = async () => {
+    setSelectedItem(MenuItem.LookupDictionary)    
   };
 
   const handleFavorite = () => {
@@ -402,40 +399,71 @@ const BookDetailPage: React.FC = () => {
 
     const fetchData = async () => {
 
-      const payload = {
-        text: selectedText,
-        action: selectedItem.toString()
-      };
-      console.log('payload to send:', JSON.stringify(payload));
-
-      try {
-        const response = await fetch('/api/tochatgpt/', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(payload),
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Network response was not ok');
+      if(selectedItem === MenuItem.LookupDictionary){
+        const payload = {
+          "key" : selectedText
+         };
+        try {
+          const response = await fetch("/api/todict/", {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+          });
+  
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Network response was not ok');
+          }
+  
+          const data = await response.json();
+          console.log('data', data);
+          if (data.results && data.results.length > 0) {
+            setContentData(convertResultsToMarkdown(data.results));
+          } else {
+            setContentData("找不到字典解释");
+          }
+        } catch (error: any) {
+          setError(error.message);
+          console.error('Error fetching data:', error);
+        } finally {
+          setLoading(false);
         }
-
-        const data = await response.json();
-        if(data.openai_response?.error?.message){
-          setContentData("大语言模型接口出现了一个问题。请联系管理员");
-        } else {
-          setContentData(data.openai_response?.choices?.[0]?.message?.content);
+      }else if(selectedItem === MenuItem.ToModernChinese || selectedItem === MenuItem.Explain){
+        const payload = {
+          text: selectedText,
+          action: selectedItem.toString()
+        };
+  
+        try {
+          const response = await fetch('/api/tochatgpt/', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload),
+          });
+  
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Network response was not ok');
+          }
+  
+          const data = await response.json();
+          if(data.openai_response?.error?.message){
+            setContentData("大语言模型接口出现了一个问题。请联系管理员");
+          } else {
+            setContentData(data.openai_response?.choices?.[0]?.message?.content);
+          }
+        } catch (error: any) {
+          setError(error.message);
+          console.error('Error fetching data:', error);
+        } finally {
+          setLoading(false);
         }
-      } catch (error: any) {
-        setError(error.message);
-        console.error('Error fetching data:', error);
-      } finally {
-        setLoading(false);
       }
     };
-
     fetchData();
   }, [selectedItem]);
 
