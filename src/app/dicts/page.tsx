@@ -61,27 +61,28 @@ const DictsPage: React.FC = () => {
       <div className="flex flex-col items-center min-h-screen p-8 pb-10 gap-8 sm:p-10">
         <h1 className="text-3xl font-bold"><Text>搜索辞典</Text></h1>
         <div className="w-full max-w-md flex items-center">
-          <SearchIcon className="mr-3 text-muted-foreground" />
-          <input
-            type="text"
-            value={searchTerm}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                handleSearch();
-              }
-            }}
-            onChange={handleSearchChange}
-            className="w-full pl-3 pr-4 py-2 border border-border rounded-md bg-background font-sans"
-            placeholder="输入要查询的词"
-            aria-label="搜索字典"
-          />
-          <button
-            onClick={handleSearch}
-            className="ml-3 px-4 py-2 w-32 bg-primary text-white rounded-md hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-primary"
-            aria-label="触发搜索"
-          >
-            <Text>搜索</Text>
-          </button>
+          <div className="w-full flex flex-col sm:flex-row items-center">
+            <input
+              type="text"
+              value={searchTerm}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  handleSearch();
+                }
+              }}
+              onChange={handleSearchChange}
+              className="w-full pl-3 pr-4 py-2 border border-border rounded-md bg-background font-sans mb-3 sm:mb-0 sm:mr-3"
+              placeholder="输入要查询的词"
+              aria-label="搜索字典"
+            />
+            <button
+              onClick={handleSearch}
+              className="px-4 py-2 w-full sm:w-32 bg-primary text-white rounded-md hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-primary"
+              aria-label="触发搜索"
+            >
+              <Text>搜索</Text>
+            </button>
+          </div>
         </div>
         {loading && <p className="mt-4 text-gray-600"><Text>查询辞典中...</Text></p>}
         {error && <p className="mt-4 text-red-500"><Text>错误</Text>: {error}</p>}

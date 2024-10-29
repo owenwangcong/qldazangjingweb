@@ -126,27 +126,28 @@ const SearchPage: React.FC = () => {
       <div className="flex flex-col items-center min-h-screen p-8 pb-10 gap-8 sm:p-10">
         <h1 className="text-3xl font-bold">搜索经书</h1>
         <div className="w-full max-w-md flex items-center">
-          <SearchIcon className="mr-3 text-muted-foreground" />
-          <input
-            type="text"
-            value={searchTerm}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                handleSearch();
-              }
-            }}
-            onChange={handleSearchChange}
-            className="w-full pl-3 pr-4 py-2 border border-border rounded-md bg-background font-sans"
-            placeholder="输入经书名或作者"
-            aria-label="搜索经书"
-          />
-          <button
-            onClick={handleSearch}
-            className="ml-3 px-4 py-2 w-32 bg-primary text-white rounded-md hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-primary"
-            aria-label="触发搜索"
-          >
-            <Text>搜索</Text>
-          </button>
+          <div className="w-full flex flex-col sm:flex-row items-center">
+            <input
+              type="text"
+              value={searchTerm}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  handleSearch();
+                }
+              }}
+              onChange={handleSearchChange}
+              className="w-full pl-3 pr-4 py-2 border border-border rounded-md bg-background font-sans mb-3 sm:mb-0 sm:mr-3"
+              placeholder="输入经书名或作者"
+              aria-label="搜索经书"
+            />
+            <button
+              onClick={handleSearch}
+              className="px-4 py-2 w-full sm:w-32 bg-primary text-white rounded-md hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-primary"
+              aria-label="触发搜索"
+            >
+              <Text>搜索</Text>
+            </button>
+          </div>
         </div>
         {loading && <p className="mt-4 text-gray-600">加载中...</p>}
         {error && <p className="mt-4 text-red-500">错误: {error}</p>}
@@ -157,22 +158,24 @@ const SearchPage: React.FC = () => {
                 {currentBooks.map(book => (
                   <li key={book.id} className="p-4 border border-border rounded-lg shadow-md hover:bg-primary-hover transition">
                     <Link href={`/books/${book.id}`} className="flex justify-between items-center">
-                      <span className="text-xl font-medium text-foreground flex-grow" style={{ flexBasis: '55%' }}>
-                        <Text>{book.title}</Text>
-                      </span>
-                      <span className="text-md text-muted-foreground flex-none text-center" style={{ flexBasis: '20%' }}>
-                        <Text>{book.bu}</Text>
-                      </span>
-                      <span className="text-md text-muted-foreground flex-none text-center" style={{ flexBasis: '25%' }}>
-                        <Text>{book.author}</Text>
-                      </span>
+                      <div className="flex flex-col sm:flex-row w-full">
+                        <span className="text-xl font-medium text-foreground flex-grow sm:flex-grow-0 text-center sm:text-left" style={{ flexBasis: '55%' }}>
+                          <Text>{book.title}</Text>
+                        </span>
+                        <span className="text-md text-muted-foreground flex-none text-center hidden sm:block" style={{ flexBasis: '20%' }}>
+                          <Text>{book.bu}</Text>
+                        </span>
+                        <span className="text-md text-muted-foreground flex-none text-center" style={{ flexBasis: '25%' }}>
+                          <Text>{book.author}</Text>
+                        </span>
+                      </div>
                     </Link>
                   </li>
                 ))}
               </ul>
             </div>
             {/* Pagination Controls */}
-            <div className="flex items-center mt-6">
+            <div className="w-full flex items-center mt-6">
               <button
                 onClick={handlePrevious}
                 disabled={currentPage === 1}
@@ -186,22 +189,96 @@ const SearchPage: React.FC = () => {
               >
                 <ChevronLeft />
               </button>
-              <div className="flex space-x-2 mx-4">
-                {Array.from({ length: totalPages }, (_, index) => (
-                  <button
-                    key={index + 1}
-                    onClick={() => handlePageSelect(index + 1)}
-                    className={classNames(
-                      'px-3 py-1 rounded-md',
-                      currentPage === index + 1
-                        ? 'bg-primary text-primary-foreground'
-                        : 'bg-muted text-muted-foreground hover:bg-muted-foreground-hover'
-                    )}
-                    aria-label={`第 ${index + 1} 页`}
-                  >
-                    {index + 1}
-                  </button>
-                ))}
+              <div className="flex flex-nowrap justify-center space-x-2 flex-1 mx-4">
+                {(() => {
+                  const pages = [];
+                  const total = totalPages;
+                  const current = currentPage;
+                  const delta = 1;
+                  
+                  const startPage = Math.max(2, current - delta);
+                  const endPage = Math.min(total - 1, current + delta);
+                  
+                  for (let i = startPage; i <= endPage; i++) {
+                    pages.push(i);
+                  }
+                  
+                  if (startPage > 2) {
+                    pages.unshift(
+                      <button
+                        key={1}
+                        onClick={() => handlePageSelect(1)}
+                        className={classNames(
+                          'px-3 py-1 rounded-md',
+                          currentPage === 1
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-muted text-muted-foreground hover:bg-muted-foreground-hover'
+                        )}
+                        aria-label={`第 1 页`}
+                      >
+                        1
+                      </button>
+                    );
+                    pages.splice(1, 0,
+                      <span key="start-ellipsis" className="px-3 py-1 text-gray-500" aria-hidden="true">
+                        ...
+                      </span>
+                    );
+                  } else {
+                    for (let i = 1; i < startPage; i++) {
+                      pages.unshift(i);
+                    }
+                  }
+                  
+                  if (endPage < total -1) {
+                    pages.push(
+                      <span key="end-ellipsis" className="px-3 py-1 text-gray-500" aria-hidden="true">
+                        ...
+                      </span>
+                    );
+                    pages.push(
+                      <button
+                        key={total}
+                        onClick={() => handlePageSelect(total)}
+                        className={classNames(
+                          'px-3 py-1 rounded-md',
+                          currentPage === total
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-muted text-muted-foreground hover:bg-muted-foreground-hover'
+                        )}
+                        aria-label={`第 ${total} 页`}
+                      >
+                        {total}
+                      </button>
+                    );
+                  } else {
+                    for (let i = endPage +1; i <= total; i++) {
+                      pages.push(i);
+                    }
+                  }
+                  
+                  return pages.map((page, index) => {
+                    if (typeof page === 'number') {
+                      return (
+                        <button
+                          key={page}
+                          onClick={() => handlePageSelect(page)}
+                          className={classNames(
+                            'px-3 py-1 rounded-md',
+                            currentPage === page
+                              ? 'bg-primary text-primary-foreground'
+                              : 'bg-muted text-muted-foreground hover:bg-muted-foreground-hover'
+                          )}
+                          aria-label={`第 ${page} 页`}
+                        >
+                          {page}
+                        </button>
+                      );
+                    } else {
+                      return page;
+                    }
+                  });
+                })()}
               </div>
               <button
                 onClick={handleNext}

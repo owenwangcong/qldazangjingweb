@@ -47,20 +47,22 @@ const JuanDetailPage: React.FC = () => {
         <div className="w-full max-w-4xl">
           <ul className="space-y-4">
             {juan.bus.map((busItem) => (
-                  <li key={busItem.id} className="p-4 border border-border rounded-lg shadow-md hover:bg-primary-hover transition">
-                    <Link href={`/books/${busItem.id}`} className="flex justify-between items-center">
-                      <span className="text-xl font-medium text-foreground flex-grow" style={{ flexBasis: '55%' }}>
-                        <Text>{busItem.title}</Text>
-                      </span>
-                      <span className="text-md text-muted-foreground flex-none text-center" style={{ flexBasis: '20%' }}>
-                        <Text>{busItem.bu}</Text>
-                      </span>
-                      <span className="text-md text-muted-foreground flex-none text-center" style={{ flexBasis: '25%' }}>
-                        <Text>{busItem.author}</Text>
-                      </span>
-                    </Link>
-                  </li>
-            ))}
+                <li key={busItem.id} className="p-4 border border-border rounded-lg shadow-md hover:bg-primary-hover transition">
+                <Link href={`/books/${busItem.id}`} className="flex justify-between items-center">
+                  <div className="flex flex-col sm:flex-row w-full">
+                    <span className="text-xl font-medium text-foreground flex-grow sm:flex-grow-0 text-center sm:text-left" style={{ flexBasis: '55%' }}>
+                      <Text>{busItem.title}</Text>
+                    </span>
+                    <span className="text-md text-muted-foreground flex-none text-center hidden sm:block" style={{ flexBasis: '20%' }}>
+                      <Text>{busItem.bu}</Text>
+                    </span>
+                    <span className="text-md text-muted-foreground flex-none text-center" style={{ flexBasis: '25%' }}>
+                      <Text>{busItem.author}</Text>
+                    </span>
+                  </div>
+                </Link>
+              </li>
+          ))}
           </ul>
         </div>
       </div>
