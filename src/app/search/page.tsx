@@ -122,7 +122,7 @@ const SearchPage: React.FC = () => {
             type="text"
             value={searchTerm}
             onChange={handleSearchChange}
-            className="w-full pl-3 pr-4 py-2 border border-border rounded-md focus:--foreground"
+            className="w-full pl-3 pr-4 py-2 border border-border rounded-md bg-background font-sans"
             placeholder="输入经书名或作者"
             aria-label="搜索经书"
           />
@@ -199,7 +199,7 @@ const SearchPage: React.FC = () => {
           </>
         )}
         {!loading && !error && searchTerm.trim() !== '' && filteredBooks.length === 0 && (
-          <p className="mt-4 text-gray-600">未找到匹配的书籍。</p>
+          <p className="mt-4 text-gray-600">未找到匹配的经书</p>
         )}
       </div>
     </div>
