@@ -40,6 +40,9 @@ const SearchPage: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   
+  // New state to track search button clicks
+  const [isSearchClicked, setIsSearchClicked] = useState<boolean>(false);
+  
   // Pagination states
   const [currentPage, setCurrentPage] = useState<number>(1);
   const itemsPerPage = 10;
@@ -83,9 +86,15 @@ const SearchPage: React.FC = () => {
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const term = e.target.value;
     setSearchTerm(term);
+  };
+
+  // Handle search trigger
+  const handleSearch = () => {
+    setIsSearchClicked(true); // Track search button click
+    const term = searchTerm.trim();
     setCurrentPage(1); // Reset to first page on search
 
-    if (term.trim() === '') {
+    if (term === '') {
       setFilteredBooks([]);
       return;
     }
@@ -121,11 +130,23 @@ const SearchPage: React.FC = () => {
           <input
             type="text"
             value={searchTerm}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                handleSearch();
+              }
+            }}
             onChange={handleSearchChange}
             className="w-full pl-3 pr-4 py-2 border border-border rounded-md bg-background font-sans"
             placeholder="输入经书名或作者"
             aria-label="搜索经书"
           />
+          <button
+            onClick={handleSearch}
+            className="ml-3 px-4 py-2 w-32 bg-primary text-white rounded-md hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-primary"
+            aria-label="触发搜索"
+          >
+            <Text>搜索</Text>
+          </button>
         </div>
         {loading && <p className="mt-4 text-gray-600">加载中...</p>}
         {error && <p className="mt-4 text-red-500">错误: {error}</p>}
@@ -198,7 +219,7 @@ const SearchPage: React.FC = () => {
             </div>
           </>
         )}
-        {!loading && !error && searchTerm.trim() !== '' && filteredBooks.length === 0 && (
+        {!loading && !error && searchTerm.trim() !== '' && filteredBooks.length === 0 && isSearchClicked && (
           <p className="mt-4 text-gray-600">未找到匹配的经书</p>
         )}
       </div>
