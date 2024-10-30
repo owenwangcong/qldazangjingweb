@@ -80,7 +80,7 @@ const DictsPage: React.FC = () => {
               className="px-4 py-2 w-full sm:w-32 bg-primary text-white rounded-md hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-primary"
               aria-label="触发搜索"
             >
-              <Text>搜索</Text>
+              <Text>查询</Text>
             </button>
           </div>
         </div>
