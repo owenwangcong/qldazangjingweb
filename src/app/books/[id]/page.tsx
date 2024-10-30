@@ -35,6 +35,7 @@ const BookDetailPage: React.FC = () => {
   const [contextMenuPosition, setContextMenuPosition] = useState<{ x: number, y: number } | null>(null);
   const contextMenuRef = useRef<HTMLDivElement>(null);
   const { selectedFont, fontSize, selectedWidth } = useContext(FontContext);
+  const { fontFamily, setFontFamily } = useContext(FontContext);
  
   const [menuLevel, setMenuLevel] = useState('main');
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
@@ -42,10 +43,7 @@ const BookDetailPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [fontFamily, setFontFamily] = useState<string>('inherit');
-
   const recogitoContainerRef = useRef<HTMLDivElement>(null); // Existing ref
-
   const { annotations, addAnnotation, removeAnnotation } = useAnnotations();
 
   // Ref to store long-press timer

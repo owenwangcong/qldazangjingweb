@@ -21,7 +21,7 @@ import { useFont, FontContext } from '../context/FontContext';
 const Header: React.FC = () => {
   const pathname = usePathname();
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
-  const { selectedFont, setSelectedFont, fontSize, setFontSize, selectedWidth, setSelectedWidth } = useFont();
+  const { selectedFont, setSelectedFont, fontSize, setFontSize, selectedWidth, setSelectedWidth, fontFamily, setFontFamily } = useFont();
   const { book } = useContext(BookContext);
 
   const { isSimplified, toggleLanguage } = useLanguage();
@@ -254,7 +254,10 @@ const Header: React.FC = () => {
                     <div className="w-5 h-5">目</div>
                   </button>
                 </DropdownMenu.Trigger>
-                  <DropdownMenu.Content className="bg-popover p-4 rounded-md shadow-lg max-h-80 overflow-y-auto">
+                  <DropdownMenu.Content 
+                    className="bg-popover p-4 rounded-md shadow-lg max-h-80 overflow-y-auto"
+                    style={{ fontFamily }}
+                  >
                     {book?.juans.filter(juan => juan.name.trim() !== '').map((juan) => (
                       <React.Fragment key={juan.id}>
                         <DropdownMenu.Item
