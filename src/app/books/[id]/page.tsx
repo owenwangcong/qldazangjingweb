@@ -203,11 +203,12 @@ const BookDetailPage: React.FC = () => {
     }
   };
 
-  const handleTextSelection = () => {
+  const handleTextSelection = (event: React.MouseEvent | React.TouchEvent) => {
     const selection = window.getSelection();
     if (selection && selection.toString().trim()) {
       const selected = selection.toString();
       console.log('Selected text:', selected); // Debug: Log selected text
+      handleContextMenu(event);
     } else {
       console.log('No text selected'); // Debug: Log when no text is selected
       setContextMenuPosition(null);
