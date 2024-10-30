@@ -13,6 +13,7 @@ import { Annotation, Recogito } from '@/app/scripts/recogito.min.js';
 import ReactMarkdown from 'react-markdown';
 import { convertResultsToMarkdown } from '@/app/utils/convertResultsToMarkdown';
 import { AnnotationProvider, useAnnotations } from '@/app/context/AnnotationContext';
+import { BookContext, BookProvider } from '@/app/context/BookContext';
 
 // Define the MenuItem enum
 enum MenuItem {
@@ -29,7 +30,7 @@ interface ExtendedAnnotation extends Annotation {
 
 const BookDetailPage: React.FC = () => {
   const { id } = useParams();
-  const [book, setBook] = useState<any>(null);
+  const { book, setBook } = useContext(BookContext);
   const [selectedText, setSelectedText] = useState<string>('');
   const [contextMenuPosition, setContextMenuPosition] = useState<{ x: number, y: number } | null>(null);
   const contextMenuRef = useRef<HTMLDivElement>(null);
@@ -506,13 +507,13 @@ const BookDetailPage: React.FC = () => {
         <h2 className="text-xl"><Text>{book.meta.Arthur}</Text></h2>
         <div className={`${fontSize} ${selectedWidth}`} style={{ fontFamily }}>
           {book.juans.map((juan: any, juanIndex: number) => (
-            <div key={juan.id || `juan-${juanIndex}`} className="mb-8">
+            <div id={juan.id} key={juan.id || `juan-${juanIndex}`} className="mb-8">
               <h3 className="font-semibold"><Text>{juan.name}</Text></h3>
               {juan.chapters.map((chapter: any, chapterIndex: number) => (
                 <div key={chapter.id || `chapter-${juanIndex}-${chapterIndex}`} className="mt-4">
                   <h4 className="font-medium"><Text>{chapter.name}</Text></h4>
                   {chapter.paragraphs.map((paragraph: string, paragraphIndex: number) => (
-                    <p key={`paragraph-${juanIndex}-${chapterIndex}-${paragraphIndex}`} className="mt-5 mb-5 leading-normal">
+                    <p id={`paragraph-${juanIndex}-${chapterIndex}-${paragraphIndex}`} key={`paragraph-${juanIndex}-${chapterIndex}-${paragraphIndex}`} className="mt-5 mb-5 leading-normal">ssss
                       {paragraph.split('”').map((part, index, array) => (
                         <React.Fragment key={index}>
                           <Text>{part}</Text>
@@ -647,7 +648,9 @@ const BookDetailPage: React.FC = () => {
 };
 
 export default () => (
-  <AnnotationProvider>
-    <BookDetailPage />
-  </AnnotationProvider>
+  <BookProvider>
+    <AnnotationProvider>
+      <BookDetailPage />
+    </AnnotationProvider>
+  </BookProvider>
 );

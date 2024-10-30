@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { usePathname } from 'next/navigation';
 import { Settings, ChevronDown, ChevronUp, Heart, Book, Download, Home, Search, Sun, Maximize } from 'lucide-react';
 import Link from "next/link";
@@ -10,6 +10,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Button } from '@/components/ui/button';
 import * as Slider from '@radix-ui/react-slider';
+import { BookContext } from '../context/BookContext';
+
 
 import Text from './Text';
 import { useLanguage } from '../context/LanguageContext';
@@ -20,6 +22,8 @@ const Header: React.FC = () => {
   const pathname = usePathname();
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const { selectedFont, setSelectedFont, fontSize, setFontSize, selectedWidth, setSelectedWidth } = useFont();
+  const { book } = useContext(BookContext);
+
   const { isSimplified, toggleLanguage } = useLanguage();
   const { theme, setTheme } = useTheme();
 
@@ -35,6 +39,14 @@ const Header: React.FC = () => {
 
   const handleThemeChange = (newTheme: Theme) => {
     setTheme(newTheme);
+  };
+  
+  const handleJuanSelect = (juan: any) => {
+    console.log(juan.id + " selected");
+    const element = document.getElementById(juan.id);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
   // Helper functions to map between font size classes and slider values
@@ -231,6 +243,32 @@ const Header: React.FC = () => {
                 </div>
               </DialogContent>
             </Dialog>
+
+            {isBookPage && (
+              <DropdownMenu.Root modal={false}>
+                <DropdownMenu.Trigger asChild>
+                  <button
+                    className="p-2 bg-card rounded-full shadow-md focus:outline-none hover:bg-primary-hover hover:text-primary-foreground-hover"
+                    aria-label="Select Theme"
+                  >
+                    <div className="w-5 h-5">目</div>
+                  </button>
+                </DropdownMenu.Trigger>
+                  <DropdownMenu.Content className="bg-popover p-4 rounded-md shadow-lg max-h-80 overflow-y-auto">
+                    {book?.juans.filter(juan => juan.name.trim() !== '').map((juan) => (
+                      <React.Fragment key={juan.id}>
+                        <DropdownMenu.Item
+                          onSelect={() => handleJuanSelect(juan)}
+                          className="flex items-center px-4 py-2 cursor-pointer text-lg hover:bg-primary-hover hover:text-primary-foreground-hover hover:border-none"
+                        >
+                          <Text>{juan.name}</Text>
+                        </DropdownMenu.Item>
+                        <DropdownMenu.Separator className="my-2 h-px bg-border" />
+                      </React.Fragment>
+                    ))}
+                  </DropdownMenu.Content>
+                </DropdownMenu.Root>
+              )}
           </>
         )}
 
