@@ -513,7 +513,7 @@ const BookDetailPage: React.FC = () => {
                 <div key={chapter.id || `chapter-${juanIndex}-${chapterIndex}`} className="mt-4">
                   <h4 className="font-medium"><Text>{chapter.name}</Text></h4>
                   {chapter.paragraphs.map((paragraph: string, paragraphIndex: number) => (
-                    <p id={`paragraph-${juanIndex}-${chapterIndex}-${paragraphIndex}`} key={`paragraph-${juanIndex}-${chapterIndex}-${paragraphIndex}`} className="mt-5 mb-5 leading-normal">ssss
+                    <p id={`paragraph-${juanIndex}-${chapterIndex}-${paragraphIndex}`} key={`paragraph-${juanIndex}-${chapterIndex}-${paragraphIndex}`} className="mt-5 mb-5 leading-normal">
                       {paragraph.split('”').map((part, index, array) => (
                         <React.Fragment key={index}>
                           <Text>{part}</Text>
