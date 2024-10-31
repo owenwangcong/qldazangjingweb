@@ -9,6 +9,7 @@ import { LanguageProvider } from './context/LanguageContext'; // Ensure Language
 import FontWrapper from './components/FontWrapper'; // Ensure FontWrapper is imported
 import { ThemeProvider } from './context/ThemeContext'; // Import ThemeProvider
 import { useEffect } from 'react'; // Add this import
+import { MyStudyProvider } from "./context/MyStudyContext";
 
 const aakai = localFont({
     src: "../../public/website_fonts/aaKaiTi_website_text.woff",
@@ -81,15 +82,17 @@ export default function RootLayout({
       </head>
       <body className={`antialiased ${aakai.variable} ${aakaiSong.variable} ${lxgw.variable} ${hyfs.variable} ${qnlb.variable} ${rzykt.variable} ${twzk.variable} ${wqwh.variable}`}>
         <Script src="/scripts/opencc.min.js" strategy="beforeInteractive" />
-        <FontProvider>
-          <LanguageProvider>
-            <ThemeProvider>
-              <FontWrapper>
-                {children}
-              </FontWrapper>
-            </ThemeProvider>
-          </LanguageProvider>
-        </FontProvider>
+          <MyStudyProvider>
+            <FontProvider>
+              <LanguageProvider>
+                <ThemeProvider>
+                  <FontWrapper>
+                    {children}
+                  </FontWrapper>
+                </ThemeProvider>
+              </LanguageProvider>
+            </FontProvider>
+          </MyStudyProvider>
       </body>
     </html>
   );

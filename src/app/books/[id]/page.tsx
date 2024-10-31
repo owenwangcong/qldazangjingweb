@@ -14,6 +14,7 @@ import ReactMarkdown from 'react-markdown';
 import { convertResultsToMarkdown } from '@/app/utils/convertResultsToMarkdown';
 import { AnnotationProvider, useAnnotations } from '@/app/context/AnnotationContext';
 import { BookContext, BookProvider } from '@/app/context/BookContext';
+import { useMyStudy } from '@/app/context/MyStudyContext';
 
 // Define the MenuItem enum
 enum MenuItem {
@@ -46,6 +47,8 @@ const BookDetailPage: React.FC = () => {
   const recogitoContainerRef = useRef<HTMLDivElement>(null); // Existing ref
   const { annotations, addAnnotation, removeAnnotation } = useAnnotations();
 
+  const { addToBrowserHistory } = useMyStudy();
+  
   // Ref to store long-press timer
   const longPressTimerRef = useRef<number | null>(null);
 
@@ -77,6 +80,7 @@ const BookDetailPage: React.FC = () => {
   useEffect(() => {
     if (id) {
       fetchBookData(id as string).then(setBook);
+      addToBrowserHistory(id as string);
     }
   }, [id]);
   

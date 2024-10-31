@@ -12,17 +12,18 @@ import { Button } from '@/components/ui/button';
 import * as Slider from '@radix-ui/react-slider';
 import { BookContext } from '../context/BookContext';
 
-
 import Text from './Text';
 import { useLanguage } from '../context/LanguageContext';
 import { useTheme, Theme } from '../context/ThemeContext';
 import { useFont, FontContext } from '../context/FontContext';
+import { useMyStudy } from '../context/MyStudyContext';
 
 const Header: React.FC = () => {
   const pathname = usePathname();
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const { selectedFont, setSelectedFont, fontSize, setFontSize, selectedWidth, setSelectedWidth, fontFamily, setFontFamily } = useFont();
   const { book } = useContext(BookContext);
+  const { favoriteBooks, addFavoriteBook, removeFavoriteBook } = useMyStudy();
 
   const { isSimplified, toggleLanguage } = useLanguage();
   const { theme, setTheme } = useTheme();
@@ -46,6 +47,18 @@ const Header: React.FC = () => {
     const element = document.getElementById(juan.id);
     if (element) {
       element.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  const toggleFavoriteBook = () => {
+    if (book) {
+      if (favoriteBooks.includes(book.meta.id)) {
+        console.log("Remove from Favorites:" + book.meta.id);
+        removeFavoriteBook(book.meta.id);
+      } else {
+        console.log("Add to Favorites:" + book.meta.id);
+        addFavoriteBook(book.meta.id);
+      }
     }
   };
 
@@ -254,24 +267,38 @@ const Header: React.FC = () => {
                     <div className="w-5 h-5">目</div>
                   </button>
                 </DropdownMenu.Trigger>
-                  <DropdownMenu.Content 
-                    className="bg-popover p-4 rounded-md shadow-lg max-h-80 overflow-y-auto"
-                    style={{ fontFamily }}
-                  >
-                    {book?.juans.filter(juan => juan.name.trim() !== '').map((juan) => (
-                      <React.Fragment key={juan.id}>
-                        <DropdownMenu.Item
-                          onSelect={() => handleJuanSelect(juan)}
-                          className="flex items-center px-4 py-2 cursor-pointer text-lg hover:bg-primary-hover hover:text-primary-foreground-hover hover:border-none"
-                        >
-                          <Text>{juan.name}</Text>
-                        </DropdownMenu.Item>
-                        <DropdownMenu.Separator className="my-2 h-px bg-border" />
-                      </React.Fragment>
-                    ))}
-                  </DropdownMenu.Content>
-                </DropdownMenu.Root>
-              )}
+                <DropdownMenu.Content 
+                  className="bg-popover p-4 rounded-md shadow-lg max-h-80 overflow-y-auto"
+                  style={{ fontFamily }}
+                >
+                  {book?.juans.filter(juan => juan.name.trim() !== '').map((juan) => (
+                    <React.Fragment key={juan.id}>
+                      <DropdownMenu.Item
+                        onSelect={() => handleJuanSelect(juan)}
+                        className="flex items-center px-4 py-2 cursor-pointer text-lg hover:bg-primary-hover hover:text-primary-foreground-hover hover:border-none"
+                      >
+                        <Text>{juan.name}</Text>
+                      </DropdownMenu.Item>
+                      <DropdownMenu.Separator className="my-2 h-px bg-border" />
+                    </React.Fragment>
+                  ))}
+                </DropdownMenu.Content>
+              </DropdownMenu.Root>
+            )}
+
+            {isBookPage && (
+              <button
+                onClick={toggleFavoriteBook}
+                className={`p-2 bg-card rounded-full shadow-md focus:outline-none hover:bg-primary-hover hover:text-primary-foreground-hover ${
+                  book && favoriteBooks.includes(book?.meta?.id) ? 'bg-primary' : 'bg-card'
+                }`}
+                aria-label="Add to Favorites"
+              >
+                <div className="w-5 h-5">藏</div>
+              </button>
+            )}
+
+
           </>
         )}
 
@@ -296,14 +323,8 @@ const Header: React.FC = () => {
               <Link href="/dicts" className={`flex items-center px-4 py-2 rounded-md border border-border hover:bg-primary-hover hover:text-primary-foreground-hover`}>
                 <Book className="w-5 h-5 mr-3" aria-hidden="true" /> <Text>辞典</Text>
               </Link>
-              <Link href="/favorites" className={`flex items-center px-4 py-2 rounded-md border border-border hover:bg-primary-hover hover:text-primary-foreground-hover`}>
-                <Heart className="w-5 h-5 mr-3" aria-hidden="true" /> <Text>收藏</Text>
-              </Link>
-              <Link href="/downloads" className={`flex items-center px-4 py-2 rounded-md border border-border hover:bg-primary-hover hover:text-primary-foreground-hover`}>
-                <Download className="w-5 h-5 mr-3" aria-hidden="true" /> <Text>下载</Text>
-              </Link>
-              <Link href="/settings" className={`flex items-center px-4 py-2 rounded-md border border-border hover:bg-primary-hover hover:text-primary-foreground-hover`}>
-                <Settings className="w-5 h-5 mr-3" aria-hidden="true" /> <Text>设置</Text>
+              <Link href="/mystudy" className={`flex items-center px-4 py-2 rounded-md border border-border hover:bg-primary-hover hover:text-primary-foreground-hover`}>
+                <Heart className="w-5 h-5 mr-3" aria-hidden="true" /> <Text>我的书房</Text>
               </Link>
             </nav>
           </div>

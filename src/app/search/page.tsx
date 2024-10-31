@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Search as SearchIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import classNames from 'classnames';
 import Text from '@/app/components/Text';
+import Pagination from '@/app/components/Pagination';
 
 interface BusItem {
   id: string;
@@ -46,14 +47,13 @@ const SearchPage: React.FC = () => {
   // Pagination states
   const [currentPage, setCurrentPage] = useState<number>(1);
   const itemsPerPage = 10;
-  
-  // Calculate total pages
   const totalPages = Math.ceil(filteredBooks.length / itemsPerPage);
-  
-  // Get current page books
-  const indexOfLastBook = currentPage * itemsPerPage;
-  const indexOfFirstBook = indexOfLastBook - itemsPerPage;
-  const currentBooks = filteredBooks.slice(indexOfFirstBook, indexOfLastBook);
+
+  // Calculate currentBooks for the current page
+  const currentBooks = filteredBooks.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   // Fetch and parse mls.json data
   useEffect(() => {
@@ -90,9 +90,8 @@ const SearchPage: React.FC = () => {
 
   // Handle search trigger
   const handleSearch = () => {
-    setIsSearchClicked(true); // Track search button click
+    setIsSearchClicked(true);
     const term = searchTerm.trim();
-    setCurrentPage(1); // Reset to first page on search
 
     if (term === '') {
       setFilteredBooks([]);
@@ -107,16 +106,8 @@ const SearchPage: React.FC = () => {
     setFilteredBooks(filtered);
   };
 
-  // Handle page navigation
-  const handlePrevious = () => {
-    setCurrentPage(prev => Math.max(prev - 1, 1));
-  };
-
-  const handleNext = () => {
-    setCurrentPage(prev => Math.min(prev + 1, totalPages));
-  };
-
-  const handlePageSelect = (page: number) => {
+  // New handler to manage page changes
+  const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
 
@@ -174,126 +165,12 @@ const SearchPage: React.FC = () => {
                 ))}
               </ul>
             </div>
-            {/* Pagination Controls */}
-            <div className="w-full flex items-center mt-6">
-              <button
-                onClick={handlePrevious}
-                disabled={currentPage === 1}
-                className={classNames(
-                  'p-2 rounded-md',
-                  currentPage === 1
-                    ? 'text-muted-foreground cursor-not-allowed'
-                    : 'text-primary hover:bg-primary-hover'
-                )}
-                aria-label="上一页"
-              >
-                <ChevronLeft />
-              </button>
-              <div className="flex flex-nowrap justify-center space-x-2 flex-1 mx-4">
-                {(() => {
-                  const pages = [];
-                  const total = totalPages;
-                  const current = currentPage;
-                  const delta = 1;
-                  
-                  const startPage = Math.max(2, current - delta);
-                  const endPage = Math.min(total - 1, current + delta);
-                  
-                  for (let i = startPage; i <= endPage; i++) {
-                    pages.push(i);
-                  }
-                  
-                  if (startPage > 2) {
-                    pages.unshift(
-                      <button
-                        key={1}
-                        onClick={() => handlePageSelect(1)}
-                        className={classNames(
-                          'px-3 py-1 rounded-md',
-                          currentPage === 1
-                            ? 'bg-primary text-primary-foreground'
-                            : 'bg-muted text-muted-foreground hover:bg-muted-foreground-hover'
-                        )}
-                        aria-label={`第 1 页`}
-                      >
-                        1
-                      </button>
-                    );
-                    pages.splice(1, 0,
-                      <span key="start-ellipsis" className="px-3 py-1 text-gray-500" aria-hidden="true">
-                        ...
-                      </span>
-                    );
-                  } else {
-                    for (let i = 1; i < startPage; i++) {
-                      pages.unshift(i);
-                    }
-                  }
-                  
-                  if (endPage < total -1) {
-                    pages.push(
-                      <span key="end-ellipsis" className="px-3 py-1 text-gray-500" aria-hidden="true">
-                        ...
-                      </span>
-                    );
-                    pages.push(
-                      <button
-                        key={total}
-                        onClick={() => handlePageSelect(total)}
-                        className={classNames(
-                          'px-3 py-1 rounded-md',
-                          currentPage === total
-                            ? 'bg-primary text-primary-foreground'
-                            : 'bg-muted text-muted-foreground hover:bg-muted-foreground-hover'
-                        )}
-                        aria-label={`第 ${total} 页`}
-                      >
-                        {total}
-                      </button>
-                    );
-                  } else {
-                    for (let i = endPage +1; i <= total; i++) {
-                      pages.push(i);
-                    }
-                  }
-                  
-                  return pages.map((page, index) => {
-                    if (typeof page === 'number') {
-                      return (
-                        <button
-                          key={page}
-                          onClick={() => handlePageSelect(page)}
-                          className={classNames(
-                            'px-3 py-1 rounded-md',
-                            currentPage === page
-                              ? 'bg-primary text-primary-foreground'
-                              : 'bg-muted text-muted-foreground hover:bg-muted-foreground-hover'
-                          )}
-                          aria-label={`第 ${page} 页`}
-                        >
-                          {page}
-                        </button>
-                      );
-                    } else {
-                      return page;
-                    }
-                  });
-                })()}
-              </div>
-              <button
-                onClick={handleNext}
-                disabled={currentPage === totalPages}
-                className={classNames(
-                  'p-2 rounded-md',
-                  currentPage === totalPages
-                    ? 'text-muted-foreground cursor-not-allowed'
-                    : 'text-primary hover:bg-primary-hover'
-                )}
-                aria-label="下一页"
-              >
-                <ChevronRight />
-              </button>
-            </div>
+            {/* Use Pagination component */}
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+            />
           </>
         )}
         {!loading && !error && searchTerm.trim() !== '' && filteredBooks.length === 0 && isSearchClicked && (
