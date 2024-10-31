@@ -11,6 +11,7 @@ import { ThemeProvider } from './context/ThemeContext'; // Import ThemeProvider
 import { useEffect } from 'react'; // Add this import
 import { MyStudyProvider } from "./context/MyStudyContext";
 import { Toaster } from "@/components/ui/toaster"
+import { AnnotationProvider } from "./context/AnnotationContext";
 
 const aakai = localFont({
     src: "../../public/website_fonts/aaKaiTi_website_text.woff",
@@ -83,6 +84,7 @@ export default function RootLayout({
       </head>
       <body className={`antialiased ${aakai.variable} ${aakaiSong.variable} ${lxgw.variable} ${hyfs.variable} ${qnlb.variable} ${rzykt.variable} ${twzk.variable} ${wqwh.variable}`}>
         <Script src="/scripts/opencc.min.js" strategy="beforeInteractive" />
+        <AnnotationProvider>
           <MyStudyProvider>
             <FontProvider>
               <LanguageProvider>
@@ -94,7 +96,8 @@ export default function RootLayout({
               </LanguageProvider>
             </FontProvider>
           </MyStudyProvider>
-          <Toaster />
+        </AnnotationProvider>
+        <Toaster />
       </body>
     </html>
   );

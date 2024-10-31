@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Header from '@/app/components/Header';
 import { FavoriteBook, BrowserHistoryItem, Bookmark, useMyStudy } from '@/app/context/MyStudyContext';
+import { Annotation, AnnotationProvider, useAnnotations } from '@/app/context/AnnotationContext';
 import mlsData from '../../../public/data/mls.json';
 import Text from '@/app/components/Text';
 import Link from 'next/link';
@@ -19,8 +20,10 @@ const MyStudyPage: React.FC = () => {
     removeFavoriteBook,
     browserHistory,
     bookmarks,
-    removeBookmark,
+    removeBookmark
   } = useMyStudy();
+
+  const { annotations, removeAnnotation } = useAnnotations();
 
   const [allBooks, setAllBooks] = useState<Book[]>([]);
 
@@ -82,6 +85,24 @@ const MyStudyPage: React.FC = () => {
         )
       );
     }, [bookmarks, currentBookmarkPage]);
+
+    // Pagination for annotations
+    const [currentAnnotationPage, setCurrentAnnotationPage] = useState<number>(1);
+    const itemsPerAnnotationPage = 10;
+    const [totalAnnotationPages, setTotalAnnotationPages] = useState<number>(1);
+    const [currentAnnotations, setCurrentAnnotations] = useState<Annotation[]>([]);
+    const handleAnnotationPageChange = (page: number) => {
+        setCurrentAnnotationPage(page);
+    };
+    useEffect(() => {
+      setTotalAnnotationPages(Math.ceil(annotations.length / itemsPerAnnotationPage));
+      setCurrentAnnotations(
+        annotations.slice(
+          (currentAnnotationPage - 1) * itemsPerAnnotationPage,
+          currentAnnotationPage * itemsPerAnnotationPage
+        )
+      );
+    }, [annotations, currentAnnotationPage]);
 
   return (
     <>
@@ -199,6 +220,38 @@ const MyStudyPage: React.FC = () => {
 
             {/* 注释 */}
             <h1 id="annotation" className="text-2xl font-bold flex justify-center p-2 m-2 mt-16 bg-secondary"><Text>注释</Text></h1>
+            {currentAnnotations.length > 0 ? (
+                currentAnnotations.map((annotation) => {
+                    return (
+                        <div key={annotation.id} className="flex justify-between items-center p-2 m-2 border border-border rounded shadow hover:bg-primary-hover transition">
+                            <Link 
+                                href={`/books/${annotation.bookId}/#${annotation.id}`} 
+                                className="flex-grow text-left focus:outline-none focus:ring-2 focus:ring-primary font-sans"
+                            >
+                                <Text>{allBooks.find((book: Book) => book.id === annotation.bookId)?.title || '未知书籍'}</Text>
+                                <span> | </span>
+                                <Text>{annotation?.body[0]?.value}</Text>
+                            </Link>
+                            <button
+                                className="min-w-[2rem] text-destructive cursor-pointer"
+                                onClick={() => removeAnnotation(annotation.id, annotation.bookId)}
+                            >
+                                <Text>删除</Text>
+                            </button>
+
+                        </div>
+                    );
+                })
+            ) : (
+                <div className="flex justify-center items-center p-2 m-2">
+                    <Text>暂无注释</Text>
+                </div>
+            )}
+            <Pagination
+                currentPage={currentAnnotationPage}
+                totalPages={totalAnnotationPages}
+                onPageChange={handleAnnotationPageChange}
+            />
         </div>
       </div>
     </>

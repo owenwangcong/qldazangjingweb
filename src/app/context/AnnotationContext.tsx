@@ -3,11 +3,11 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 
 // Define the shape of an annotation
-interface Annotation {
+export interface Annotation {
   id: string;
   text: string;
-  bookId: string; // Add bookId to associate with a specific book
-  // Add other relevant fields as needed
+  bookId: string;
+  body: any[];
 }
 
 // Define the shape of the context
@@ -15,7 +15,6 @@ interface AnnotationContextProps {
   annotations: Annotation[];
   addAnnotation: (annotation: Annotation, bookId: string) => void;
   removeAnnotation: (id: string, bookId: string) => void; // Update to accept id
-  // ... other functions as needed
 }
 
 const DEFAULT_ANNOTATIONS: Annotation[] = [];

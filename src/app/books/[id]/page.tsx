@@ -135,16 +135,21 @@ const BookDetailPage: React.FC = () => {
     };
 
     const handleHashScroll = () => {
-      console.log(window.location);
       const hash = window.location.hash;
-      console.log("hash:", hash);
-      if (!hash.startsWith('#part-')) return;
-
-      const elementId = hash.substring(1); // Remove the '#' character
-      const targetElement = document.getElementById(elementId);
-      console.log("scroll to part:", elementId);
-      if (targetElement) {
-        targetElement.scrollIntoView({ behavior: 'smooth' });
+      if (hash.startsWith('#part-')) {
+        const elementId = hash.substring(1); // Remove the '#' character
+        const targetElement = document.getElementById(elementId);
+        console.log("scroll to part:", elementId);
+        if (targetElement) {
+          targetElement.scrollIntoView({ behavior: 'smooth' });
+        }
+      } else if (hash.startsWith('##')) {
+        const dataId = hash.substring(1); // Remove the '##' characters
+        const targetElement = document.querySelector(`[data-id="${dataId}"]`);
+        console.log("scroll to data-id:", dataId);
+        if (targetElement) {
+          targetElement.scrollIntoView({ behavior: 'smooth' });
+        }
       }
     };
 
