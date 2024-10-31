@@ -17,6 +17,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { useTheme, Theme } from '../context/ThemeContext';
 import { useFont, FontContext } from '../context/FontContext';
 import { useMyStudy } from '../context/MyStudyContext';
+import { useToast } from '@/hooks/use-toast';
 
 const Header: React.FC = () => {
   const pathname = usePathname();
@@ -27,6 +28,7 @@ const Header: React.FC = () => {
 
   const { isSimplified, toggleLanguage } = useLanguage();
   const { theme, setTheme } = useTheme();
+  const { toast } = useToast()
 
   const toggleHeaderVisibility = () => {
     setIsHeaderVisible(!isHeaderVisible);
@@ -56,9 +58,17 @@ const Header: React.FC = () => {
       if (isFavorited) {
         console.log("Remove from Favorites:" + book.meta.id);
         removeFavoriteBook(book.meta.id);
+        toast({
+          title: "已从收藏中移除",
+          description: book.meta.title,
+        })
       } else {
         console.log("Add to Favorites:" + book.meta.id);
         addFavoriteBook(book.meta.id);
+        toast({
+          title: "已添加到收藏",
+          description: book.meta.title,
+        })
       }
     }
   };
@@ -92,6 +102,11 @@ const Header: React.FC = () => {
           const content = part?.innerText.slice(0, 16) || '';
           addBookmark(book.meta.id, currentPartId, content);
           console.log('Bookmarked part:', content);
+
+          toast({
+            title: "已添加书签",
+            description: book.meta.title + ' - ' + content + '...',
+          })
     } else {
       console.log('No paragraph to bookmark.');
     }
@@ -327,7 +342,7 @@ const Header: React.FC = () => {
 
       </div>  
 
-      <div className={`transition-all duration-500 ${isHeaderVisible ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}`}>
+      <div>
         <header className="w-full p-2">
           <nav className="flex flex-col md:flex-row justify-center items-center mx-auto p-5">
             <div className="flex-1 text-center">

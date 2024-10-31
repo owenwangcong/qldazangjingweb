@@ -10,6 +10,7 @@ import FontWrapper from './components/FontWrapper'; // Ensure FontWrapper is imp
 import { ThemeProvider } from './context/ThemeContext'; // Import ThemeProvider
 import { useEffect } from 'react'; // Add this import
 import { MyStudyProvider } from "./context/MyStudyContext";
+import { Toaster } from "@/components/ui/toaster"
 
 const aakai = localFont({
     src: "../../public/website_fonts/aaKaiTi_website_text.woff",
@@ -93,6 +94,7 @@ export default function RootLayout({
               </LanguageProvider>
             </FontProvider>
           </MyStudyProvider>
+          <Toaster />
       </body>
     </html>
   );
