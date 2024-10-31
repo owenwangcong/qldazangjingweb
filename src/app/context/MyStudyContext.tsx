@@ -20,15 +20,31 @@ interface Book {
 }
 
 // Define the shape of a context data
+export interface FavoriteBook {
+  bookId: string;
+  timestamp: number;
+}
+
+export interface BrowserHistoryItem {
+  bookId: string;
+  timestamp: number;
+}
+
+export interface Bookmark {
+  bookId: string;
+  paragraphId: string;
+  timestamp: number;
+}
+
 interface MyStudyContextProps {
-  favoriteBooks: string[];
+  favoriteBooks: FavoriteBook[];
   addFavoriteBook: (bookId: string) => void;
   removeFavoriteBook: (bookId: string) => void;
-  browserHistory: string[];
+  browserHistory: BrowserHistoryItem[];
   addToBrowserHistory: (bookId: string) => void;
-  bookmarks: string[];
-  addBookmark: (bookId: string) => void;
-  removeBookmark: (bookId: string) => void;
+  bookmarks: Bookmark[];
+  addBookmark: (bookId: string, paragraphId: string) => void;
+  removeBookmark: (bookId: string, paragraphId: string) => void;
 }
 
 // Create the MyStudyContext with default values
@@ -46,13 +62,13 @@ export const MyStudyContext = createContext<MyStudyContextProps>({
 // MyStudyProvider component to wrap around parts of the app that need access to the MyStudy context
 export const MyStudyProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
 
-  const storedfavoriteBooks: string[] = typeof window !== "undefined" ? JSON.parse(localStorage.getItem("favoriteBooks") || "[]") : [];
-  const storedHistory: string[] = typeof window !== "undefined" ? JSON.parse(localStorage.getItem("browserHistory") || "[]") : [];
-  const storedBookmarks: string[] = typeof window !== "undefined" ? JSON.parse(localStorage.getItem("bookmarks") || "[]") : [];
+  const storedFavoriteBooks: FavoriteBook[] = typeof window !== "undefined" ? JSON.parse(localStorage.getItem("favoriteBooks") || "[]") : [];
+  const storedHistory: BrowserHistoryItem[] = typeof window !== "undefined" ? JSON.parse(localStorage.getItem("browserHistory") || "[]") : [];
+  const storedBookmarks: Bookmark[] = typeof window !== "undefined" ? JSON.parse(localStorage.getItem("bookmarks") || "[]") : [];
 
-  const [favoriteBooks, setFavoriteBooks] = useState<string[]>(storedfavoriteBooks || []);
-  const [browserHistory, setBrowserHistory] = useState<string[]>(storedHistory || []);
-  const [bookmarks, setBookmarks] = useState<string[]>(storedBookmarks || []);
+  const [favoriteBooks, setFavoriteBooks] = useState<FavoriteBook[]>(storedFavoriteBooks);
+  const [browserHistory, setBrowserHistory] = useState<BrowserHistoryItem[]>(storedHistory);
+  const [bookmarks, setBookmarks] = useState<Bookmark[]>(storedBookmarks);
 
   // Load from localStorage on mount
   useEffect(() => {
@@ -94,12 +110,12 @@ export const MyStudyProvider: React.FC<{ children: ReactNode }> = ({ children })
     }
   }, [bookmarks]);
 
-  // Add a book to favorites
+  // Add a book to favorites with timestamp
   const addFavoriteBook = (bookId: string) => {
-    console.log('addFavoriteBook in context', bookId);
+    const timestamp = Date.now();
     setFavoriteBooks((prev) => {
-      if (!prev.includes(bookId)) {
-        return [...prev, bookId];
+      if (!prev.some(book => book.bookId === bookId)) {
+        return [...prev, { bookId, timestamp }];
       }
       return prev;
     });
@@ -107,30 +123,32 @@ export const MyStudyProvider: React.FC<{ children: ReactNode }> = ({ children })
 
   // Remove a book from favorites
   const removeFavoriteBook = (bookId: string) => {
-    setFavoriteBooks((prev) => prev.filter((id) => id !== bookId));
+    setFavoriteBooks((prev) => prev.filter((book) => book.bookId !== bookId));
   };
 
-  // Add a book to browser history
+  // Add a book to browser history with timestamp
   const addToBrowserHistory = (bookId: string) => {
+    const timestamp = Date.now();
     setBrowserHistory((prev) => {
-      const updatedHistory = [bookId, ...prev.filter((id) => id !== bookId)];
+      const updatedHistory = [{ bookId, timestamp }, ...prev.filter((item) => item.bookId !== bookId)];
       return updatedHistory.slice(0, 50); // Limit history to last 50 items
     });
   };
 
-  // Add a bookmark
-  const addBookmark = (bookId: string) => {
+  // Add a bookmark with bookId and paragraphId
+  const addBookmark = (bookId: string, paragraphId: string) => {
+    const timestamp = Date.now();
     setBookmarks((prev) => {
-      if (!prev.includes(bookId)) {
-        return [...prev, bookId];
+      if (!prev.some(bm => bm.bookId === bookId && bm.paragraphId === paragraphId)) {
+        return [...prev, { bookId, paragraphId, timestamp }];
       }
       return prev;
     });
   };
 
   // Remove a bookmark
-  const removeBookmark = (bookId: string) => {
-    setBookmarks((prev) => prev.filter((id) => id !== bookId));
+  const removeBookmark = (bookId: string, paragraphId: string) => {
+    setBookmarks((prev) => prev.filter((bm) => !(bm.bookId === bookId && bm.paragraphId === paragraphId)));
   };
 
   return (

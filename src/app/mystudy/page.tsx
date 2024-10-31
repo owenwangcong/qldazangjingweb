@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Header from '@/app/components/Header';
-import { useMyStudy } from '@/app/context/MyStudyContext';
+import { FavoriteBook, BrowserHistoryItem, Bookmark, useMyStudy } from '@/app/context/MyStudyContext';
 import mlsData from '../../../public/data/mls.json';
 import Text from '@/app/components/Text';
 import Link from 'next/link';
@@ -33,7 +33,7 @@ const MyStudyPage: React.FC = () => {
     const [currentFavoritePage, setCurrentFavoritePage] = useState<number>(1);
     const itemsPerFavoritePage = 10;
     const [totalFavoritePages, setTotalFavoritePages] = useState<number>(1);
-    const [currentFavorites, setCurrentFavorites] = useState<string[]>([]);
+    const [currentFavorites, setCurrentFavorites] = useState<FavoriteBook[]>([]);
     const handleFavoritePageChange = (page: number) => {
         setCurrentFavoritePage(page);
     };
@@ -43,7 +43,7 @@ const MyStudyPage: React.FC = () => {
         favoriteBooks.slice(
           (currentFavoritePage - 1) * itemsPerFavoritePage,
           currentFavoritePage * itemsPerFavoritePage
-        )
+        )       
       );
     }, [favoriteBooks, currentFavoritePage]);
 
@@ -51,7 +51,7 @@ const MyStudyPage: React.FC = () => {
     const [currentHistoryPage, setCurrentHistoryPage] = useState<number>(1);
     const itemsPerHistoryPage = 5;
     const [totalHistoryPages, setTotalHistoryPages] = useState<number>(1);
-    const [currentHistory, setCurrentHistory] = useState<string[]>([]);
+    const [currentHistory, setCurrentHistory] = useState<BrowserHistoryItem[]>([]);
     const handleHistoryPageChange = (page: number) => {
         setCurrentHistoryPage(page);
     };
@@ -69,7 +69,7 @@ const MyStudyPage: React.FC = () => {
     const [currentBookmarkPage, setCurrentBookmarkPage] = useState<number>(1);
     const itemsPerBookmarkPage = 2;
     const [totalBookmarkPages, setTotalBookmarkPages] = useState<number>(1);
-    const [currentBookmarks, setCurrentBookmarks] = useState<string[]>([]);
+    const [currentBookmarks, setCurrentBookmarks] = useState<Bookmark[]>([]);
     const handleBookmarkPageChange = (page: number) => {
         setCurrentBookmarkPage(page);
     };  
@@ -87,22 +87,34 @@ const MyStudyPage: React.FC = () => {
     <>
       <Header />
       <div className="flex flex-col items-center min-h-screen p-8 pb-8 gap-8 sm:p-8">
+
+        <div className="flex space-x-4">
+            <Link href="#favorite" className="border border-primary rounded-full hover:border-primary-hover transition"><Text className="m-5">收藏</Text></Link>
+            <Link href="#history" className="border border-primary rounded-full hover:border-primary-hover transition"><Text className="m-5">历史</Text></Link>
+            <Link href="#bookmark" className="border border-primary rounded-full hover:border-primary-hover transition"><Text className="m-5">书签</Text></Link>
+        </div>
+
         <div className="w-full max-w-4xl">
             {/* 收藏 */}
-            <h1 className="text-2xl font-bold flex justify-center p-2 m-2 bg-secondary"><Text>收藏</Text></h1>
+            <h1 id="favorite" className="text-2xl font-bold flex justify-center p-2 m-2 bg-secondary"><Text>收藏</Text></h1>
             {currentFavorites.length > 0 ? (
                 allBooks
-                .filter((book: Book) => currentFavorites.includes(book.id))
-                .map((book: Book, bookIndex: number) => (
+                .filter((book: Book) => currentFavorites.some(fav => fav.bookId === book.id))
+                .sort((a, b) => {
+                    const timestampA = currentFavorites.find(fav => fav.bookId === a.id)?.timestamp || 0;
+                    const timestampB = currentFavorites.find(fav => fav.bookId === b.id)?.timestamp || 0;
+                    return timestampB - timestampA;
+                })
+                .map((book: Book) => (
                     <div key={book.id} className="flex justify-between items-center p-2 m-2 border border-border rounded shadow hover:bg-primary-hover transition">
                         <Link href={`/books/${book.id}`} className="flex-grow text-left focus:outline-none focus:ring-2 focus:ring-primary"><Text>{book.title}</Text></Link>
-                            <button
-                              className="min-w-[2rem] text-destructive cursor-pointer"
-                              aria-label="删除"
-                              onClick={() => removeFavoriteBook(book.id)}
-                            >
-                              <Text>删除</Text>
-                            </button>
+                        <button
+                          className="min-w-[2rem] text-destructive cursor-pointer"
+                          aria-label="删除"
+                          onClick={() => removeFavoriteBook(book.id)}
+                        >
+                          <Text>删除</Text>
+                        </button>
                     </div>
                 ))
                 ) : (
@@ -117,11 +129,16 @@ const MyStudyPage: React.FC = () => {
             />
 
             {/* 历史 */}
-            <h1 className="text-2xl font-bold flex justify-center p-2 m-2 mt-16 bg-secondary"><Text>历史</Text></h1>
+            <h1 id="history" className="text-2xl font-bold flex justify-center p-2 m-2 mt-16 bg-secondary"><Text>历史</Text></h1>
             {currentHistory.length > 0 ? (
                 allBooks
-                .filter((book: Book) => currentHistory.includes(book.id))
-                .map((book: Book, bookIndex: number) => (
+                .filter((book: Book) => currentHistory.some(history => history.bookId === book.id))
+                .sort((a, b) => {
+                    const timestampA = currentHistory.find(history => history.bookId === a.id)?.timestamp || 0;
+                    const timestampB = currentHistory.find(history => history.bookId === b.id)?.timestamp || 0;
+                    return timestampB - timestampA;
+                })
+                .map((book: Book) => (
                     <div key={book.id} className="flex justify-between items-center p-2 m-2 border border-border rounded shadow hover:bg-primary-hover transition">
                         <Link href={`/books/${book.id}`} className="flex-grow text-left focus:outline-none focus:ring-2 focus:ring-primary"><Text>{book.title}</Text></Link>
                     </div>
@@ -138,11 +155,11 @@ const MyStudyPage: React.FC = () => {
             />
 
             {/* 书签 */}
-            <h1 className="text-2xl font-bold flex justify-center p-2 m-2 mt-16 bg-secondary"><Text>书签</Text></h1>
+            <h1 id="bookmark" className="text-2xl font-bold flex justify-center p-2 m-2 mt-16 bg-secondary"><Text>书签</Text></h1>
             {currentBookmarks.length > 0 ? (
                 allBooks
-                .filter((book: Book) => currentBookmarks.includes(book.id))
-                .map((book: Book, bookIndex: number) => (
+                .filter((book: Book) => currentBookmarks.some(bm => bm.bookId === book.id))
+                .map((book: Book) => (
                     <div key={book.id} className="flex justify-between items-center p-2 m-2 border border-border rounded shadow hover:bg-primary-hover transition">
                         <Link href={`/books/${book.id}`} className="flex-grow text-left focus:outline-none focus:ring-2 focus:ring-primary"><Text>{book.title}</Text></Link>
                     </div>

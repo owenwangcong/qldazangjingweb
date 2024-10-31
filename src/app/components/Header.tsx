@@ -52,7 +52,8 @@ const Header: React.FC = () => {
 
   const toggleFavoriteBook = () => {
     if (book) {
-      if (favoriteBooks.includes(book.meta.id)) {
+      const isFavorited = favoriteBooks.some(fav => fav.bookId === book.meta.id);
+      if (isFavorited) {
         console.log("Remove from Favorites:" + book.meta.id);
         removeFavoriteBook(book.meta.id);
       } else {
@@ -290,7 +291,7 @@ const Header: React.FC = () => {
               <button
                 onClick={toggleFavoriteBook}
                 className={`p-2 bg-card rounded-full shadow-md focus:outline-none hover:bg-primary-hover hover:text-primary-foreground-hover ${
-                  book && favoriteBooks.includes(book?.meta?.id) ? 'bg-primary' : 'bg-card'
+                  book && favoriteBooks.some(fav => fav.bookId === book?.meta?.id) ? 'bg-primary' : 'bg-card'
                 }`}
                 aria-label="Add to Favorites"
               >
