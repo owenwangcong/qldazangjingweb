@@ -47,12 +47,14 @@ const BookDetailPage: React.FC = () => {
   const recogitoContainerRef = useRef<HTMLDivElement>(null); // Existing ref
   const { annotations, addAnnotation, removeAnnotation } = useAnnotations();
 
-  const { addToBrowserHistory } = useMyStudy();
+  const { addToBrowserHistory, currentPartId, setCurrentPartId } = useMyStudy();
   
   // Ref to store long-press timer
   const longPressTimerRef = useRef<number | null>(null);
 
   const LONG_PRESS_DURATION = 500; // Duration in ms for long press
+
+  const [visiblePartIds, setVisiblePartIds] = useState<string[]>([]);
 
   // Fetch the font data when the selected font or id changes
   useEffect(() => {
@@ -132,12 +134,28 @@ const BookDetailPage: React.FC = () => {
 
     };
 
+    const handleHashScroll = () => {
+      console.log(window.location);
+      const hash = window.location.hash;
+      console.log("hash:", hash);
+      if (!hash.startsWith('#part-')) return;
+
+      const elementId = hash.substring(1); // Remove the '#' character
+      const targetElement = document.getElementById(elementId);
+      console.log("scroll to part:", elementId);
+      if (targetElement) {
+        targetElement.scrollIntoView({ behavior: 'smooth' });
+      }
+    };
+
     const onDocumentReady = () => {
       initializeRecogito();
+      handleHashScroll();
     };
 
     if (document.readyState === 'complete' || document.readyState === 'interactive') {
       initializeRecogito();
+      handleHashScroll();
     } else {
       document.addEventListener('load', onDocumentReady);
     }
@@ -481,6 +499,37 @@ const BookDetailPage: React.FC = () => {
     };
   }, []);
 
+  // 滚动到选中的段落
+  useEffect(() => {
+    const parts = document.querySelectorAll('span[id^="part-"]');
+    const visiblePartIdsSet = new Set<string>();
+  
+    const observer = new IntersectionObserver(
+      (entries: IntersectionObserverEntry[]) => {
+        entries.forEach(entry => {
+          const id = entry.target.id;
+          if (entry.isIntersecting) {
+            visiblePartIdsSet.add(id);
+          } else {
+            visiblePartIdsSet.delete(id);
+          }
+        });
+        const visibleIds = Array.from(visiblePartIdsSet);
+        setVisiblePartIds(visibleIds);
+        visibleIds.sort((a, b) => a.localeCompare(b));
+        setCurrentPartId(visibleIds[0]);
+      },
+      { threshold: 0.01 }
+    );
+  
+    parts.forEach(p => observer.observe(p));
+  
+    return () => {
+      parts.forEach(p => observer.unobserve(p));
+    };
+  }, [book]);
+  
+
   if (!book) {
     return (
       <div>
@@ -519,8 +568,14 @@ const BookDetailPage: React.FC = () => {
                     <p id={`paragraph-${juanIndex}-${chapterIndex}-${paragraphIndex}`} key={`paragraph-${juanIndex}-${chapterIndex}-${paragraphIndex}`} className="mt-5 mb-5 leading-normal">
                       {paragraph.split('”').map((part, index, array) => (
                         <React.Fragment key={index}>
-                          <Text>{part}</Text>
-                          {index < array.length - 1 && '”'}
+                          <span
+                            id={`part-${juanIndex}-${chapterIndex}-${paragraphIndex}-${index}`}
+                            className="inline-block"
+                            style={{ paddingTop: '12px' }}
+                          >
+                            <Text>{part}</Text>
+                          </span>
+                          {index < array.length - 1 && ''}
                           {index < array.length - 1 && <br />}
                         </React.Fragment>
                       ))}

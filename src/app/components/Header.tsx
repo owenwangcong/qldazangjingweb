@@ -23,7 +23,7 @@ const Header: React.FC = () => {
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const { selectedFont, setSelectedFont, fontSize, setFontSize, selectedWidth, setSelectedWidth, fontFamily, setFontFamily } = useFont();
   const { book } = useContext(BookContext);
-  const { favoriteBooks, addFavoriteBook, removeFavoriteBook } = useMyStudy();
+  const { favoriteBooks, addFavoriteBook, removeFavoriteBook, addBookmark, currentPartId } = useMyStudy();
 
   const { isSimplified, toggleLanguage } = useLanguage();
   const { theme, setTheme } = useTheme();
@@ -83,6 +83,18 @@ const Header: React.FC = () => {
 
   const numberToWidth = (value: number): string => {
     return widthOptions[value] || 'max-w-4xl';
+  };
+
+  const handleAddBookmark = () => {
+    if (book && currentPartId) {
+          // Start of Selection
+          const part = document.getElementById(currentPartId);
+          const content = part?.innerText.slice(0, 16) || '';
+          addBookmark(book.meta.id, currentPartId, content);
+          console.log('Bookmarked part:', content);
+    } else {
+      console.log('No paragraph to bookmark.');
+    }
   };
 
   return (
@@ -291,7 +303,7 @@ const Header: React.FC = () => {
               <button
                 onClick={toggleFavoriteBook}
                 className={`p-2 bg-card rounded-full shadow-md focus:outline-none hover:bg-primary-hover hover:text-primary-foreground-hover ${
-                  book && favoriteBooks.some(fav => fav.bookId === book?.meta?.id) ? 'bg-primary' : 'bg-card'
+                  book && favoriteBooks.some(fav => fav.bookId === book?.meta?.id) ? 'bg-secondary' : 'bg-card'
                 }`}
                 aria-label="Add to Favorites"
               >
@@ -299,6 +311,16 @@ const Header: React.FC = () => {
               </button>
             )}
 
+            {isBookPage && (
+              <button
+                onClick={handleAddBookmark}
+                className={`p-2 bg-card rounded-full shadow-md focus:outline-none hover:bg-primary-hover hover:text-primary-foreground-hover
+                }`}
+                aria-label="Add to Bookmarks"
+              >
+                <div className="w-5 h-5">签</div>
+              </button>
+            )}
 
           </>
         )}

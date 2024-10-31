@@ -31,9 +31,11 @@ export interface BrowserHistoryItem {
 }
 
 export interface Bookmark {
+  compositeKey: string;
   bookId: string;
-  paragraphId: string;
+  partId: string;
   timestamp: number;
+  content: string;
 }
 
 interface MyStudyContextProps {
@@ -43,8 +45,10 @@ interface MyStudyContextProps {
   browserHistory: BrowserHistoryItem[];
   addToBrowserHistory: (bookId: string) => void;
   bookmarks: Bookmark[];
-  addBookmark: (bookId: string, paragraphId: string) => void;
-  removeBookmark: (bookId: string, paragraphId: string) => void;
+  addBookmark: (bookId: string, partId: string, content: string) => void;
+  removeBookmark: (bookId: string, partId: string) => void;
+  currentPartId: string | null;
+  setCurrentPartId: (id: string | null) => void;
 }
 
 // Create the MyStudyContext with default values
@@ -57,6 +61,8 @@ export const MyStudyContext = createContext<MyStudyContextProps>({
   bookmarks: [],
   addBookmark: () => {},
   removeBookmark: () => {},
+  currentPartId: null,
+  setCurrentPartId: () => {},
 });
 
 // MyStudyProvider component to wrap around parts of the app that need access to the MyStudy context
@@ -69,6 +75,7 @@ export const MyStudyProvider: React.FC<{ children: ReactNode }> = ({ children })
   const [favoriteBooks, setFavoriteBooks] = useState<FavoriteBook[]>(storedFavoriteBooks);
   const [browserHistory, setBrowserHistory] = useState<BrowserHistoryItem[]>(storedHistory);
   const [bookmarks, setBookmarks] = useState<Bookmark[]>(storedBookmarks);
+  const [currentPartId, setCurrentPartId] = useState<string | null>(null);
 
   // Load from localStorage on mount
   useEffect(() => {
@@ -135,20 +142,22 @@ export const MyStudyProvider: React.FC<{ children: ReactNode }> = ({ children })
     });
   };
 
-  // Add a bookmark with bookId and paragraphId
-  const addBookmark = (bookId: string, paragraphId: string) => {
+  // Add a bookmark with a composite key (bookId and partId)
+  const addBookmark = (bookId: string, partId: string, content: string) => {
     const timestamp = Date.now();
     setBookmarks((prev) => {
-      if (!prev.some(bm => bm.bookId === bookId && bm.paragraphId === paragraphId)) {
-        return [...prev, { bookId, paragraphId, timestamp }];
+      const compositeKey = `${bookId}-${partId}`;
+      if (!prev.some(bm => `${bm.compositeKey}` === compositeKey)) {
+        return [...prev, { compositeKey, bookId, partId, timestamp, content }];
       }
       return prev;
     });
   };
 
   // Remove a bookmark
-  const removeBookmark = (bookId: string, paragraphId: string) => {
-    setBookmarks((prev) => prev.filter((bm) => !(bm.bookId === bookId && bm.paragraphId === paragraphId)));
+  const removeBookmark = (bookId: string, partId: string) => {
+    const compositeKey = `${bookId}-${partId}`;
+    setBookmarks((prev) => prev.filter((bm) => !(bm.compositeKey === compositeKey)));
   };
 
   return (
@@ -162,6 +171,8 @@ export const MyStudyProvider: React.FC<{ children: ReactNode }> = ({ children })
         bookmarks,
         addBookmark,
         removeBookmark,
+        currentPartId,
+        setCurrentPartId,
       }}
     >
       {children}

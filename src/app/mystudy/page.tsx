@@ -67,7 +67,7 @@ const MyStudyPage: React.FC = () => {
 
     // Pagination for bookmarks
     const [currentBookmarkPage, setCurrentBookmarkPage] = useState<number>(1);
-    const itemsPerBookmarkPage = 2;
+    const itemsPerBookmarkPage = 10;
     const [totalBookmarkPages, setTotalBookmarkPages] = useState<number>(1);
     const [currentBookmarks, setCurrentBookmarks] = useState<Bookmark[]>([]);
     const handleBookmarkPageChange = (page: number) => {
@@ -88,10 +88,19 @@ const MyStudyPage: React.FC = () => {
       <Header />
       <div className="flex flex-col items-center min-h-screen p-8 pb-8 gap-8 sm:p-8">
 
-        <div className="flex space-x-4">
-            <Link href="#favorite" className="border border-primary rounded-full hover:border-primary-hover transition"><Text className="m-5">收藏</Text></Link>
-            <Link href="#history" className="border border-primary rounded-full hover:border-primary-hover transition"><Text className="m-5">历史</Text></Link>
-            <Link href="#bookmark" className="border border-primary rounded-full hover:border-primary-hover transition"><Text className="m-5">书签</Text></Link>
+        <div className="flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4">
+            <Link href="#favorite" className="border border-primary rounded-full hover:border-primary-hover transition">
+                <Text className="m-5">收藏</Text>
+            </Link>
+            <Link href="#history" className="border border-primary rounded-full hover:border-primary-hover transition">
+                <Text className="m-5">历史</Text>
+            </Link>
+            <Link href="#bookmark" className="border border-primary rounded-full hover:border-primary-hover transition">
+                <Text className="m-5">书签</Text>
+            </Link>
+            <Link href="#bookmark" className="border border-primary rounded-full hover:border-primary-hover transition">
+                <Text className="m-5">注释</Text>
+            </Link>
         </div>
 
         <div className="w-full max-w-4xl">
@@ -157,23 +166,39 @@ const MyStudyPage: React.FC = () => {
             {/* 书签 */}
             <h1 id="bookmark" className="text-2xl font-bold flex justify-center p-2 m-2 mt-16 bg-secondary"><Text>书签</Text></h1>
             {currentBookmarks.length > 0 ? (
-                allBooks
-                .filter((book: Book) => currentBookmarks.some(bm => bm.bookId === book.id))
-                .map((book: Book) => (
-                    <div key={book.id} className="flex justify-between items-center p-2 m-2 border border-border rounded shadow hover:bg-primary-hover transition">
-                        <Link href={`/books/${book.id}`} className="flex-grow text-left focus:outline-none focus:ring-2 focus:ring-primary"><Text>{book.title}</Text></Link>
-                    </div>
-                ))
+                currentBookmarks.map((bookmark) => {
+                    return (
+                        <div key={bookmark.compositeKey} className="flex justify-between items-center p-2 m-2 border border-border rounded shadow hover:bg-primary-hover transition">
+                            <Link 
+                                href={`/books/${bookmark.bookId}/#${bookmark.partId}`} 
+                                className="flex-grow text-left focus:outline-none focus:ring-2 focus:ring-primary font-sans"
+                            >
+                                <Text>{allBooks.find((book: Book) => book.id === bookmark.bookId)?.title || '未知书籍'}</Text>
+                                <Text>{bookmark.content}</Text> 
+                                <Text>...</Text>
+                            </Link>
+                            <button
+                                className="min-w-[2rem] text-destructive cursor-pointer"
+                                onClick={() => removeBookmark(bookmark.bookId, bookmark.partId)}
+                            >
+                                <Text>删除</Text>
+                            </button>
+                        </div>
+                    );
+                })
                 ) : (
                     <div className="flex justify-center items-center p-2 m-2">
                         <Text>暂无书签</Text>
                     </div>
-            )}      
+                )}      
             <Pagination
                 currentPage={currentBookmarkPage}
                 totalPages={totalBookmarkPages}
                 onPageChange={handleBookmarkPageChange}
             />
+
+            {/* 注释 */}
+            <h1 id="annotation" className="text-2xl font-bold flex justify-center p-2 m-2 mt-16 bg-secondary"><Text>注释</Text></h1>
         </div>
       </div>
     </>
