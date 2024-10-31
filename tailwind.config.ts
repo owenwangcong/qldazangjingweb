@@ -63,6 +63,9 @@ const config: Config = {
   			vibrant: {
   				DEFAULT: 'hsl(var(--primary))',
   			},
+			accentalert: {
+				DEFAULT: 'hsl(var(--accent-alert))',
+			},
   		},
   		borderRadius: {
   			lg: 'var(--radius)',

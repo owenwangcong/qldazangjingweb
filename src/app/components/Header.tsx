@@ -317,8 +317,8 @@ const Header: React.FC = () => {
             {isBookPage && (
               <button
                 onClick={toggleFavoriteBook}
-                className={`p-2 bg-card rounded-full shadow-md focus:outline-none hover:bg-primary-hover hover:text-primary-foreground-hover ${
-                  book && favoriteBooks.some(fav => fav.bookId === book?.meta?.id) ? 'bg-secondary' : 'bg-card'
+                className={`p-2 rounded-full shadow-md focus:outline-none hover:bg-primary-hover hover:text-primary-foreground-hover ${
+                  book && favoriteBooks.some(fav => fav.bookId === book?.meta?.id) ? 'bg-accentalert' : 'bg-card'
                 }`}
                 aria-label="Add to Favorites"
               >

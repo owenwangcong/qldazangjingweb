@@ -86,6 +86,7 @@ html {
     --primary-foreground-hover: 0 0% 96%;
     --secondary-hover: 0 0% 94%;
     --secondary-foreground-hover: 0 0% 11%;
+    --accent-alert: 210 50% 60%; /* Changed to a softer blue */
   }
 
   .dark {
@@ -129,6 +130,7 @@ html {
     --primary-foreground-hover: 0 0% 11%;
     --secondary-hover: 0 0% 17%; /* Slightly lighter */
     --secondary-foreground-hover: 0 0% 96%;
+    --accent-alert: 210 50% 40%; /* Softer blue for dark mode */
   }
 
   .lianchichanyun {
@@ -161,6 +163,7 @@ html {
     --primary-foreground-hover: 85 10% 25%;
     --secondary-hover: 80 15% 83%; /* 亮度减少 */
     --secondary-foreground-hover: 85 10% 30%;
+    --accent-alert: 90 40% 70%; /* Softer green */
   }
 
   .zhulinyoujing {
@@ -193,6 +196,7 @@ html {
     --primary-foreground-hover: 140 15% 25%;
     --secondary-hover: 130 20% 83%; /* 亮度减少 */
     --secondary-foreground-hover: 140 15% 30%;
+    --accent-alert: 150 40% 70%; /* Softer green */
   }
 
   .yueyingqinghui {
@@ -225,6 +229,7 @@ html {
     --primary-foreground-hover: 220 5% 25%;
     --secondary-hover: 210 10% 83%; /* 亮度减少 */
     --secondary-foreground-hover: 220 5% 30%;
+    --accent-alert: 230 40% 70%; /* Lighter blue */
   }
 
   .sangaijingtu {
@@ -258,6 +263,7 @@ html {
     --primary-foreground-hover: 200 5% 28%; /* 保持不变 */
     --secondary-hover: 190 10% 85%; /* 由81%增至85%，更浅 */
     --secondary-foreground-hover: 200 5% 35%; /* 保持不变 */
+    --accent-alert: 210 40% 70%; /* Softer blue */
   }
 
   .guchayese {
@@ -290,6 +296,7 @@ html {
     --primary-foreground-hover: 220 15% 90%;
     --secondary-hover: 210 20% 27%; /* 亮度增加 */
     --secondary-foreground-hover: 220 15% 85%;
+    --accent-alert: 230 40% 40%; /* Softer blue */
   }
 
   .fagufanyin {
@@ -322,6 +329,7 @@ html {
     --primary-foreground-hover: 20 20% 90%;
     --secondary-hover: 10 25% 27%; /* 亮度增加 */
     --secondary-foreground-hover: 20 20% 85%;
+    --accent-alert: 30 40% 40%; /* Softer brown */
   }
 
   /* Define the dynamic font class */
