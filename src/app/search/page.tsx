@@ -7,6 +7,7 @@ import { Search as SearchIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import classNames from 'classnames';
 import Text from '@/app/components/Text';
 import Pagination from '@/app/components/Pagination';
+import * as OpenCC from 'opencc-js';
 
 interface BusItem {
   id: string;
@@ -93,12 +94,16 @@ const SearchPage: React.FC = () => {
     setIsSearchClicked(true);
     const term = searchTerm.trim();
 
+    // Dynamically import OpenCC using require
+    const converter = OpenCC.Converter({ from: 'tw', to: 'cn' });
+    const simplifiedTerm = converter(term);
+    
     if (term === '') {
       setFilteredBooks([]);
       return;
     }
 
-    const lowerTerm = term.toLowerCase();
+    const lowerTerm = simplifiedTerm.toLowerCase();
     const filtered = books.filter(book =>
       book.title.toLowerCase().includes(lowerTerm) ||
       book.author.toLowerCase().includes(lowerTerm)
@@ -115,7 +120,7 @@ const SearchPage: React.FC = () => {
     <div>
       <Header />
       <div className="flex flex-col items-center min-h-screen p-8 pb-10 gap-8 sm:p-10">
-        <h1 className="text-3xl font-bold">搜索经书</h1>
+        <h1 className="text-3xl font-bold"><Text>搜索经书</Text></h1>
         <div className="w-full max-w-md flex items-center">
           <div className="w-full flex flex-col sm:flex-row items-center">
             <input

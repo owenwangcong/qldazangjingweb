@@ -43,7 +43,7 @@ const JuanDetailPage: React.FC = () => {
     <>
       <Header />
       <div className="flex flex-col items-center min-h-screen p-8 pb-10 gap-16 sm:p-10">
-        <h1 className="text-3xl font-bold">{juan.name}</h1>
+        <h1 className="text-3xl font-bold"><Text>{juan.name}</Text></h1>
         <div className="w-full max-w-4xl">
           <ul className="space-y-4">
             {juan.bus
