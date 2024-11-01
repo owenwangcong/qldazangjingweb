@@ -560,36 +560,56 @@ const BookDetailPage: React.FC = () => {
         onTouchMove={handleTouchEnd}         
         onContextMenu={handleContextMenu}
       >
-        <h1 className="text-3xl font-bold"><Text>{book.meta.title}</Text></h1>
+        <h1 className="text-3xl"><Text>{book.meta.title}</Text></h1>
         <h2 className="text-xl"><Text>{book.meta.Arthur}</Text></h2>
         <div className={`${fontSize} ${selectedWidth}`} style={{ fontFamily }}>
-          {book.juans.map((juan: any, juanIndex: number) => (
-            <div id={juan.id} key={juan.id || `juan-${juanIndex}`} className="mb-8">
-              <h3 className="font-semibold"><Text>{juan.name}</Text></h3>
-              {juan.chapters.map((chapter: any, chapterIndex: number) => (
-                <div key={chapter.id || `chapter-${juanIndex}-${chapterIndex}`} className="mt-4">
-                  <h4 className="font-medium"><Text>{chapter.name}</Text></h4>
-                  {chapter.paragraphs.map((paragraph: string, paragraphIndex: number) => (
-                    <p id={`paragraph-${juanIndex}-${chapterIndex}-${paragraphIndex}`} key={`paragraph-${juanIndex}-${chapterIndex}-${paragraphIndex}`} className="mt-5 mb-5 leading-normal">
-                      {paragraph.split('”').map((part, index, array) => (
+              {book.juans.map((juan: any) => {
+                if (juan.type === 'bt') {
+                  return (
+                    <div key={juan.id} id={juan.id} className="mb-8">
+                      <h2 className="text-center text-2xl">
+                        <Text>{juan.content[0]}</Text>
+                      </h2>
+                    </div>
+                  );
+                } else if (juan.type === 'bm') {
+                  return (
+                    <div key={juan.id} id={juan.id} className="mb-8">
+                      <h4 className="text-center text-lg">
+                        <Text>{juan.content[0]}</Text>
+                      </h4>
+                    </div>
+                  );
+                } else if (juan.type === 'p') {
+                  return (
+                    <p key={juan.id} id={juan.id} className="mb-8">
+                      {juan.content.map((content: any, index: number) => (
                         <React.Fragment key={index}>
-                          <span
-                            id={`part-${juanIndex}-${chapterIndex}-${paragraphIndex}-${index}`}
+                          <span id={`part-${juan.id}-${index}`}
                             className="inline-block"
                             style={{ paddingTop: '12px' }}
                           >
-                            <Text>{part}</Text>
+                            {content.replace("“", '').replace("”", '').split(/(<img[^>]*>)/g).map((part: any, idx: number) => (
+                              part.match(/<img[^>]*>/) ? (
+                                <img
+                                  key={idx}
+                                  src={part.match(/src=["']([^"']+)["']/)?.[1] || ''}
+                                  alt={`Image ${idx + 1}`}
+                                  className="my-4"
+                                />
+                              ) : (
+                                <span key={idx}><Text>{part}</Text></span>
+                              )
+                            ))}
                           </span>
-                          {index < array.length - 1 && ''}
-                          {index < array.length - 1 && <br />}
+                          <br />
                         </React.Fragment>
                       ))}
                     </p>
-                  ))}
-                </div>
-              ))}
-            </div>
-          ))}
+                  );
+                }
+                return null;
+              })}
         </div>
       </div>
 
