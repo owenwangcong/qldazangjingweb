@@ -12,6 +12,7 @@ import { useEffect } from 'react'; // Add this import
 import { MyStudyProvider } from "./context/MyStudyContext";
 import { Toaster } from "@/components/ui/toaster"
 import { AnnotationProvider } from "./context/AnnotationContext";
+import { usePathname } from "next/navigation";
 
 const aakai = localFont({
     src: "../../public/website_fonts/aaKaiTi_website_text.woff",
@@ -60,11 +61,24 @@ const wqwh = localFont({
 };
  */
 
+const GA_TRACKING_ID = 'G-YYK959RPCX';
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+
+  const pathname = usePathname();
+
+  useEffect(() => {
+    const handleRouteChange = (url: string) => {
+      (window as any).gtag('config', GA_TRACKING_ID, {
+        page_path: url,
+      });
+    };
+    handleRouteChange(pathname);
+  }, [pathname]);
 
   useEffect(() => { // Add this useEffect hook
     const handleContextMenu = (event: MouseEvent) => {
@@ -79,6 +93,24 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        <Script
+          src={`https://www.googletagmanager.com/gtag/js?id=${GA_TRACKING_ID}`}
+          strategy="afterInteractive"
+        />
+        <Script
+          id="google-analytics"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', '${GA_TRACKING_ID}', {
+                page_path: window.location.pathname,
+              });
+            `,
+          }}
+        />
         <link rel="stylesheet" href="/styles/recogito.min.css" />
         <link rel="preload" href="/scripts/opencc.min.js" as="script" />
       </head>
