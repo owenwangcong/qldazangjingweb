@@ -29,21 +29,28 @@ export const AnnotationContext = createContext<AnnotationContextProps>({
 // AnnotationProvider component
 export const AnnotationProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [annotations, setAnnotations] = useState<Annotation[]>(() => {
-    const storedAnnotations = localStorage.getItem('annotations');
-    return storedAnnotations ? JSON.parse(storedAnnotations) : DEFAULT_ANNOTATIONS;
+    if (typeof window !== "undefined") {
+      const storedAnnotations = localStorage.getItem('annotations');
+      return storedAnnotations ? JSON.parse(storedAnnotations) : DEFAULT_ANNOTATIONS;
+    }
+    return DEFAULT_ANNOTATIONS;
   });
 
   // Load annotations from localStorage on mount
   useEffect(() => {
-    const storedAnnotations = localStorage.getItem('annotations');
-    if (storedAnnotations) {
-      setAnnotations(JSON.parse(storedAnnotations));
+    if (typeof window !== "undefined") {
+      const storedAnnotations = localStorage.getItem('annotations');
+      if (storedAnnotations) {
+        setAnnotations(JSON.parse(storedAnnotations));
+      }
     }
   }, []);
 
   // Save annotations to localStorage whenever they change
-  useEffect(() => {
-    localStorage.setItem('annotations', JSON.stringify(annotations));
+  useEffect(() => { 
+    if (typeof window !== "undefined") {
+      localStorage.setItem('annotations', JSON.stringify(annotations));
+    }
   }, [annotations]);
 
   const addAnnotation = (annotation: Annotation, bookId: string) => {
