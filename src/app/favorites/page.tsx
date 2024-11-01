@@ -5,13 +5,6 @@ import Header from '@/app/components/Header';
 
 const FavoritesPage: React.FC = () => {
   const [favorites, setFavorites] = useState<string[]>([]);
-
-  useEffect(() => {
-    // Fetch favorites from local storage or a database
-    const storedFavorites = JSON.parse(localStorage.getItem('favorites') || '[]');
-    setFavorites(storedFavorites);
-  }, []);
-
   return (
     <>
       <Header />
