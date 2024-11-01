@@ -1,15 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
+import * as OpenCC from 'opencc-js';
 
 export async function POST(request: NextRequest) {
   try {
-
     const { key } = await request.json();
 
     if (!key) {
       return NextResponse.json({ error: '请先选择文字' }, { status: 400 });
     } else {
       console.log('key', key);
-    }   
+    }
+
+    // Dynamically import OpenCC using require
+    const converter = OpenCC.Converter({ from: 'tw', to: 'cn' });
+    const simplifiedKey = converter(key);
 
     const apiUrl = 'https://yn7n97jj9c.execute-api.ca-central-1.amazonaws.com/ToDict';
 
@@ -18,7 +22,7 @@ export async function POST(request: NextRequest) {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ "key": key })
+      body: JSON.stringify({ "key": simplifiedKey })
     });
 
     if (!response.ok) {

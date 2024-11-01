@@ -6,6 +6,14 @@ interface Book {
     id: string;
     title: string;
     Arthur: string;
+    last_bu: {
+      id: string;
+      name: string;
+    };
+    next_bu: {
+      id: string;
+      name: string;
+    };
   };
   juans: any[];
 }

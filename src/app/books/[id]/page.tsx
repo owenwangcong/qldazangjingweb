@@ -7,6 +7,7 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
 import { FontContext } from '@/app/context/FontContext';
 import Text from '@/app/components/Text';
 import { ArrowLeft } from 'lucide-react';
+import Link from 'next/link';
 import classNames from 'classnames'; // Import classNames for conditional classes
 import { Annotation, Recogito } from '@/app/scripts/recogito.min.js';
 
@@ -726,6 +727,29 @@ const BookDetailPage: React.FC = () => {
           </DropdownMenu.Content>
         </DropdownMenu.Root>
       </div>
+
+      {/* Last and next button */}
+      <div className="flex flex-col space-y-2 items-center">
+        {book.meta.last_bu && (
+          <Link
+            href={`/books/${book.meta.last_bu.id}`}
+            className="text-[hsl(var(--primary))] p-2"
+            aria-label={`Navigate to previous book: ${book.meta.last_bu.name}`}
+          >
+            <Text>{`${book.meta.last_bu.name}`}</Text>
+          </Link>
+        )}
+        {book.meta.next_bu && (
+          <Link
+            href={`/books/${book.meta.next_bu.id}`}
+            className="text-[hsl(var(--primary))] p-2 pb-10"
+            aria-label={`Navigate to next book: ${book.meta.next_bu.name}`}
+          >
+            <Text>{`${book.meta.next_bu.name}`}</Text>
+          </Link>
+        )}
+      </div>
+
     </div>
   );
 };
