@@ -93,6 +93,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        <title>乾隆大藏经 | 大藏经</title>
         <Script
           src={`https://www.googletagmanager.com/gtag/js?id=${GA_TRACKING_ID}`}
           strategy="afterInteractive"
