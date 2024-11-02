@@ -1,46 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <!-- Homepage -->
-  <url>
-    <loc>https://qldazangjing.com/</loc>
-    <lastmod>${new Date().toISOString()}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>1.0</priority>
-  </url>
-
-  <!-- Juan Pages -->
-  <!-- Repeat the following <url> block for each book -->
-  <url>
-    <loc>https://qldazangjing.com/juans/{id}</loc>
-    <lastmod>${new Date().toISOString()}</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-
-  <!-- Books Pages -->
-  <!-- Repeat the following <url> block for each book -->
-  <url>
-    <loc>https://qldazangjing.com/books/{id}</loc>
-    <lastmod>${new Date().toISOString()}</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-
-  <!-- Search Page -->
-  <url>
-    <loc>https://qldazangjing.com/search</loc>
-    <lastmod>${new Date().toISOString()}</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-
-  <!-- My Study Page -->
-  <url>
-    <loc>https://qldazangjing.com/mystudy</loc>
-    <lastmod>${new Date().toISOString()}</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-
-  <!-- End of Sitemap -->
-</urlset> 
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <sitemap>
+    <loc>https://qldazangjing.com/sitemap-main.xml</loc>
+  </sitemap>
+  <sitemap>
+    <loc>https://qldazangjing.com/sitemap-juans.xml</loc>
+  </sitemap>
+  <sitemap>
+    <loc>https://qldazangjing.com/sitemap-books.xml</loc>
+  </sitemap>
+</sitemapindex>
