@@ -94,6 +94,7 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <title>乾隆大藏经 | 大藏经</title>
+        <link rel="icon" type="image/x-icon" href="/images/favicon.ico"></link>
         <Script
           src={`https://www.googletagmanager.com/gtag/js?id=${GA_TRACKING_ID}`}
           strategy="afterInteractive"
