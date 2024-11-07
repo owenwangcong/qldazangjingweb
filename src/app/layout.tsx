@@ -13,6 +13,7 @@ import { MyStudyProvider } from "./context/MyStudyContext";
 import { Toaster } from "@/components/ui/toaster"
 import { AnnotationProvider } from "./context/AnnotationContext";
 import { usePathname } from "next/navigation";
+import Head from 'next/head'; // Import Head from Next.js
 
 const aakai = localFont({
     src: "../../public/website_fonts/aaKaiTi_website_text.woff",
@@ -70,6 +71,7 @@ export default function RootLayout({
 }>) {
 
   const pathname = usePathname();
+  const canonicalUrl = `https://qldazangjing.com${pathname}`;
 
   useEffect(() => {
     const handleRouteChange = (url: string) => {
@@ -94,6 +96,7 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <title>乾隆大藏经 | 大藏经</title>
+        <link rel="canonical" href={canonicalUrl} />
         <Script
           src={`https://www.googletagmanager.com/gtag/js?id=${GA_TRACKING_ID}`}
           strategy="afterInteractive"
