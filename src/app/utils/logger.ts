@@ -7,9 +7,9 @@ const logFilePath = path.join(process.cwd(), 'api.log');
 const archiveLogPath = path.join(process.cwd(), `api-${Date.now()}.log`);
 
 const logger = {
-  log: (message: string) => {
+  log: (message: string, ip: string) => {
     const timestamp = new Date().toISOString();
-    const logMessage = `${timestamp} - ${message}\n`;
+    const logMessage = `${timestamp} - ${ip} - ${message}\n`;
     
     // Check the current log file size
     fs.stat(logFilePath, (err, stats) => {
