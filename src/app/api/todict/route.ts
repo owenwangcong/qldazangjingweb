@@ -1,14 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import * as OpenCC from 'opencc-js';
+import logger from '../../utils/logger'; // Import the logger
 
 export async function POST(request: NextRequest) {
   try {
     const { key } = await request.json();
 
     if (!key) {
+      logger.log('POST /todict - Missing key'); // Log error
       return NextResponse.json({ error: '请先选择文字' }, { status: 400 });
     } else {
       console.log('key', key);
+      logger.log(`POST /todict - Received key: ${key}`); // Log received key
     }
 
     // Dynamically import OpenCC using require
@@ -28,13 +31,16 @@ export async function POST(request: NextRequest) {
     if (!response.ok) {
       console.log('response', response);
       const errorText = await response.text();
+      logger.log(`POST /todict - External API error: ${errorText}`); // Log external API error
       throw new Error(`External API error: ${response.json}`);
     }
 
     const data = await response.json();
+    logger.log('POST /todict - Successfully fetched data for ' + simplifiedKey); // Log success
     return NextResponse.json(data);
   } catch (error: any) {
     console.error('Translation API Error:', error);
+    logger.log(`POST /todict - Internal Server Error: ${error.message}`); // Log internal error
     return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
   }
 }

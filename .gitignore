@@ -37,3 +37,6 @@ next-env.d.ts
 
 # Exclude data folder
 /data
+
+# Exclude api.log
+api.log

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import logger from '../../utils/logger'; // Import the logger
 
 export async function POST(request: NextRequest) {
   try {
@@ -6,12 +7,16 @@ export async function POST(request: NextRequest) {
     const { text, action } = await request.json();
 
     if (!action) {
+      logger.log('POST /tochatgpt - Missing action'); // Log error
       return NextResponse.json({ error: '请先选择动作' }, { status: 400 });
     }
 
     if (!text) {
+      logger.log('POST /tochatgpt - Missing text'); // Log error
       return NextResponse.json({ error: '请先选择文字' }, { status: 400 });
     }
+
+    logger.log(`POST /tochatgpt - Action: ${action}, Text: ${text}`); // Log received action and text
 
     let prompt = '';
 
@@ -22,8 +27,11 @@ export async function POST(request: NextRequest) {
     } else if (action === 'lookupdictionary') {
       prompt = `你是一部佛教词典。我希望你能提供词典式的释义。请为以下词语提供简明定义：${text}`;
     } else{
+      logger.log(`POST /tochatgpt - Invalid action: ${action}`); // Log invalid action
       return NextResponse.json({ error: '请先选择文字' }, { status: 400 });
     }
+
+    logger.log(`POST /tochatgpt - Action: ${action}, Text: ${text}`); // Log action, text, and prompt
 
     const apiUrl = 'https://a5axo76waf.execute-api.ca-central-1.amazonaws.com/ToChatGPT';
 
@@ -37,13 +45,16 @@ export async function POST(request: NextRequest) {
 
     if (!response.ok) {
       const errorText = await response.text();
+      logger.log(`POST /tochatgpt - External API error: ${errorText}`); // Log external API error
       throw new Error(`External API error: ${errorText}`);
     }
 
     const data = await response.json();
+    logger.log('POST /tochatgpt - Successfully fetched data from external API'); // Log success
     return NextResponse.json(data);
   } catch (error: any) {
     console.error('Translation API Error:', error);
+    logger.log(`POST /tochatgpt - Internal Server Error: ${error.message}`); // Log internal error
     return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
   }
 }
