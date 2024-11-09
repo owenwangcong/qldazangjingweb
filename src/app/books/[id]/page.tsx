@@ -482,10 +482,10 @@ const BookDetailPage: React.FC = () => {
           if(data.openai_response?.error?.message){
             setContentData("大语言模型接口出现了一个问题。请联系管理员");
           } else {
-
+            const warning = "**以下内容由AI生成, 仅供参考**\n\n";
             const content = data.openai_response?.choices?.[0]?.message?.content;
-            const oversizeMessage = "\n\n\n\n注意：由于查询内容较长，部分信息可能未显示。请适当减少查询字数。";
-            let finalContent = content;
+            const oversizeMessage = "\n\n\n\n**注意：由于查询内容较长，部分信息可能未显示。请适当减少查询字数。**";
+            let finalContent = warning + content;
             if (data.openai_response?.usage?.completion_tokens >= 1024) {
               finalContent += oversizeMessage;
             }
@@ -663,13 +663,6 @@ const BookDetailPage: React.FC = () => {
                 onSelect={handleDictionary}
               >
                 <Text>字典</Text>
-              </DropdownMenu.Item>
-              <DropdownMenu.Separator className="h-px my-1 bg-border" />
-              <DropdownMenu.Item
-                className="flex cursor-pointer select-none items-center rounded-sm px-3 py-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground whitespace-nowrap"
-                onSelect={handleFavorite}
-              >
-                <Text>收藏</Text> 
               </DropdownMenu.Item>
               <DropdownMenu.Separator className="h-px my-1 bg-border" />
               <DropdownMenu.Item
