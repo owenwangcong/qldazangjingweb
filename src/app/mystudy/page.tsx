@@ -109,7 +109,7 @@ const MyStudyPage: React.FC = () => {
       <Header />
       <div className="flex flex-col items-center min-h-screen p-8 pb-8 gap-8 sm:p-8">
 
-        <div className="flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4">
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-4">
             <Link href="#favorite" className="border border-primary rounded-full hover:border-primary-hover transition">
                 <Text className="m-5">收藏</Text>
             </Link>
