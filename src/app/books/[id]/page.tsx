@@ -545,6 +545,17 @@ const BookDetailPage: React.FC = () => {
     };
   }, [book]);
   
+  useEffect(() => {
+    const originalTitle = document.title; // Store the original title
+
+    if (book && book.meta && book.meta.title) {
+      document.title = "乾隆大藏经 | " + book.meta.title; // Set the document title dynamically
+    }
+
+    return () => {
+      document.title = originalTitle; // Restore the original title on unmount
+    };
+  }, [book]);
 
   if (!book) {
     return (
