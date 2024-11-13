@@ -730,7 +730,7 @@ const BookDetailPage: React.FC = () => {
 
       {/* Last and next button */}
       <div className="flex flex-col space-y-2 items-center">
-        {book.meta.last_bu && (
+        {book.meta.last_bu && Object.keys(book.meta.last_bu).length > 0 && (
           <Link
             href={`/books/${book.meta.last_bu.id}`}
             className="text-[hsl(var(--primary))] p-2"
@@ -739,7 +739,7 @@ const BookDetailPage: React.FC = () => {
             <Text>{`${book.meta.last_bu.name}`}</Text>
           </Link>
         )}
-        {book.meta.next_bu && (
+        {book.meta.next_bu && Object.keys(book.meta.next_bu).length > 0 && (
           <Link
             href={`/books/${book.meta.next_bu.id}`}
             className="text-[hsl(var(--primary))] p-2 pb-10"
