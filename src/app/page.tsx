@@ -13,7 +13,7 @@ export default function Home() {
     <>  
       <Header />
       <div 
-        className={`flex flex-col items-center min-h-screen p-8 pb-10 gap-16 sm:p-10`}
+        className={`flex flex-col items-center min-h-screen p-8 pb-8 gap-8`}
       >
         <main 
           id="annotatable-content" 
