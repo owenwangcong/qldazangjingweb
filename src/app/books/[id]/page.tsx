@@ -57,6 +57,50 @@ const BookDetailPage: React.FC = () => {
 
   const [visiblePartIds, setVisiblePartIds] = useState<string[]>([]);
 
+  // Fetch the book data based on the id
+  const fetchBookData = async (id: string) => {
+    try {
+      const response = await fetch(`/data/books/${id}.json`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch book data: ${response.statusText}`);
+      }
+      const bookData = await response.json();
+      return bookData;
+    } catch (error) {
+      console.error("Error fetching book data:", error);
+      return null;
+    }
+  };
+      
+  const fetchFontData = async (selectedFontFamilyName: string, bookId: string) => {
+    try {
+      // Dynamically import the font file based on the fontId and bookId.
+      const fontMapping: { [key: string]: string } = {
+        '--font-aakai': 'aaKaiTi',
+        '--font-aakaiSong': 'aaKaiSong',
+        '--font-lxgw': 'lxgw',
+        '--font-hyfs': 'hyFangSong',
+        '--font-qnlb': 'qnBianLi',
+        '--font-rzykt': 'rzyKaiTi',
+        '--font-twzk': 'twZhengKai',
+        '--font-wqwh': 'wqwMiHei',
+      };
+
+      const selectedFontName = fontMapping[selectedFontFamilyName] || 'lxgw';
+      const response = await fetch(`/data/book_fonts/${selectedFontName}_${bookId}.woff`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch font: ${response.statusText}`);
+      }
+      const fontBlob = await response.blob();
+      const fontUrl = URL.createObjectURL(fontBlob);
+      console.log('Font URL:', fontUrl);
+      return fontUrl;
+    } catch (error) {
+      console.error("Error fetching font data:", error);
+      return null;
+    }
+  };
+
   // Fetch the font data when the selected font or id changes
   useEffect(() => {
     if (selectedFont && id) {
@@ -98,11 +142,14 @@ const BookDetailPage: React.FC = () => {
 
     let recogitoInstance: Recogito | null = null;
 
-    const initializeRecogito = () => {
+    const initializeRecogito = async () => {
       if (!recogitoContainerRef.current) {
         console.log('recogitoContainerRef.current is null');
         return;
       }
+
+      // Dynamically import Recogito only on the client side
+      const { Recogito } = await import('@/app/scripts/recogito.min.js');
 
       recogitoInstance = new Recogito({
         content: recogitoContainerRef.current,
@@ -132,7 +179,6 @@ const BookDetailPage: React.FC = () => {
         const bookId = Array.isArray(id) ? id[0] : id; // Ensure 'bookId' is a string
         removeAnnotation(annotation.id, bookId); // Pass annotation.id directly
       });
-
     };
 
     const handleHashScroll = () => {
@@ -185,49 +231,6 @@ const BookDetailPage: React.FC = () => {
     };
   }, [id, book]); // Updated dependencies
   
-  // Fetch the book data based on the id
-  const fetchBookData = async (id: string) => {
-    try {
-      const response = await fetch(`/data/books/${id}.json`);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch book data: ${response.statusText}`);
-      }
-      const bookData = await response.json();
-      return bookData;
-    } catch (error) {
-      console.error("Error fetching book data:", error);
-      return null;
-    }
-  };
-
-  const fetchFontData = async (selectedFontFamilyName: string, bookId: string) => {
-    try {
-      // Dynamically import the font file based on the fontId and bookId.
-      const fontMapping: { [key: string]: string } = {
-        '--font-aakai': 'aaKaiTi',
-        '--font-aakaiSong': 'aaKaiSong',
-        '--font-lxgw': 'lxgw',
-        '--font-hyfs': 'hyFangSong',
-        '--font-qnlb': 'qnBianLi',
-        '--font-rzykt': 'rzyKaiTi',
-        '--font-twzk': 'twZhengKai',
-        '--font-wqwh': 'wqwMiHei',
-      };
-
-      const selectedFontName = fontMapping[selectedFontFamilyName] || 'lxgw';
-      const response = await fetch(`/data/book_fonts/${selectedFontName}_${bookId}.woff`);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch font: ${response.statusText}`);
-      }
-      const fontBlob = await response.blob();
-      const fontUrl = URL.createObjectURL(fontBlob);
-      console.log('Font URL:', fontUrl);
-      return fontUrl;
-    } catch (error) {
-      console.error("Error fetching font data:", error);
-      return null;
-    }
-  };
 
   const handleTextSelection = (event: React.MouseEvent | React.TouchEvent) => {
     const selection = window.getSelection();
