@@ -112,6 +112,7 @@ export default function RootLayout({
               gtag('config', '${GA_TRACKING_ID}', {
                 page_path: window.location.pathname,
               });
+              gtag('event', 'conversion', { 'send_to': 'AW-819400923/KyMeCKbag-oZENuh3IYD', 'value': 1.0, 'currency': 'CAD' });
             `,
           }}
         />
