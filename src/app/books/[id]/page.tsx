@@ -647,8 +647,8 @@ const BookDetailPage: React.FC = () => {
               position: 'absolute',
               top: contextMenuPosition?.y,
               left: contextMenuPosition?.x,
-              scrollbarWidth: 'thin', 
-              scrollbarColor: '#888 #f1f1f1',
+              scrollbarWidth: 'thin',
+              scrollbarColor: 'rgba(136, 136, 136, 0.8) transparent',
               scrollbarGutter: 'stable both-edges',
             }}
             className={classNames(
