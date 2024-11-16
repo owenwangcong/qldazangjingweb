@@ -1,18 +1,23 @@
 import logger from '@/app/utils/logger';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import puppeteer from 'puppeteer';
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
+  const userIp = req.headers.get('x-forwarded-for') || req.ip || 'Unknown IP';
+
   try {
     const { url, fontFamily, fontSize, isSimplified, selectedFont, selectedWidth, theme } = await req.json();
     
+    logger.log(`PDF generation started for URL: ${url}`, userIp);
+    logger.log(`Font Family: ${fontFamily}`, userIp);
+    logger.log(`Font Size: ${fontSize}`, userIp);
+    logger.log(`Is Simplified: ${isSimplified}`, userIp);
+    logger.log(`Selected Font: ${selectedFont}`, userIp);
+    logger.log(`Selected Width: ${selectedWidth}`, userIp);
+    logger.log(`Theme: ${theme}`, userIp);
+
     const browser = await puppeteer.launch({
         headless: true,
-        args: [
-            '--disable-features=SameSiteByDefaultCookies',
-            '--disable-features=CookiesWithoutSameSiteMustBeSecure',
-            '--disable-site-isolation-trials'
-        ]
     });
     
     const page = await browser.newPage();
@@ -65,6 +70,7 @@ export async function POST(req: Request) {
     });
 
   } catch (error) {
+    logger.log(`PDF generation error: ${error}`, userIp);
     console.error('PDF generation error:', error);
     return NextResponse.json({ error: 'Failed to generate PDF' }, { status: 500 });
   }
