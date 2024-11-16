@@ -647,19 +647,22 @@ const BookDetailPage: React.FC = () => {
               position: 'absolute',
               top: contextMenuPosition?.y,
               left: contextMenuPosition?.x,
+              scrollbarWidth: 'thin', 
+              scrollbarColor: '#888 #f1f1f1',
+              scrollbarGutter: 'stable both-edges',
             }}
             className={classNames(
-              "bg-popover shadow-lg rounded-md p-2",
+              "bg-muted/85 backdrop-blur-sm shadow-lg rounded-md p-2",
               {
-                'w-80 h-64 overflow-auto font-sans': menuLevel === 'content'
+                'w-80 h-64 overflow-y-scroll scrollbar-thin font-sans': menuLevel === 'content'
               }
             )}
           >
 
           {menuLevel === 'main' && (
             <>
-              <DropdownMenu.Item
-                className="flex cursor-pointer select-none items-center rounded-sm px-3 py-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground whitespace-nowrap"
+              <DropdownMenu.Item 
+                className="flex cursor-pointer select-none items-center rounded-sm px-3 py-2 text-sm outline-none focus:bg-accent focus:text-primary-foreground whitespace-nowrap"
                 onSelect={handleCopy}
               >
                 <Text>复制</Text>

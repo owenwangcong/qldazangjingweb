@@ -2,7 +2,7 @@
 
 import React, { useState, useContext } from 'react';
 import { usePathname } from 'next/navigation';
-import { Settings, ChevronDown, ChevronUp, Heart, Book, Download, Home, Search, Sun, Maximize } from 'lucide-react';
+import { Settings, ChevronDown, ChevronUp, Heart, Book, Download, Home, Search, Sun, Maximize, Info } from 'lucide-react';
 import Link from "next/link";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose } from "@/components/ui/dialog";
@@ -359,8 +359,11 @@ const Header: React.FC = () => {
 
           <div className="flex justify-center text-md py-4 text-xl">
             <nav className="flex flex-wrap justify-center w-full gap-4">
-              <Link href="/" className={`flex items-center px-4 py-2 rounded-md border border-border hover:bg-primary-hover hover:text-primary-foreground-hover`}>
+            <Link href="/" className={`flex items-center px-4 py-2 rounded-md border border-border hover:bg-primary-hover hover:text-primary-foreground-hover`}>
                 <Home className="w-5 h-5 mr-3" aria-hidden="true" /> <Text>首页</Text>
+              </Link>
+              <Link href="/intro" className={`flex items-center px-4 py-2 rounded-md border border-border hover:bg-primary-hover hover:text-primary-foreground-hover`}>
+                <Info className="w-5 h-5 mr-3" aria-hidden="true" /> <Text>简介</Text>
               </Link>
               <Link href="/search" className={`flex items-center px-4 py-2 rounded-md border border-border hover:bg-primary-hover hover:text-primary-foreground-hover`}>
                 <Search className="w-5 h-5 mr-3" aria-hidden="true" /> <Text>搜索</Text>
