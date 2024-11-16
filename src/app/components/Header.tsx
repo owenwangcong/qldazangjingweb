@@ -113,8 +113,67 @@ const Header: React.FC = () => {
     }
   };
 
+  const handleDownload = async () => {
+    try {
+      // Retrieve values from local storage
+      const fontFamily = localStorage.getItem('fontFamily');
+      const fontSize = localStorage.getItem('fontSize');
+      const isSimplified = localStorage.getItem('isSimplified');
+      const selectedFont = localStorage.getItem('selectedFont');
+      const selectedWidth = localStorage.getItem('selectedWidth');
+      const theme = localStorage.getItem('theme');
+
+      const response = await fetch('/api/download-pdf', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          url: window.location.href,
+          fontFamily: fontFamily,
+          fontSize: fontSize,
+          isSimplified: isSimplified,
+          selectedFont: selectedFont,
+          selectedWidth: selectedWidth,
+          theme: theme,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('PDF generation failed');
+      }
+
+      // Convert the response to a blob
+      const blob = await response.blob();
+
+      // Create a download link
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${book?.meta.title || 'book'}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+
+      // Cleanup
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast({
+        title: "下载成功",
+        description: book?.meta.title || 'PDF文件已下载',
+      });
+    } catch (error) {
+      console.error('Download error:', error);
+      toast({
+        title: "下载失败",
+        description: "生成PDF时出现错误",
+        variant: "destructive"
+      });
+    }
+  };
+
   return (
-    <div className="bg-background text-foreground">
+    <div id="header" className="bg-background text-foreground">
         <div className="fixed top-2 right-2 space-y-4 z-50 flex flex-col">
 
         <button
@@ -151,9 +210,12 @@ const Header: React.FC = () => {
                           <React.Fragment key={theme.value}>
                             <DropdownMenu.Item
                               onSelect={() => handleThemeChange(theme.value as Theme)}
-                              className="flex items-center px-4 py-2 cursor-pointer text-lg hover:bg-primary-hover hover:text-primary-foreground-hover hover:border-none"
+                              className={`flex items-center px-4 py-2 cursor-pointer text-lg ${theme.value}
+                                hover:${theme.value} focus:${theme.value}
+                                hover:bg-primary hover:text-primary-foreground 
+                                focus:bg-primary focus:text-primary-foreground`}
                             >
-                              <Text>{theme.label}</Text>
+                              <Text className={`text-${theme.value}-foreground`}>{theme.label}</Text>
                             </DropdownMenu.Item>
                             {index < 5 && <DropdownMenu.Separator className="my-2 h-px bg-border" />}
                           </React.Fragment>
@@ -341,6 +403,16 @@ const Header: React.FC = () => {
                 aria-label="Add to Bookmarks"
               >
                 <div className="w-5 h-5">签</div>
+              </button>
+            )}
+
+            {isBookPage && (
+              <button
+                onClick={handleDownload}
+                className={`p-2 bg-card rounded-full shadow-md focus:outline-none hover:bg-primary-hover hover:text-primary-foreground-hover`}
+                aria-label="Download"
+              >
+                <div className="w-5 h-5">下</div>
               </button>
             )}
 

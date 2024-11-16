@@ -746,7 +746,7 @@ const BookDetailPage: React.FC = () => {
       </div>
 
       {/* Last and next button */}
-      <div className="flex flex-col space-y-2 items-center">
+      <div id="book-footer" className="flex flex-col space-y-2 items-center">
         {book.meta.last_bu && Object.keys(book.meta.last_bu).length > 0 && (
           <Link
             href={`/books/${book.meta.last_bu.id}`}

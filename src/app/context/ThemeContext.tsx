@@ -42,6 +42,8 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     if (typeof window !== 'undefined') {
       const themeToApply = storedTheme || DEFAULT_THEME;
       setTheme(themeToApply as Theme);
+      
+      document.body.classList.remove('lianchichanyun', 'zhulinyoujing', 'yueyingqinghui', 'sangaijingtu', 'guchayese', 'fagufanyin');
       document.body.classList.add(themeToApply);
     }
   }, []);

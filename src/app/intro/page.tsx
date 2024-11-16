@@ -135,6 +135,14 @@ const DictsPage: React.FC = () => {
                     <Text>添加当前阅读位置至书签</Text>
                 </div>
             </div>            
+
+            <div className="flex flex-row gap-2">
+                <button className="p-2 bg-card rounded-full shadow-md"><div className="w-5 h-5 flex items-center justify-center">下</div></button>
+                <div className="flex flex-col justify-center">
+                    <Text>将此经文保存为PDF文档</Text>
+                </div>
+            </div>            
+
         </div>
 
         <h2 id="contextMenuDescription" className="w-full max-w-4xl text-2xl font-bold flex justify-center p-2 m-2 bg-secondary"><Text>弹出按钮</Text></h2>
