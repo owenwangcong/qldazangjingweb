@@ -19,6 +19,7 @@ import { useFont, FontContext } from '../context/FontContext';
 import { useMyStudy } from '../context/MyStudyContext';
 import { useToast } from '@/hooks/use-toast';
 import classNames from 'classnames';
+import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
 const Header: React.FC = () => {
   const pathname = usePathname();
@@ -176,249 +177,306 @@ const Header: React.FC = () => {
     <div id="header" className="bg-background text-foreground">
         <div className="fixed top-2 right-2 space-y-4 z-50 flex flex-col">
 
-        <button
-          onClick={toggleHeaderVisibility}
-          className="p-2 bg-card rounded-full shadow-md focus:outline-none hover:bg-primary-hover hover:text-primary-foreground-hover"
-          aria-label={isHeaderVisible ? "Hide Header" : "Show Header"}
-        >
-          {isHeaderVisible ? 
-            <div className="w-5 h-5">隐</div> : 
-            <div className="w-5 h-5">显</div>
-          }
-        </button>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={toggleHeaderVisibility}
+                className="p-2 bg-card rounded-full shadow-md focus:outline-none hover:bg-primary-hover hover:text-primary-foreground-hover"
+                aria-label={isHeaderVisible ? "Hide Header" : "Show Header"}
+              >
+                {isHeaderVisible ? 
+                  <div className="w-5 h-5">隐</div> : 
+                  <div className="w-5 h-5">显</div>
+                }
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <Text>{isHeaderVisible ? "隐藏控制界面" : "显示控制界面"}</Text>
+            </TooltipContent>
+          </Tooltip>
 
-        {isHeaderVisible && (
-          <>
-            <DropdownMenu.Root modal={false}>
-              <DropdownMenu.Trigger asChild>
-                <button
-                  className="p-2 bg-card rounded-full shadow-md focus:outline-none hover:bg-primary-hover hover:text-primary-foreground-hover"
-                  aria-label="Select Theme"
-                >
-                  <div className="w-5 h-5">色</div>
-                </button>
-              </DropdownMenu.Trigger>
-                      <DropdownMenu.Content className="bg-popover p-4 rounded-md shadow-lg">
-                        {[
-                          { value: 'lianchichanyun', label: '莲池禅韵' },
-                          { value: 'zhulinyoujing', label: '竹林幽径' },
-                          { value: 'yueyingqinghui', label: '月影清辉' },
-                          { value: 'sangaijingtu', label: '伞盖净土' },
-                          { value: 'guchayese', label: '古刹夜色' },
-                          { value: 'fagufanyin', label: '法鼓梵音' },
-                        ].map((theme, index) => (
-                          <React.Fragment key={theme.value}>
-                            <DropdownMenu.Item
-                              onSelect={() => handleThemeChange(theme.value as Theme)}
-                              className={`flex items-center px-4 py-2 cursor-pointer text-lg ${theme.value}
-                                hover:${theme.value} focus:${theme.value}
-                                hover:bg-primary hover:text-primary-foreground 
-                                focus:bg-primary focus:text-primary-foreground`}
-                            >
-                              <Text className={`text-${theme.value}-foreground`}>{theme.label}</Text>
-                            </DropdownMenu.Item>
-                            {index < 5 && <DropdownMenu.Separator className="my-2 h-px bg-border" />}
-                          </React.Fragment>
-                        ))}
-                      </DropdownMenu.Content>
-            </DropdownMenu.Root>
-
-            <button
-              onClick={handleToggleLanguage}
-              className="p-2 bg-card rounded-full shadow-md focus:outline-none hover:bg-primary-hover hover:text-primary-foreground-hover"
-              aria-label={isSimplified ? "Switch to Traditional Chinese" : "Switch to Simplified Chinese"}
-            >
-              {isSimplified ? (
-                <div className="w-5 h-5">繁</div>
-              ) : (
-                <div className="w-5 h-5">简</div>
-              )}
-            </button>
-            
-            <Dialog modal={false}>
-              <DialogTrigger asChild>
-                <button
-                  className="p-2 bg-card rounded-full shadow-md focus:outline-none hover:bg-primary-hover hover:text-primary-foreground-hover"
-                  aria-label="Select Font and Width"
-                >
-                  <div className="w-5 h-5 flex items-center justify-center">
-                  <div className="w-5 h-5">字</div>
-                  </div>
-                </button>
-              </DialogTrigger>
-              <DialogContent className="p-6 bg-card max-w-md md:max-w-lg lg:max-w-xl mx-auto max-h-[80vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle><Text>选择字体和宽度</Text></DialogTitle>
-                  <DialogDescription>
-                    <Text>请选择一种字体、字体大小和内容宽度</Text>
-                  </DialogDescription>
-                </DialogHeader>
-                <RadioGroup value={selectedFont} onValueChange={setSelectedFont} className="mt-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="--font-aakai" id="aakai-font" />
-                      <Label className="text-2xl" style={{ fontFamily: `var(--font-aakai)` }} htmlFor="aakai-font">Aa楷体</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="--font-aakaiSong" id="aaKaiSongFont" />
-                      <Label className="text-2xl" style={{ fontFamily: `var(--font-aakaiSong)` }} htmlFor="aaKaiSongFont">Aa楷宋</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="--font-hyfs" id="hyfangsongFont" />
-                      <Label className="text-2xl" style={{ fontFamily: `var(--font-hyfs)` }} htmlFor="hyfangsongFont">汉仪仿宋</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="--font-lxgw" id="lxgwFont" />
-                      <Label className="text-2xl" style={{ fontFamily: `var(--font-lxgw)` }} htmlFor="lxgwFont">落霞孤鹜</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="--font-qnlb" id="qingniaolibianFont" />
-                      <Label className="text-2xl" style={{ fontFamily: `var(--font-qnlb)` }} htmlFor="qingniaolibianFont">青鸟隶变</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="--font-rzykt" id="ruiziyunFont" />
-                      <Label className="text-2xl" style={{ fontFamily: `var(--font-rzykt)` }} htmlFor="ruiziyunFont">锐字云楷体</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="--font-twzk" id="taiwanzhengkaiFont" />
-                      <Label className="text-2xl" style={{ fontFamily: `var(--font-twzk)` }} htmlFor="taiwanzhengkaiFont">台湾正楷体</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="--font-wqwh" id="wenquanweiheiFont" />
-                      <Label className="text-2xl" style={{ fontFamily: `var(--font-wqwh)` }} htmlFor="wenquanweiheiFont">文泉微黑</Label>
-                    </div>
-                  </div>
-                </RadioGroup>
-                
-                <div className="mt-6">
-                  <label className="text-sm font-medium mb-2">
-                    <Text>字体大小</Text>
-                  </label>
-                  <Slider.Root
-                    className="relative flex items-center select-none touch-none w-full h-5"
-                    value={[fontSizeToNumber(fontSize)]}
-                    min={0}
-                    max={fontSizeOptions.length - 1}
-                    step={1}
-                    onValueChange={(value) => setFontSize(numberToFontSize(value[0]))}
-                    aria-label="Font Size Slider"
-                  >
-                    <Slider.Track className="bg-secondary relative flex-1 h-1 rounded-full">
-                      <Slider.Range className="absolute bg-primary h-full rounded-full" />
-                    </Slider.Track>
-                    <Slider.Thumb className="block w-4 h-4 bg-primary rounded-full focus:outline-none" />
-                  </Slider.Root>
-                  <div className="flex justify-between text-sm mt-2">
-                    <span className="text-sm"><Text>小</Text></span>
-                    <span className="text-xl"><Text>大</Text></span>
-                  </div>
-                </div>
-
-                <div className="mt-6">
-                  <label className="text-sm font-medium mb-2">
-                    <Text>内容宽度</Text>
-                  </label>
-                  <Slider.Root
-                    className="relative flex items-center select-none touch-none w-full h-5"
-                    value={[widthToNumber(selectedWidth)]}
-                    min={0}
-                    max={widthOptions.length - 1}
-                    step={1}
-                    onValueChange={(value) => setSelectedWidth(numberToWidth(value[0]))}
-                    aria-label="Content Width Slider"
-                  >
-                    <Slider.Track className="bg-secondary relative flex-1 h-1 rounded-full">
-                      <Slider.Range className="absolute bg-primary h-full rounded-full" />
-                    </Slider.Track>
-                    <Slider.Thumb className="block w-4 h-4 bg-primary rounded-full focus:outline-none" />
-                  </Slider.Root>
-                  <div className="flex justify-between text-sm mt-2">
-                    <span className="text-base"><Text>窄</Text></span>
-                    <span className="text-base"><Text>宽</Text></span>
-                  </div>
-                </div>
-
-                <div className="mt-6 flex justify-end">
-                  <DialogClose asChild>
-                    <Button className="hover:bg-primary-hover hover:text-primary-foreground-hover">
-                      <Text>确定</Text>
-                    </Button>
-                  </DialogClose>
-                </div>
-              </DialogContent>
-            </Dialog>
-
-            {isBookPage && (
+          {isHeaderVisible && (
+            <>
               <DropdownMenu.Root modal={false}>
-                <DropdownMenu.Trigger asChild>
-                  <button
-                    className="p-2 bg-card rounded-full shadow-md focus:outline-none hover:bg-primary-hover hover:text-primary-foreground-hover"
-                    aria-label="Select Theme"
-                  >
-                    <div className="w-5 h-5">目</div>
-                  </button>
-                </DropdownMenu.Trigger>
-                <DropdownMenu.Content 
-                  className="bg-popover p-4 rounded-md shadow-lg max-h-80 overflow-y-auto"
-                  style={{ fontFamily }}
-                >
-                  {book?.juans.filter(juan => juan.type === 'bt' || juan.type === 'bm').map(juan => (
-                    <React.Fragment key={juan.id}>
-                      <DropdownMenu.Item
-                        onSelect={() => handleJuanSelect(juan)}
-                            className={classNames(
-                              "flex items-center px-4 py-2 cursor-pointer ",
-                              {
-                                "text-lg bg-secondary hover:bg-primary-hover hover:text-primary-foreground-hover": juan.type === "bt",
-                                "text-base hover:bg-secondary-hover hover:text-secondary-foreground-hover": juan.type === "bm",
-                              }
-                            )}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <DropdownMenu.Trigger asChild>
+                      <button
+                        className="p-2 bg-card rounded-full shadow-md focus:outline-none hover:bg-primary-hover hover:text-primary-foreground-hover"
+                        aria-label="Select Theme"
                       >
-                        <Text>{juan.content[0]}</Text>
+                        <div className="w-5 h-5">色</div>
+                      </button>
+                    </DropdownMenu.Trigger>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <Text>更换网站颜色主题</Text>
+                  </TooltipContent>
+                </Tooltip>
+                <DropdownMenu.Content className="bg-popover p-4 rounded-md shadow-lg">
+                  {[
+                    { value: 'lianchichanyun', label: '莲池禅韵' },
+                    { value: 'zhulinyoujing', label: '竹林幽径' },
+                    { value: 'yueyingqinghui', label: '月影清辉' },
+                    { value: 'sangaijingtu', label: '伞盖净土' },
+                    { value: 'guchayese', label: '古刹夜色' },
+                    { value: 'fagufanyin', label: '法鼓梵音' },
+                  ].map((theme, index) => (
+                    <React.Fragment key={theme.value}>
+                      <DropdownMenu.Item
+                        onSelect={() => handleThemeChange(theme.value as Theme)}
+                        className={`flex items-center px-4 py-2 cursor-pointer text-lg ${theme.value}
+                          hover:${theme.value} focus:${theme.value}
+                          hover:bg-primary hover:text-primary-foreground 
+                          focus:bg-primary focus:text-primary-foreground`}
+                      >
+                        <Text className={`text-${theme.value}-foreground`}>{theme.label}</Text>
                       </DropdownMenu.Item>
-                      <DropdownMenu.Separator className="my-2 h-px bg-border" />
+                      {index < 5 && <DropdownMenu.Separator className="my-2 h-px bg-border" />}
                     </React.Fragment>
                   ))}
                 </DropdownMenu.Content>
               </DropdownMenu.Root>
-            )}
 
-            {isBookPage && (
-              <button
-                onClick={toggleFavoriteBook}
-                className={`p-2 rounded-full shadow-md focus:outline-none hover:bg-primary-hover hover:text-primary-foreground-hover ${
-                  book && favoriteBooks.some(fav => fav.bookId === book?.meta?.id) ? 'bg-accentalert' : 'bg-card'
-                }`}
-                aria-label="Add to Favorites"
-              >
-                <div className="w-5 h-5">藏</div>
-              </button>
-            )}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={handleToggleLanguage}
+                    className="p-2 bg-card rounded-full shadow-md focus:outline-none hover:bg-primary-hover hover:text-primary-foreground-hover"
+                    aria-label={isSimplified ? "Switch to Traditional Chinese" : "Switch to Simplified Chinese"}
+                  >
+                    {isSimplified ? (
+                      <div className="w-5 h-5">繁</div>
+                    ) : (
+                      <div className="w-5 h-5">简</div>
+                    )}
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <Text>{isSimplified ? "切换至繁体中文" : "切换至简体中文"}</Text>
+                </TooltipContent>
+              </Tooltip>
+              
+              <Dialog modal={false}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <DialogTrigger asChild>
+                      <button
+                        className="p-2 bg-card rounded-full shadow-md focus:outline-none hover:bg-primary-hover hover:text-primary-foreground-hover"
+                        aria-label="Select Font and Width"
+                      >
+                        <div className="w-5 h-5 flex items-center justify-center">
+                        <div className="w-5 h-5">字</div>
+                        </div>
+                      </button>
+                    </DialogTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <Text>更换网站字体</Text>
+                  </TooltipContent>
+                </Tooltip>
+                <DialogContent className="p-6 bg-card max-w-md md:max-w-lg lg:max-w-xl mx-auto max-h-[80vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle><Text>选择字体和宽度</Text></DialogTitle>
+                    <DialogDescription>
+                      <Text>请选择一种字体、字体大小和内容宽度</Text>
+                    </DialogDescription>
+                  </DialogHeader>
+                  <RadioGroup value={selectedFont} onValueChange={setSelectedFont} className="mt-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="--font-aakai" id="aakai-font" />
+                        <Label className="text-2xl" style={{ fontFamily: `var(--font-aakai)` }} htmlFor="aakai-font">Aa楷体</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="--font-aakaiSong" id="aaKaiSongFont" />
+                        <Label className="text-2xl" style={{ fontFamily: `var(--font-aakaiSong)` }} htmlFor="aaKaiSongFont">Aa楷宋</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="--font-hyfs" id="hyfangsongFont" />
+                        <Label className="text-2xl" style={{ fontFamily: `var(--font-hyfs)` }} htmlFor="hyfangsongFont">汉仪仿宋</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="--font-lxgw" id="lxgwFont" />
+                        <Label className="text-2xl" style={{ fontFamily: `var(--font-lxgw)` }} htmlFor="lxgwFont">落霞孤鹜</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="--font-qnlb" id="qingniaolibianFont" />
+                        <Label className="text-2xl" style={{ fontFamily: `var(--font-qnlb)` }} htmlFor="qingniaolibianFont">青鸟隶变</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="--font-rzykt" id="ruiziyunFont" />
+                        <Label className="text-2xl" style={{ fontFamily: `var(--font-rzykt)` }} htmlFor="ruiziyunFont">锐字云楷体</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="--font-twzk" id="taiwanzhengkaiFont" />
+                        <Label className="text-2xl" style={{ fontFamily: `var(--font-twzk)` }} htmlFor="taiwanzhengkaiFont">台湾正楷体</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="--font-wqwh" id="wenquanweiheiFont" />
+                        <Label className="text-2xl" style={{ fontFamily: `var(--font-wqwh)` }} htmlFor="wenquanweiheiFont">文泉微黑</Label>
+                      </div>
+                    </div>
+                  </RadioGroup>
+                  
+                  <div className="mt-6">
+                    <label className="text-sm font-medium mb-2">
+                      <Text>字体大小</Text>
+                    </label>
+                    <Slider.Root
+                      className="relative flex items-center select-none touch-none w-full h-5"
+                      value={[fontSizeToNumber(fontSize)]}
+                      min={0}
+                      max={fontSizeOptions.length - 1}
+                      step={1}
+                      onValueChange={(value) => setFontSize(numberToFontSize(value[0]))}
+                      aria-label="Font Size Slider"
+                    >
+                      <Slider.Track className="bg-secondary relative flex-1 h-1 rounded-full">
+                        <Slider.Range className="absolute bg-primary h-full rounded-full" />
+                      </Slider.Track>
+                      <Slider.Thumb className="block w-4 h-4 bg-primary rounded-full focus:outline-none" />
+                    </Slider.Root>
+                    <div className="flex justify-between text-sm mt-2">
+                      <span className="text-sm"><Text>小</Text></span>
+                      <span className="text-xl"><Text>大</Text></span>
+                    </div>
+                  </div>
 
-            {isBookPage && (
-              <button
-                onClick={handleAddBookmark}
-                className={`p-2 bg-card rounded-full shadow-md focus:outline-none hover:bg-primary-hover hover:text-primary-foreground-hover
-                }`}
-                aria-label="Add to Bookmarks"
-              >
-                <div className="w-5 h-5">签</div>
-              </button>
-            )}
+                  <div className="mt-6">
+                    <label className="text-sm font-medium mb-2">
+                      <Text>内容宽度</Text>
+                    </label>
+                    <Slider.Root
+                      className="relative flex items-center select-none touch-none w-full h-5"
+                      value={[widthToNumber(selectedWidth)]}
+                      min={0}
+                      max={widthOptions.length - 1}
+                      step={1}
+                      onValueChange={(value) => setSelectedWidth(numberToWidth(value[0]))}
+                      aria-label="Content Width Slider"
+                    >
+                      <Slider.Track className="bg-secondary relative flex-1 h-1 rounded-full">
+                        <Slider.Range className="absolute bg-primary h-full rounded-full" />
+                      </Slider.Track>
+                      <Slider.Thumb className="block w-4 h-4 bg-primary rounded-full focus:outline-none" />
+                    </Slider.Root>
+                    <div className="flex justify-between text-sm mt-2">
+                      <span className="text-base"><Text>窄</Text></span>
+                      <span className="text-base"><Text>宽</Text></span>
+                    </div>
+                  </div>
 
-            {isBookPage && (
-              <button
-                onClick={handleDownload}
-                className={`p-2 bg-card rounded-full shadow-md focus:outline-none hover:bg-primary-hover hover:text-primary-foreground-hover`}
-                aria-label="Download"
-              >
-                <div className="w-5 h-5">下</div>
-              </button>
-            )}
+                  <div className="mt-6 flex justify-end">
+                    <DialogClose asChild>
+                      <Button className="hover:bg-primary-hover hover:text-primary-foreground-hover">
+                        <Text>确定</Text>
+                      </Button>
+                    </DialogClose>
+                  </div>
+                </DialogContent>
+              </Dialog>
+
+              {isBookPage && (
+                <DropdownMenu.Root modal={false}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <DropdownMenu.Trigger asChild>
+                        <button
+                          className="p-2 bg-card rounded-full shadow-md focus:outline-none hover:bg-primary-hover hover:text-primary-foreground-hover"
+                          aria-label="Select Theme"
+                        >
+                          <div className="w-5 h-5">目</div>
+                        </button>
+                      </DropdownMenu.Trigger>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <Text>显示书籍目录</Text>
+                    </TooltipContent>
+                  </Tooltip>
+                  <DropdownMenu.Content 
+                    className="bg-popover p-4 rounded-md shadow-lg max-h-80 overflow-y-auto"
+                    style={{ fontFamily }}
+                  >
+                    {book?.juans.filter(juan => juan.type === 'bt' || juan.type === 'bm').map(juan => (
+                      <React.Fragment key={juan.id}>
+                        <DropdownMenu.Item
+                          onSelect={() => handleJuanSelect(juan)}
+                              className={classNames(
+                                "flex items-center px-4 py-2 cursor-pointer ",
+                                {
+                                  "text-lg bg-secondary hover:bg-primary-hover hover:text-primary-foreground-hover": juan.type === "bt",
+                                  "text-base hover:bg-secondary-hover hover:text-secondary-foreground-hover": juan.type === "bm",
+                                }
+                              )}
+                        >
+                          <Text>{juan.content[0]}</Text>
+                        </DropdownMenu.Item>
+                        <DropdownMenu.Separator className="my-2 h-px bg-border" />
+                      </React.Fragment>
+                    ))}
+                  </DropdownMenu.Content>
+                </DropdownMenu.Root>
+              )}
+
+              {isBookPage && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={toggleFavoriteBook}
+                      className={`p-2 rounded-full shadow-md focus:outline-none hover:bg-primary-hover hover:text-primary-foreground-hover ${
+                        book && favoriteBooks.some(fav => fav.bookId === book?.meta?.id) ? 'bg-accentalert' : 'bg-card'
+                      }`}
+                      aria-label="Add to Favorites"
+                    >
+                      <div className="w-5 h-5">藏</div>
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <Text>添加书籍至收藏</Text>
+                  </TooltipContent>
+                </Tooltip>
+              )}
+
+              {isBookPage && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={handleAddBookmark}
+                      className={`p-2 bg-card rounded-full shadow-md focus:outline-none hover:bg-primary-hover hover:text-primary-foreground-hover
+                      }`}
+                      aria-label="Add to Bookmarks"
+                    >
+                      <div className="w-5 h-5">签</div>
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <Text>添加当前阅读位置至书签</Text>
+                  </TooltipContent>
+                </Tooltip>
+              )}
+
+              {isBookPage && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={handleDownload}
+                      className={`p-2 bg-card rounded-full shadow-md focus:outline-none hover:bg-primary-hover hover:text-primary-foreground-hover`}
+                      aria-label="Download"
+                    >
+                      <div className="w-5 h-5">下</div>
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <Text>将此经文保存为PDF文档</Text>
+                  </TooltipContent>
+                </Tooltip>
+              )}
 
           </>
         )}
-
+        </TooltipProvider>
       </div>  
 
       <div>
