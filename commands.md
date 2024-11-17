@@ -42,3 +42,24 @@ sudo apt install -y \
     libwayland-egl1 \
     fonts-liberation \
     libfontconfig1
+
+
+## Git commands
+
+git add '*aaKaiSong*'; git commit -m 'Update aaKaiSong'
+
+git add '*aaKaiTi*'; git commit -m 'Update aaKaiTi' 
+
+git add '*hyFangsong*'; git commit -m 'Update hyFangsong'
+
+git add '*lxgw*'; git commit -m 'Update lxgw'
+
+git add '*qnBianLi*'; git commit -m 'Update qnBianLi'
+
+git add '*rzyKaiTi*'; git commit -m 'Update rzyKaiTi'
+
+git add '*twZhengKai*'; git commit -m 'Update twZhengKai'
+
+git add '*wqwMiHei*'; git commit -m 'Update wqwMiHei'
+
+
