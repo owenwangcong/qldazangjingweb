@@ -46,20 +46,24 @@ sudo apt install -y \
 
 ## Git commands
 
-git add '*aaKaiSong*'; git commit -m 'Update aaKaiSong'
+git add *; git commit -m 'Update comamnd file'; git push origin main
 
-git add '*aaKaiTi*'; git commit -m 'Update aaKaiTi' 
+### Update font files
 
-git add '*hyFangsong*'; git commit -m 'Update hyFangsong'
+git add '*aaKaiSong*'; git commit -m 'Update aaKaiSong'; git push origin main
 
-git add '*lxgw*'; git commit -m 'Update lxgw'
+git add '*aaKaiTi*'; git commit -m 'Update aaKaiTi'; git push origin main
 
-git add '*qnBianLi*'; git commit -m 'Update qnBianLi'
+git add '*hyFangsong*'; git commit -m 'Update hyFangsong'; git push origin main
 
-git add '*rzyKaiTi*'; git commit -m 'Update rzyKaiTi'
+git add '*lxgw*'; git commit -m 'Update lxgw'; git push origin main
 
-git add '*twZhengKai*'; git commit -m 'Update twZhengKai'
+git add '*qnBianLi*'; git commit -m 'Update qnBianLi'; git push origin main
 
-git add '*wqwMiHei*'; git commit -m 'Update wqwMiHei'
+git add '*rzyKaiTi*'; git commit -m 'Update rzyKaiTi'; git push origin main
+
+git add '*twZhengKai*'; git commit -m 'Update twZhengKai'; git push origin main
+
+git add '*wqwMiHei*'; git commit -m 'Update wqwMiHei'; git push origin main
 
 
