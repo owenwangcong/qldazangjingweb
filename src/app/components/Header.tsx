@@ -175,8 +175,7 @@ const Header: React.FC = () => {
 
   return (
     <div id="header" className="bg-background text-foreground">
-        <div className="fixed top-2 right-2 space-y-4 z-50 flex flex-col">
-
+      <div data-nosnippet="true" className="fixed top-2 right-2 space-y-4 z-50 flex flex-col">
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
