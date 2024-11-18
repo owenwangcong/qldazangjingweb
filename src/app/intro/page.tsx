@@ -137,9 +137,9 @@ const DictsPage: React.FC = () => {
             </div>            
 
             <div className="flex flex-row gap-2">
-                <button className="p-2 bg-card rounded-full shadow-md"><div className="w-5 h-5 flex items-center justify-center">下</div></button>
+                <button className="p-2 bg-card rounded-full shadow-md"><div className="w-5 h-5 flex items-center justify-center">存</div></button>
                 <div className="flex flex-col justify-center">
-                    <Text>将此经文保存为PDF文档</Text>
+                    <Text>将此经文下载保存为PDF文档</Text>
                 </div>
             </div>            
 
