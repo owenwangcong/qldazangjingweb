@@ -186,8 +186,8 @@ const Header: React.FC = () => {
                 aria-label={isHeaderVisible ? "Hide Header" : "Show Header"}
               >
                 {isHeaderVisible ? 
-                  <div className="w-5 h-5 flex items-center justify-center">隐</div> : 
-                  <div className="w-5 h-5 flex items-center justify-center">显</div>
+                  <div data-nosnippet className="w-5 h-5 flex items-center justify-center">隐</div> : 
+                  <div data-nosnippet className="w-5 h-5 flex items-center justify-center">显</div>
                 }
               </button>
             </TooltipTrigger>
@@ -206,7 +206,7 @@ const Header: React.FC = () => {
                         className="p-2 bg-card rounded-full shadow-md focus:outline-none hover:bg-primary-hover hover:text-primary-foreground-hover"
                         aria-label="Select Theme"
                       >
-                        <div className="w-5 h-5 flex items-center justify-center">色</div>
+                        <div data-nosnippet className="w-5 h-5 flex items-center justify-center">色</div>
                       </button>
                     </DropdownMenu.Trigger>
                   </TooltipTrigger>
@@ -247,9 +247,9 @@ const Header: React.FC = () => {
                     aria-label={isSimplified ? "Switch to Traditional Chinese" : "Switch to Simplified Chinese"}
                   >
                     {isSimplified ? (
-                      <div className="w-5 h-5 flex items-center justify-center">繁</div>
+                      <div data-nosnippet className="w-5 h-5 flex items-center justify-center">繁</div>
                     ) : (
-                      <div className="w-5 h-5 flex items-center justify-center">简</div>
+                      <div data-nosnippet className="w-5 h-5 flex items-center justify-center">简</div>
                     )}
                   </button>
                 </TooltipTrigger>
@@ -267,7 +267,7 @@ const Header: React.FC = () => {
                         aria-label="Select Font and Width"
                       >
                         <div className="w-5 h-5 flex items-center justify-center">
-                          <div className="w-5 h-5 flex items-center justify-center">字</div>
+                          <div data-nosnippet className="w-5 h-5 flex items-center justify-center">字</div>
                         </div>
                       </button>
                     </DialogTrigger>
@@ -387,7 +387,7 @@ const Header: React.FC = () => {
                           className="p-2 bg-card rounded-full shadow-md focus:outline-none hover:bg-primary-hover hover:text-primary-foreground-hover"
                           aria-label="Select Theme"
                         >
-                          <div className="w-5 h-5 flex items-center justify-center">目</div>
+                          <div data-nosnippet className="w-5 h-5 flex items-center justify-center">目</div>
                         </button>
                       </DropdownMenu.Trigger>
                     </TooltipTrigger>
@@ -430,7 +430,7 @@ const Header: React.FC = () => {
                       }`}
                       aria-label="Add to Favorites"
                     >
-                      <div className="w-5 h-5 flex items-center justify-center">藏</div>
+                      <div data-nosnippet className="w-5 h-5 flex items-center justify-center">藏</div>
                     </button>
                   </TooltipTrigger>
                   <TooltipContent>
@@ -448,7 +448,7 @@ const Header: React.FC = () => {
                       }`}
                       aria-label="Add to Bookmarks"
                     >
-                      <div className="w-5 h-5 flex items-center justify-center">签</div>
+                      <div data-nosnippet className="w-5 h-5 flex items-center justify-center">签</div>
                     </button>
                   </TooltipTrigger>
                   <TooltipContent>
@@ -465,7 +465,7 @@ const Header: React.FC = () => {
                       className={`p-2 bg-card rounded-full shadow-md focus:outline-none hover:bg-primary-hover hover:text-primary-foreground-hover`}
                       aria-label="Download"
                     >
-                      <div className="w-5 h-5 flex items-center justify-center">存</div>
+                      <div data-nosnippet className="w-5 h-5 flex items-center justify-center">存</div>
                     </button>
                   </TooltipTrigger>
                   <TooltipContent>
