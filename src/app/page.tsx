@@ -7,10 +7,11 @@ import Link from 'next/link';
 import { FontContext } from './context/FontContext';
 import Text from '@/app/components/Text';
 import $ from 'jquery';
+import Head from 'next/head';
 export default function Home() {
 
   return (
-    <>  
+    <> 
       <Header />
       <div 
         className={`flex flex-col items-center min-h-screen p-8 pb-8 gap-8`}
