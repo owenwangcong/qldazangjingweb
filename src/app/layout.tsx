@@ -49,10 +49,6 @@ const wqwh = localFont({
 const GA_TRACKING_ID = 'G-YYK959RPCX';
 
 export async function generateMetadata(): Promise<Metadata> {
-    // Since generateMetadata runs on the server, we cannot use usePathname here.
-    // Instead, we'll dynamically set the canonical URL based on the request.
-    // However, Next.js currently doesn't allow accessing pathname directly in generateMetadata.
-    // We'll set a generic canonical URL.
     return {
         title: "乾隆大藏经 | 大藏经",
         description: "乾隆大藏经是清代乾隆年间编纂的一部重要佛教典籍，收录了大量佛教经典、论著和注疏。本网站提供乾隆大藏经的在线阅读、检索、注释和研究功能，让读者能够方便地查阅和学习这部珍贵的佛教文献。乾隆大藏经。龙藏。",
@@ -74,13 +70,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
 
-  const canonicalUrl = `https://qldazangjing.com`;
-
   return (
     <html lang="en">
       <head>
         <meta name="description" content="乾隆大藏经是清代乾隆年间编纂的一部重要佛教典籍，收录了大量佛教经典、论著和注疏。本网站提供乾隆大藏经的在线阅读、检索、注释和研究功能，让读者能够方便地查阅和学习这部珍贵的佛教文献。乾隆大藏经。龙藏。" />
-        <link rel="canonical" href={canonicalUrl} />
         <Script
           src={`https://www.googletagmanager.com/gtag/js?id=${GA_TRACKING_ID}`}
           strategy="afterInteractive"

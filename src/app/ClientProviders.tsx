@@ -16,8 +16,6 @@ const GA_TRACKING_ID = 'G-YYK959RPCX';
 const ClientProviders = ({ children }: { children: React.ReactNode }) => {
   
   const pathname = usePathname();
-  const canonicalUrl = `https://qldazangjing.com${pathname}`;
-
   useEffect(() => {
     const handleRouteChange = (url: string) => {
       (window as any).gtag('config', GA_TRACKING_ID, {
