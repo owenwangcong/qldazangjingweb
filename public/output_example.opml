@@ -1,0 +1,106 @@
+<?xml version="1.0" ?>
+<opml version="1.0">
+  <head>
+    <title>Sheet 1</title>
+  </head>
+  <body>
+    <outline text="Example">
+      <outline text="gerunds">
+        <outline text="used after preposition">
+          <outline text="a. On"/>
+          <outline text="b. at"/>
+          <outline text="c. up"/>
+          <outline text="some thing like that:)"/>
+        </outline>
+        <outline text="after possessive adj or &quot; 's&quot;">
+          <outline text="1. their"/>
+          <outline text="2.her"/>
+          <outline text="3. Vanessa 's"/>
+        </outline>
+        <outline text="after the following expressions">
+          <outline text="a. look forward"/>
+          <outline text="b. can't sleep"/>
+        </outline>
+        <outline text="the following words">
+          <outline text="1. enjoy"/>
+          <outline text="2. mind"/>
+          <outline text="3. finish"/>
+          <outline text="4. quit"/>
+          <outline text="5. postpone"/>
+          <outline text="6. delay"/>
+          <outline text="7. admite"/>
+          <outline text="8. appreciate"/>
+        </outline>
+        <outline text="&quot;To&quot;+gerund">
+          <outline text="a. (be)used to"/>
+          <outline text="b. object to"/>
+        </outline>
+        <outline text="the (v)of perception">
+          <outline text="1. see"/>
+          <outline text="2. hear"/>
+        </outline>
+      </outline>
+      <outline text="Infinitives">
+        <outline text="expressions are 
+
+followed by&quot;to&quot;(infinitive)">
+          <outline text="A.(v)+infinitive pattern">
+            <outline text="1.appear to"/>
+            <outline text="2.fail to"/>
+            <outline text="3.hope to"/>
+          </outline>
+          <outline text="B.(v)+object+infinitive pattern">
+            <outline text="a.ask+object+to"/>
+            <outline text="b.order+object+to"/>
+          </outline>
+        </outline>
+        <outline text="Infinitives without&quot;TO&quot;">
+          <outline text="1. Will/shall/can/may/do/must..."/>
+          <outline text="2.see/watch/feel/smell..."/>
+          <outline text="3.make/let..."/>
+          <outline text="4.had better/cannot but..."/>
+        </outline>
+        <outline text="after adj">
+          <outline text="used with adj of personal 
+
+qualities,the preposition which
+
+follows is&quot;of&quot;">
+            <outline text=" kind of/crazy of"/>
+          </outline>
+          <outline text="with adj of impersonal,the
+
+preposition which follows is&quot;for&quot;">
+            <outline text="easy fo/important for..."/>
+          </outline>
+        </outline>
+        <outline text="other infinitive partterns">
+          <outline text="a. Too+adj+to
+
+,It is+adj+to">
+            <outline text="too bad to/too great to..."/>
+            <outline text="it is cooler to sit"/>
+          </outline>
+          <outline text="b.adj/adv+enough+infinitive">
+            <outline text="not old enough..."/>
+          </outline>
+          <outline text="c. not enough to=too...to">
+            <outline text="too old to /too heavy..."/>
+          </outline>
+          <outline text="d. so+adj/adv+as+infinitive">
+            <outline text="so foolish as to leave..."/>
+          </outline>
+          <outline text="e.&quot;only to&quot;pattern">
+            <outline text="only to find..."/>
+          </outline>
+        </outline>
+      </outline>
+      <outline text="the following(v)can be followed 
+
+by either gerunds/infinitive">
+        <outline text="1.stop"/>
+        <outline text="2.remember"/>
+      </outline>
+    </outline>
+  </body>
+</opml>
