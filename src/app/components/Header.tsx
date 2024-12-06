@@ -116,6 +116,11 @@ const Header: React.FC = () => {
 
   const handleDownload = async () => {
     try {
+      toast({
+        title: "下载开始",
+        description: "正在准备下载 " + (book?.meta.title || 'PDF文件'),
+      });
+
       // Retrieve values from local storage
       const fontFamily = localStorage.getItem('fontFamily');
       const fontSize = localStorage.getItem('fontSize');
