@@ -116,6 +116,14 @@ const Header: React.FC = () => {
 
   const handleDownload = async () => {
     try {
+
+      // INSERT_YOUR_CODE
+      toast({
+        title: "下载功能暂时不可用",
+        description: "抱歉，下载功能正在维护中，请稍后再试。",
+      });
+      return;
+
       toast({
         title: "下载开始",
         description: "正在准备下载 " + (book?.meta.title || 'PDF文件'),
