@@ -11,7 +11,8 @@
       "Bash(powershell:*)",
       "Bash(npx next:*)",
       "Bash(del D:ProjectsCursorqldazangjingwebnext.config.js)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(del:*)"
     ],
     "deny": [],
     "ask": []
