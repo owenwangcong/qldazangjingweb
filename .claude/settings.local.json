@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run dev:*)",
+      "Bash(node:*)",
+      "Bash(taskkill:*)",
+      "Bash(npm:*)",
+      "Bash(tasklist:*)",
+      "Bash(rd:*)",
+      "Bash(rm:*)",
+      "Bash(powershell:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
