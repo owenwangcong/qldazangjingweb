@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Header from '@/app/components/Header';
 import { FavoriteBook, BrowserHistoryItem, Bookmark, useMyStudy } from '@/app/context/MyStudyContext';
 import { Annotation, AnnotationProvider, useAnnotations } from '@/app/context/AnnotationContext';
-import mlsData from '../../../public/data/mls.json';
+// Remove direct JSON import - load dynamically instead
 import Text from '@/app/components/Text';
 import Link from 'next/link';
 import Pagination from '../components/Pagination';
@@ -26,10 +26,23 @@ const MyStudyPage: React.FC = () => {
   const { annotations, removeAnnotation } = useAnnotations();
 
   const [allBooks, setAllBooks] = useState<Book[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const books = Object.values(mlsData).flatMap(section => section.bus);
-    setAllBooks(books);
+    const loadBooks = async () => {
+      try {
+        const response = await fetch('/data/mls.json');
+        const mlsData = await response.json();
+        const books = Object.values(mlsData).flatMap((section: any) => section.bus);
+        setAllBooks(books);
+      } catch (error) {
+        console.error('Failed to load mls data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadBooks();
   }, []);
 
     // Pagination for favorites

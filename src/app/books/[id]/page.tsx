@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
-import bookMetaData from '../../../../public/data/bookMetaData.json';
+import { readFileSync } from 'fs';
+import { join } from 'path';
 import BookDetailPage from './BookDetailPage';
 
 // Define the type for book metadata
@@ -13,26 +14,38 @@ type BookMetaData = {
   [key: string]: BookMeta;
 };
 
+// Helper function to load book metadata
+async function loadBookMetaData(): Promise<BookMetaData> {
+  const filePath = join(process.cwd(), 'public', 'data', 'bookMetaData.json');
+  const fileContents = readFileSync(filePath, 'utf8');
+  return JSON.parse(fileContents);
+}
+
 // Generate metadata for SEO
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
   const { id } = params;
 
-  // Retrieve the book metadata by id
-  const bookMeta: BookMeta | undefined = (bookMetaData as BookMetaData)[id];
+  try {
+    const bookMetaData = await loadBookMetaData();
+    // Retrieve the book metadata by id
+    const bookMeta: BookMeta | undefined = bookMetaData[id];
 
-  if (bookMeta) {
-    return {
-      title: `${bookMeta.title}`,
-      description: `经名: ${bookMeta.title}. 作者: ${bookMeta.author}`,
-      other: {
-        "application/ld+json": JSON.stringify({
-          "@context": "https://schema.org",
-          "@type": "Book",
-          "name": bookMeta.title,
-          "description": `经名: ${bookMeta.title}. 作者: ${bookMeta.author}`,
-        }),
-      },
-    };
+    if (bookMeta) {
+      return {
+        title: `${bookMeta.title}`,
+        description: `经名: ${bookMeta.title}. 作者: ${bookMeta.author}`,
+        other: {
+          "application/ld+json": JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Book",
+            "name": bookMeta.title,
+            "description": `经名: ${bookMeta.title}. 作者: ${bookMeta.author}`,
+          }),
+        },
+      };
+    }
+  } catch (error) {
+    console.error('Failed to load book metadata:', error);
   }
 
   return {
@@ -44,9 +57,6 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
 // Server-side page component
 const Page = ({ params }: { params: { id: string } }) => {
   const { id } = params;
-
-  // Retrieve the book metadata by id
-  //const bookMeta: BookMeta | undefined = (bookMetaData as BookMetaData)[id];
 
   // Pass the metadata to the client-side component
   return <BookDetailPage/>;

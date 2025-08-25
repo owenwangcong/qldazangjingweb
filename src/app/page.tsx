@@ -2,13 +2,49 @@
 
 import React, { useState, useEffect } from 'react';
 import Header from './components/Header';
-import mlsData from '../../public/data/mls.json';
 import Link from 'next/link';
 import { FontContext } from './context/FontContext';
 import Text from '@/app/components/Text';
 import $ from 'jquery';
 import Head from 'next/head';
+
+interface MlsItem {
+  id: string;
+  name: string;
+}
+
+type MlsData = Record<string, MlsItem>;
+
 export default function Home() {
+  const [mlsData, setMlsData] = useState<MlsData>({});
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadMlsData = async () => {
+      try {
+        const response = await fetch('/data/mls.json');
+        const data = await response.json();
+        setMlsData(data);
+      } catch (error) {
+        console.error('Failed to load mls data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadMlsData();
+  }, []);
+
+  if (loading) {
+    return (
+      <>
+        <Header />
+        <div className="flex flex-col items-center min-h-screen p-8 pb-8 gap-8">
+          <div className="text-center">Loading...</div>
+        </div>
+      </>
+    );
+  }
 
   return (
     <> 
