@@ -4,23 +4,53 @@ import puppeteer from 'puppeteer';
 
 export async function POST(req: NextRequest) {
   const userIp = req.headers.get('x-forwarded-for') || req.ip || 'Unknown IP';
+  const userAgent = req.headers.get('user-agent') || 'Unknown';
+  const method = req.method;
+  const requestUrl = req.url;
+
+  let browser = null;
+  let page = null;
 
   try {
     const { url, fontFamily, fontSize, isSimplified, selectedFont, selectedWidth, theme } = await req.json();
     
-    logger.log(`PDF generation started for URL: ${url}`, userIp);
-    logger.log(`Font Family: ${fontFamily}`, userIp);
-    logger.log(`Font Size: ${fontSize}`, userIp);
-    logger.log(`Is Simplified: ${isSimplified}`, userIp);
-    logger.log(`Selected Font: ${selectedFont}`, userIp);
-    logger.log(`Selected Width: ${selectedWidth}`, userIp);
-    logger.log(`Theme: ${theme}`, userIp);
+    const pdfConfig = {
+      url,
+      fontFamily,
+      fontSize,
+      isSimplified,
+      selectedFont,
+      selectedWidth,
+      theme
+    };
 
-    const browser = await puppeteer.launch({
+    logger.log(`POST /download-pdf - PDF generation started`, userIp, userAgent, method, requestUrl);
+    logger.debug('PDF generation config', pdfConfig, userIp);
+
+    // Launch browser with enhanced error handling
+    browser = await puppeteer.launch({
         headless: true,
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-accelerated-2d-canvas',
+          '--no-first-run',
+          '--no-zygote',
+          '--single-process',
+          '--disable-gpu'
+        ]
     });
+
+    logger.debug('Browser launched successfully', {}, userIp);
     
-    const page = await browser.newPage();
+    page = await browser.newPage();
+
+    // Set page settings
+    await page.setViewport({ width: 1920, height: 1080 });
+    
+    // Set timeout for page operations
+    page.setDefaultTimeout(60000);
 
     await page.evaluateOnNewDocument((fontFamily, fontSize, isSimplified, selectedFont, selectedWidth, theme) => {
         if (fontFamily && fontFamily.trim() !== '') localStorage.setItem('fontFamily', fontFamily);
@@ -31,11 +61,17 @@ export async function POST(req: NextRequest) {
         if (theme && theme.trim() !== '') localStorage.setItem('theme', theme);
     }, fontFamily, fontSize, isSimplified, selectedFont, selectedWidth, theme);
 
-    await page.goto(url, { waitUntil: 'networkidle0' });
+    logger.debug('Navigating to URL', { url }, userIp);
+    await page.goto(url, { 
+      waitUntil: 'networkidle0',
+      timeout: 60000 
+    });
     
+    logger.debug('Waiting for content to render', {}, userIp);
     // Wait for the content to be rendered
-    await page.waitForSelector('#recogito-container');
+    await page.waitForSelector('#recogito-container', { timeout: 30000 });
     
+    logger.debug('Hiding header and footer elements', {}, userIp);
     // Hide the header element before generating PDF
     await page.evaluate(() => {
         const header = document.getElementById('header');
@@ -48,6 +84,8 @@ export async function POST(req: NextRequest) {
         }
     });
 
+    logger.debug('Generating PDF', {}, userIp);
+    const startPdfTime = Date.now();
     const pdf = await page.pdf({
       format: 'A4',
       margin: {
@@ -57,9 +95,14 @@ export async function POST(req: NextRequest) {
         right: '0mm'
       },
       printBackground: true,
+      timeout: 120000
     });
+    const pdfGenerationTime = Date.now() - startPdfTime;
 
     await browser.close();
+    browser = null;
+
+    logger.log(`POST /download-pdf - PDF generated successfully (${pdfGenerationTime}ms, ${Math.round(pdf.length / 1024)}KB)`, userIp, userAgent, method, requestUrl);
 
     // Return the PDF as a blob
     return new NextResponse(pdf, {
@@ -69,9 +112,23 @@ export async function POST(req: NextRequest) {
       }
     });
 
-  } catch (error) {
-    logger.log(`PDF generation error: ${error}`, userIp);
-    console.error('PDF generation error:', error);
-    return NextResponse.json({ error: 'Failed to generate PDF' }, { status: 500 });
+  } catch (error: any) {
+    // Clean up browser if still open
+    if (browser) {
+      try {
+        await browser.close();
+      } catch (closeError) {
+        logger.warn('Failed to close browser during error cleanup', userIp, userAgent, method, requestUrl);
+      }
+    }
+
+    logger.error('POST /download-pdf - PDF generation failed', error, userIp, userAgent, method, requestUrl);
+    
+    return NextResponse.json({ 
+      error: 'Failed to generate PDF',
+      details: error.message,
+      timestamp: new Date().toISOString(),
+      requestId: Math.random().toString(36).substring(7)
+    }, { status: 500 });
   }
 }

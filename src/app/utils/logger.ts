@@ -4,18 +4,40 @@ import path from 'path';
 // Define maximum log file size (e.g., 5MB)
 const MAX_LOG_SIZE = 5 * 1024 * 1024; // 5MB
 const logFilePath = path.join(process.cwd(), 'api.log');
-const archiveLogPath = path.join(process.cwd(), `api-${Date.now()}.log`);
+const errorLogPath = path.join(process.cwd(), 'error.log');
+const debugLogPath = path.join(process.cwd(), 'debug.log');
+
+enum LogLevel {
+  DEBUG = 'DEBUG',
+  INFO = 'INFO',
+  WARN = 'WARN',
+  ERROR = 'ERROR',
+  FATAL = 'FATAL'
+}
+
+interface LogEntry {
+  timestamp: string;
+  level: LogLevel;
+  ip: string;
+  message: string;
+  userAgent?: string;
+  method?: string;
+  url?: string;
+  stack?: string;
+  processId: number;
+  memoryUsage: NodeJS.MemoryUsage;
+}
 
 const logger = {
-  log: (message: string, ip: string) => {
-    const timestamp = new Date().toISOString();
-    const logMessage = `${timestamp} - ${ip} - ${message}\n`;
+  // Enhanced logging with different levels and structured data
+  writeLog: (entry: LogEntry, filePath: string) => {
+    const logMessage = JSON.stringify(entry) + '\n';
     
-    // Check the current log file size
-    fs.stat(logFilePath, (err, stats) => {
+    // Check file size and rotate if needed
+    fs.stat(filePath, (err, stats) => {
       if (!err && stats.size >= MAX_LOG_SIZE) {
-        // Rotate the log file
-        fs.rename(logFilePath, archiveLogPath, (renameErr) => {
+        const archivePath = filePath.replace('.log', `-${Date.now()}.log`);
+        fs.rename(filePath, archivePath, (renameErr) => {
           if (renameErr) {
             console.error('Failed to rotate log file:', renameErr);
           }
@@ -23,13 +45,98 @@ const logger = {
       }
 
       // Append the log message
-      fs.appendFile(logFilePath, logMessage, (appendErr) => {
+      fs.appendFile(filePath, logMessage, (appendErr) => {
         if (appendErr) {
           console.error('Failed to write to log file:', appendErr);
         }
       });
     });
   },
+
+  log: (message: string, ip: string, userAgent?: string, method?: string, url?: string) => {
+    const entry: LogEntry = {
+      timestamp: new Date().toISOString(),
+      level: LogLevel.INFO,
+      ip,
+      message,
+      userAgent,
+      method,
+      url,
+      processId: process.pid,
+      memoryUsage: process.memoryUsage()
+    };
+    
+    logger.writeLog(entry, logFilePath);
+    console.log(`[${entry.level}] ${entry.timestamp} - ${ip} - ${message}`);
+  },
+
+  error: (message: string, error: Error | unknown, ip: string, userAgent?: string, method?: string, url?: string) => {
+    const entry: LogEntry = {
+      timestamp: new Date().toISOString(),
+      level: LogLevel.ERROR,
+      ip,
+      message,
+      userAgent,
+      method,
+      url,
+      stack: error instanceof Error ? error.stack : String(error),
+      processId: process.pid,
+      memoryUsage: process.memoryUsage()
+    };
+    
+    logger.writeLog(entry, errorLogPath);
+    logger.writeLog(entry, logFilePath);
+    console.error(`[${entry.level}] ${entry.timestamp} - ${ip} - ${message}`, error);
+  },
+
+  warn: (message: string, ip: string, userAgent?: string, method?: string, url?: string) => {
+    const entry: LogEntry = {
+      timestamp: new Date().toISOString(),
+      level: LogLevel.WARN,
+      ip,
+      message,
+      userAgent,
+      method,
+      url,
+      processId: process.pid,
+      memoryUsage: process.memoryUsage()
+    };
+    
+    logger.writeLog(entry, logFilePath);
+    console.warn(`[${entry.level}] ${entry.timestamp} - ${ip} - ${message}`);
+  },
+
+  debug: (message: string, data?: any, ip?: string) => {
+    if (process.env.NODE_ENV === 'development') {
+      const entry: LogEntry = {
+        timestamp: new Date().toISOString(),
+        level: LogLevel.DEBUG,
+        ip: ip || 'system',
+        message: data ? `${message} - Data: ${JSON.stringify(data)}` : message,
+        processId: process.pid,
+        memoryUsage: process.memoryUsage()
+      };
+      
+      logger.writeLog(entry, debugLogPath);
+      console.debug(`[${entry.level}] ${entry.timestamp} - ${message}`, data);
+    }
+  },
+
+  fatal: (message: string, error: Error | unknown, ip: string) => {
+    const entry: LogEntry = {
+      timestamp: new Date().toISOString(),
+      level: LogLevel.FATAL,
+      ip,
+      message,
+      stack: error instanceof Error ? error.stack : String(error),
+      processId: process.pid,
+      memoryUsage: process.memoryUsage()
+    };
+    
+    logger.writeLog(entry, errorLogPath);
+    logger.writeLog(entry, logFilePath);
+    console.error(`[${entry.level}] ${entry.timestamp} - ${ip} - FATAL: ${message}`, error);
+  }
 };
 
 export default logger; 
