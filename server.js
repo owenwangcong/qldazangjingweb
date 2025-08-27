@@ -68,7 +68,44 @@ function removePidFile() {
 // Handle process termination signals
 function setupGracefulShutdown(server) {
   const shutdown = (signal) => {
+    const signalInfo = {
+      timestamp: new Date().toISOString(),
+      signal: signal,
+      processId: process.pid,
+      parentProcessId: process.ppid,
+      processGroup: process.getpgid(process.pid),
+      uptime: process.uptime(),
+      memoryUsage: process.memoryUsage(),
+      platform: process.platform,
+      workingDirectory: process.cwd(),
+      environment: process.env,
+      argv: process.argv,
+      execPath: process.execPath,
+      sessionId: process.getsid ? process.getsid(process.pid) : 'unknown',
+      userId: process.getuid ? process.getuid() : 'unknown',
+      groupId: process.getgid ? process.getgid() : 'unknown',
+      tty: process.stdout.isTTY,
+      connected: process.connected,
+      title: process.title
+    };
+
     console.log(`\nReceived ${signal}. Shutting down gracefully...`);
+    console.log('Signal source information:');
+    console.log(`- Process ID: ${signalInfo.processId}`);
+    console.log(`- Parent Process ID: ${signalInfo.parentProcessId}`);
+    console.log(`- Process Group ID: ${signalInfo.processGroup}`);
+    console.log(`- Session ID: ${signalInfo.sessionId}`);
+    console.log(`- User ID: ${signalInfo.userId}`);
+    console.log(`- TTY attached: ${signalInfo.tty}`);
+    console.log(`- Process connected: ${signalInfo.connected}`);
+    console.log(`- Environment SSH_CLIENT: ${process.env.SSH_CLIENT || 'not set'}`);
+    console.log(`- Environment SSH_CONNECTION: ${process.env.SSH_CONNECTION || 'not set'}`);
+    console.log(`- Environment SSH_TTY: ${process.env.SSH_TTY || 'not set'}`);
+
+    // Write detailed signal info to log file
+    const logMessage = JSON.stringify(signalInfo, null, 2) + '\n' + '='.repeat(80) + '\n';
+    fs.appendFileSync(path.join(process.cwd(), 'signal-exits.log'), logMessage);
+
     removePidFile();
     server.close(() => {
       console.log('Server closed');
