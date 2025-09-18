@@ -13,7 +13,9 @@
       "Bash(del D:ProjectsCursorqldazangjingwebnext.config.js)",
       "Bash(npx tsc:*)",
       "Bash(del:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ],
     "deny": [
       "Read(./public/**)",
