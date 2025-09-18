@@ -18,7 +18,7 @@ npm install
 npm run build
 
 ## Start the production server
-npm run start
+pm2 start npm --name "qldazangjingweb" -- run start
 
 ## Install Chromium dependencies
 sudo apt install -y \
