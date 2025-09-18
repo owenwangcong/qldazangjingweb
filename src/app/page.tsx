@@ -5,7 +5,6 @@ import Header from './components/Header';
 import Link from 'next/link';
 import { FontContext } from './context/FontContext';
 import Text from '@/app/components/Text';
-import $ from 'jquery';
 import Head from 'next/head';
 
 interface MlsItem {
