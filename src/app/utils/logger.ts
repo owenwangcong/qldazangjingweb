@@ -3,9 +3,16 @@ import path from 'path';
 
 // Define maximum log file size (e.g., 5MB)
 const MAX_LOG_SIZE = 5 * 1024 * 1024; // 5MB
-const logFilePath = path.join(process.cwd(), 'api.log');
-const errorLogPath = path.join(process.cwd(), 'error.log');
-const debugLogPath = path.join(process.cwd(), 'debug.log');
+
+// Ensure logs directory exists
+const logsDir = path.join(process.cwd(), 'logs');
+if (!fs.existsSync(logsDir)) {
+  fs.mkdirSync(logsDir, { recursive: true });
+}
+
+const logFilePath = path.join(process.cwd(), 'logs', 'api.log');
+const errorLogPath = path.join(process.cwd(), 'logs', 'error.log');
+const debugLogPath = path.join(process.cwd(), 'logs', 'debug.log');
 
 enum LogLevel {
   DEBUG = 'DEBUG',

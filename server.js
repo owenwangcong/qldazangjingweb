@@ -33,7 +33,7 @@ const logRequest = (req, res, next) => {
     };
     
     const logMessage = JSON.stringify(logEntry) + '\n';
-    fs.appendFileSync(path.join(process.cwd(), 'requests.log'), logMessage);
+    fs.appendFileSync(path.join(process.cwd(), 'logs', 'requests.log'), logMessage);
     
     console.log(`[${logEntry.timestamp}] ${req.method} ${req.url} - ${res.statusCode} - ${duration}ms`);
   });
@@ -42,6 +42,12 @@ const logRequest = (req, res, next) => {
 };
 
 const pidFile = path.join(process.cwd(), 'app.pid');
+
+// Ensure logs directory exists
+const logsDir = path.join(process.cwd(), 'logs');
+if (!fs.existsSync(logsDir)) {
+  fs.mkdirSync(logsDir, { recursive: true });
+}
 
 // Function to write PID file
 function writePidFile() {
@@ -104,7 +110,7 @@ function setupGracefulShutdown(server) {
 
     // Write detailed signal info to log file
     const logMessage = JSON.stringify(signalInfo, null, 2) + '\n' + '='.repeat(80) + '\n';
-    fs.appendFileSync(path.join(process.cwd(), 'signal-exits.log'), logMessage);
+    fs.appendFileSync(path.join(process.cwd(), 'logs', 'signal-exits.log'), logMessage);
 
     removePidFile();
     server.close(() => {
@@ -146,11 +152,11 @@ const logError = (error, context) => {
   };
   
   const logMessage = JSON.stringify(errorLog) + '\n';
-  fs.appendFileSync(path.join(process.cwd(), 'crash.log'), logMessage);
+  fs.appendFileSync(path.join(process.cwd(), 'logs', 'crash.log'), logMessage);
   console.error(`[CRASH] ${errorLog.timestamp} - ${context}:`, error);
-  
+
   // Also write to a separate abnormal exit log for easier analysis
-  fs.appendFileSync(path.join(process.cwd(), 'abnormal-exit.log'), logMessage);
+  fs.appendFileSync(path.join(process.cwd(), 'logs', 'abnormal-exit.log'), logMessage);
 };
 
 // Comprehensive exit logging function
@@ -187,8 +193,8 @@ const logAbnormalExit = (reason, data, signal = null) => {
     const logMessage = JSON.stringify(exitInfo, null, 2) + '\n' + '='.repeat(80) + '\n';
     
     // Write to multiple log files for redundancy
-    fs.appendFileSync(path.join(process.cwd(), 'abnormal-exit.log'), logMessage);
-    fs.appendFileSync(path.join(process.cwd(), 'crash.log'), logMessage);
+    fs.appendFileSync(path.join(process.cwd(), 'logs', 'abnormal-exit.log'), logMessage);
+    fs.appendFileSync(path.join(process.cwd(), 'logs', 'crash.log'), logMessage);
     
     console.error(`[ABNORMAL EXIT] ${exitInfo.timestamp} - ${reason}`);
     console.error('Full exit details written to abnormal-exit.log');
@@ -280,7 +286,7 @@ process.on('warning', (warning) => {
     memoryUsage: process.memoryUsage()
   };
   
-  fs.appendFileSync(path.join(process.cwd(), 'warnings.log'), JSON.stringify(warningLog) + '\n');
+  fs.appendFileSync(path.join(process.cwd(), 'logs', 'warnings.log'), JSON.stringify(warningLog) + '\n');
   console.warn(`[WARNING] ${warning.name}: ${warning.message}`);
 });
 
@@ -297,7 +303,7 @@ process.on('exit', (code) => {
   
   // Use synchronous write since process is exiting
   try {
-    fs.appendFileSync(path.join(process.cwd(), 'process-exits.log'), JSON.stringify(exitLog) + '\n');
+    fs.appendFileSync(path.join(process.cwd(), 'logs', 'process-exits.log'), JSON.stringify(exitLog) + '\n');
     console.log(`[EXIT] Process exiting with code ${code} after ${Math.round(process.uptime())} seconds`);
   } catch (e) {
     console.error('Failed to log exit:', e);
@@ -324,7 +330,7 @@ setInterval(() => {
       uptime: process.uptime(),
       processId: process.pid
     };
-    fs.appendFileSync(path.join(process.cwd(), 'memory.log'), JSON.stringify(memLog) + '\n');
+    fs.appendFileSync(path.join(process.cwd(), 'logs', 'memory.log'), JSON.stringify(memLog) + '\n');
   }
 }, 60000); // Check every minute
 

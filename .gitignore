@@ -38,17 +38,8 @@ next-env.d.ts
 # Exclude data folder
 /data
 
-# Exclude api.log
-api.log
-debug.log
-error.log
-crash.log
-abnormal-exit.log
-process-exits.log
-warnings.log
-health.log
-memory.log
-requests.log
+# Exclude logs folder
+/logs/
 
 # PID file
 app.pid

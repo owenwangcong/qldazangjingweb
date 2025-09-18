@@ -6,16 +6,16 @@ const path = require('path');
 class LogAnalyzer {
   constructor() {
     this.logFiles = {
-      api: 'api.log',
-      error: 'error.log',
-      crash: 'crash.log',
-      debug: 'debug.log',
-      health: 'health.log',
-      memory: 'memory.log',
-      requests: 'requests.log',
-      abnormalExit: 'abnormal-exit.log',
-      processExits: 'process-exits.log',
-      warnings: 'warnings.log'
+      api: 'logs/api.log',
+      error: 'logs/error.log',
+      crash: 'logs/crash.log',
+      debug: 'logs/debug.log',
+      health: 'logs/health.log',
+      memory: 'logs/memory.log',
+      requests: 'logs/requests.log',
+      abnormalExit: 'logs/abnormal-exit.log',
+      processExits: 'logs/process-exits.log',
+      warnings: 'logs/warnings.log'
     };
   }
 

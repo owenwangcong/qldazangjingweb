@@ -23,8 +23,16 @@ interface HealthCheck {
 
 class ApplicationMonitor {
   private healthCheckInterval: NodeJS.Timeout | null = null;
-  private healthLogPath = path.join(process.cwd(), 'health.log');
-  
+  private healthLogPath = path.join(process.cwd(), 'logs', 'health.log');
+
+  constructor() {
+    // Ensure logs directory exists
+    const logsDir = path.join(process.cwd(), 'logs');
+    if (!fs.existsSync(logsDir)) {
+      fs.mkdirSync(logsDir, { recursive: true });
+    }
+  }
+
   // Memory thresholds in MB
   private readonly MEMORY_WARNING_THRESHOLD = 512;
   private readonly MEMORY_CRITICAL_THRESHOLD = 1024;

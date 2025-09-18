@@ -4,6 +4,12 @@
 const fs = require('fs');
 const path = require('path');
 
+// Ensure logs directory exists
+const logsDir = path.join(process.cwd(), 'logs');
+if (!fs.existsSync(logsDir)) {
+  fs.mkdirSync(logsDir, { recursive: true });
+}
+
 console.log('Testing enhanced logging system...\n');
 
 // Test 1: Create a sample error log
@@ -18,7 +24,7 @@ const errorEntry = {
   memoryUsage: process.memoryUsage()
 };
 
-fs.appendFileSync('error.log', JSON.stringify(errorEntry) + '\n');
+fs.appendFileSync('logs/error.log', JSON.stringify(errorEntry) + '\n');
 console.log('   ✅ Sample error logged');
 
 // Test 2: Create a sample request log
@@ -34,7 +40,7 @@ const requestEntry = {
   memoryUsage: process.memoryUsage()
 };
 
-fs.appendFileSync('requests.log', JSON.stringify(requestEntry) + '\n');
+fs.appendFileSync('logs/requests.log', JSON.stringify(requestEntry) + '\n');
 console.log('   ✅ Sample request logged');
 
 // Test 3: Create a sample process exit log
@@ -48,7 +54,7 @@ const exitEntry = {
   type: 'NORMAL_EXIT'
 };
 
-fs.appendFileSync('process-exits.log', JSON.stringify(exitEntry) + '\n');
+fs.appendFileSync('logs/process-exits.log', JSON.stringify(exitEntry) + '\n');
 console.log('   ✅ Sample process exit logged');
 
 // Test 4: Create a sample warning log
@@ -62,7 +68,7 @@ const warningEntry = {
   memoryUsage: process.memoryUsage()
 };
 
-fs.appendFileSync('warnings.log', JSON.stringify(warningEntry) + '\n');
+fs.appendFileSync('logs/warnings.log', JSON.stringify(warningEntry) + '\n');
 console.log('   ✅ Sample warning logged');
 
 // Test 5: Generate a comprehensive abnormal exit log
@@ -101,7 +107,7 @@ const abnormalExitEntry = {
 };
 
 const logMessage = JSON.stringify(abnormalExitEntry, null, 2) + '\n' + '='.repeat(80) + '\n';
-fs.appendFileSync('abnormal-exit.log', logMessage);
+fs.appendFileSync('logs/abnormal-exit.log', logMessage);
 console.log('   ✅ Sample abnormal exit logged');
 
 console.log('\n📊 Testing complete! Running log analyzer...\n');
@@ -112,7 +118,7 @@ const analyzer = new LogAnalyzer();
 analyzer.analyze();
 
 console.log('\n🧹 Cleaning up test logs...');
-const testLogs = ['error.log', 'requests.log', 'process-exits.log', 'warnings.log', 'abnormal-exit.log'];
+const testLogs = ['logs/error.log', 'logs/requests.log', 'logs/process-exits.log', 'logs/warnings.log', 'logs/abnormal-exit.log'];
 testLogs.forEach(logFile => {
   if (fs.existsSync(logFile)) {
     fs.unlinkSync(logFile);
