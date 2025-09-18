@@ -40,6 +40,15 @@ next-env.d.ts
 
 # Exclude api.log
 api.log
+debug.log
+error.log
+crash.log
+abnormal-exit.log
+process-exits.log
+warnings.log
+health.log
+memory.log
+requests.log
 
 # PID file
 app.pid
