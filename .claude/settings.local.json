@@ -12,7 +12,8 @@
       "Bash(npx next:*)",
       "Bash(del D:ProjectsCursorqldazangjingwebnext.config.js)",
       "Bash(npx tsc:*)",
-      "Bash(del:*)"
+      "Bash(del:*)",
+      "Bash(curl:*)"
     ],
     "deny": [
       "Read(./public/**)",
