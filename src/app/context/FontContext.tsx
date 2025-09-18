@@ -66,19 +66,24 @@ export const FontProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   // Effect to load the selected font, width, and fontFamily from localStorage on client side
   useEffect(() => {
     if (typeof window !== "undefined") {
+      const actualStoredFont = localStorage.getItem("selectedFont");
+      const actualStoredFontSize = localStorage.getItem("fontSize");
+      const actualStoredWidth = localStorage.getItem("selectedWidth");
+      const actualStoredFontFamily = localStorage.getItem("fontFamily");
+
       // Load the font from localStorage
-      setSelectedFont(storedFont || DEFAULT_FONT);
+      setSelectedFont(actualStoredFont || DEFAULT_FONT);
 
       // Load the font size from localStorage
-      setFontSize(storedFontSize || DEFAULT_FONT_SIZE);
+      setFontSize(actualStoredFontSize || DEFAULT_FONT_SIZE);
 
       // Load the width from localStorage
-      setSelectedWidth(storedWidth || DEFAULT_WIDTH);
+      setSelectedWidth(actualStoredWidth || DEFAULT_WIDTH);
 
       // Load the fontFamily from localStorage
-      setFontFamily(storedFontFamily || DEFAULT_FONT_FAMILY);
+      setFontFamily(actualStoredFontFamily || DEFAULT_FONT_FAMILY);
     }
-  }, []);
+  }, []); // Empty dependency array - only run once on mount
 
   // Effect to update localStorage whenever selectedFont changes
   useEffect(() => {

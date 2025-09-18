@@ -40,13 +40,14 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   // Load the persisted theme from localStorage on mount
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const themeToApply = storedTheme || DEFAULT_THEME;
+      const actualStoredTheme = localStorage.getItem('theme');
+      const themeToApply = actualStoredTheme || DEFAULT_THEME;
       setTheme(themeToApply as Theme);
-      
+
       document.body.classList.remove('lianchichanyun', 'zhulinyoujing', 'yueyingqinghui', 'sangaijingtu', 'guchayese', 'fagufanyin');
       document.body.classList.add(themeToApply);
     }
-  }, []);
+  }, []); // Empty dependency array - only run once on mount
 
   // Effect to update localStorage whenever theme changes
   useEffect(() => {

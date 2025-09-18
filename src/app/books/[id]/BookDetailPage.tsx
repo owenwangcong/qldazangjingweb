@@ -131,7 +131,7 @@ const BookDetailPage: React.FC = () => {
         }
       });
     }
-  }, [selectedFont, id]);
+  }, [selectedFont, id, setFontFamily]);
 
   // This useEffect hook fetches the book data when the component mounts or when the id changes.
   useEffect(() => {
@@ -139,7 +139,7 @@ const BookDetailPage: React.FC = () => {
       fetchBookData(id as string).then(setBook);
       addToBrowserHistory(id as string);
     }
-  }, [id]);
+  }, [id]); // Only depend on id
   
   // Initialize Recogito when the component mounts or id/book changes
   useEffect(() => {
@@ -239,7 +239,7 @@ const BookDetailPage: React.FC = () => {
         console.log('Recogito instance is null');
       }
     };
-  }, [id, book]); // Updated dependencies
+  }, [id, book]); // Only depend on id and book
   
 
   const handleTextSelection = (event: React.MouseEvent | React.TouchEvent) => {
@@ -513,7 +513,7 @@ const BookDetailPage: React.FC = () => {
       }
     };
     fetchData();
-  }, [selectedItem]);
+  }, [selectedItem, selectedText]);
 
 
   // Cleanup for long press timer on unmount
@@ -553,7 +553,7 @@ const BookDetailPage: React.FC = () => {
     return () => {
       parts.forEach(p => observer.unobserve(p));
     };
-  }, [book]);
+  }, [book]); // Only depend on book
   
   if (!book) {
     return (
