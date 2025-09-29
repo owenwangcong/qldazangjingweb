@@ -72,6 +72,15 @@ module.exports = {
         id: {
           type: 'keyword'
         },
+        bu: {
+          type: 'text',
+          analyzer: 'buddhist_analyzer',
+          fields: {
+            keyword: {
+              type: 'keyword'
+            }
+          }
+        },
         title: {
           type: 'text',
           analyzer: 'buddhist_analyzer',
@@ -90,14 +99,25 @@ module.exports = {
             }
           }
         },
-        dynasty: {
-          type: 'keyword'
+        last_bu: {
+          properties: {
+            id: { type: 'keyword' },
+            name: { type: 'text', analyzer: 'buddhist_analyzer' }
+          }
         },
-        part: {
-          type: 'keyword'
+        next_bu: {
+          properties: {
+            id: { type: 'keyword' },
+            name: { type: 'text', analyzer: 'buddhist_analyzer' }
+          }
         },
-        juan: {
-          type: 'integer'
+        juans: {
+          type: 'nested',
+          properties: {
+            id: { type: 'keyword' },
+            type: { type: 'keyword' },
+            content: { type: 'text', analyzer: 'buddhist_analyzer' }
+          }
         },
         content: {
           type: 'text',

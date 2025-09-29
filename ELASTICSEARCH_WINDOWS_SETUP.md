@@ -86,6 +86,102 @@ This guide will help you set up Elasticsearch on your local Windows computer for
    npm run dev
    ```
 
+### Optional: Setup Kibana for Elasticsearch Management
+
+Kibana provides a web interface to manage and query your Elasticsearch data.
+
+1. **Start Kibana Container**
+   ```powershell
+   # Run Kibana container
+   docker run -d --name kibana -p 5601:5601 -e "ELASTICSEARCH_HOSTS=http://host.docker.internal:9200" docker.elastic.co/kibana/kibana:8.12.0
+   ```
+
+2. **Access Kibana**
+   - Open browser: http://localhost:5601
+   - Wait 1-2 minutes for Kibana to start
+   - No login required (security disabled)
+
+3. **Useful Kibana Features**
+   - **Dev Tools**: Console for running queries (Menu → Management → Dev Tools)
+   - **Discover**: Browse your indexed documents
+   - **Index Management**: View index settings and mappings
+
+4. **Example Kibana Queries**
+   ```javascript
+   // In Dev Tools Console
+
+   // View index mapping
+   GET /buddhist_texts/_mapping
+
+   // Count documents
+   GET /buddhist_texts/_count
+
+   // Search for text
+   POST /buddhist_texts/_search
+   {
+     "query": {
+       "match": {
+         "content": "般若波罗蜜"
+       }
+     }
+   }
+
+   // Analyze text with IK tokenizer
+   POST /buddhist_texts/_analyze
+   {
+     "analyzer": "buddhist_analyzer",
+     "text": "金刚般若波罗蜜经"
+   }
+
+   // Exact match by title (keyword field)
+   POST /buddhist_texts/_search
+   {
+     "query": {
+       "term": {
+         "title.keyword": "大般若波罗蜜多经六百卷（第一卷～第十卷）"
+       }
+     }
+   }
+
+   // Exact match by ID
+   GET /buddhist_texts/_doc/0001-01
+
+   // Multiple exact matches
+   POST /buddhist_texts/_search
+   {
+     "query": {
+       "terms": {
+         "id": ["0001-01", "0001-02", "0001-03"]
+       }
+     }
+   }
+
+   // Phrase match (exact phrase in content)
+   POST /buddhist_texts/_search
+   {
+     "query": {
+       "match_phrase": {
+         "content": "般若波罗蜜多"
+       }
+     }
+   }
+   ```
+
+5. **Kibana Docker Commands**
+   ```powershell
+   # Start Kibana
+   docker start kibana
+
+   # Stop Kibana
+   docker stop kibana
+
+   # View Kibana logs
+   docker logs kibana
+
+   # Remove Kibana container
+   docker rm kibana
+   ```
+
 ### Docker Commands Reference
 
 ```powershell
@@ -103,6 +199,12 @@ docker rm elasticsearch
 
 # Check container status
 docker ps -a | findstr elasticsearch
+
+# Start both Elasticsearch and Kibana
+docker start elasticsearch kibana
+
+# Stop both
+docker stop elasticsearch kibana
 ```
 
 ## Option 2: Direct Installation on Windows
@@ -175,6 +277,35 @@ docker ps -a | findstr elasticsearch
    npm run es:import
    ```
 
+### Optional: Install Kibana (Direct Installation)
+
+1. **Download Kibana**
+   - Go to: https://www.elastic.co/downloads/kibana
+   - Download Windows ZIP file (version 8.12.0)
+   - Extract to `C:\kibana-8.12.0`
+
+2. **Configure Kibana**
+
+   Edit `C:\kibana-8.12.0\config\kibana.yml`:
+   ```yaml
+   server.port: 5601
+   server.host: "localhost"
+   elasticsearch.hosts: ["http://localhost:9200"]
+   ```
+
+3. **Start Kibana**
+   ```powershell
+   # Open new PowerShell window
+   cd C:\kibana-8.12.0
+   .\bin\kibana.bat
+
+   # Keep this window open while using Kibana
+   ```
+
+4. **Access Kibana**
+   - Open browser: http://localhost:5601
+   - Wait 1-2 minutes for Kibana to start
+
 ## Option 3: Using WSL2 (Windows Subsystem for Linux)
 
 ### Prerequisites
@@ -213,6 +344,25 @@ docker ps -a | findstr elasticsearch
 3. **Access from Windows**
    - Elasticsearch will be available at: `http://localhost:9200`
 
+### Optional: Install Kibana on WSL2
+
+1. **Inside Ubuntu WSL**
+   ```bash
+   # Install Kibana
+   sudo apt install kibana
+
+   # Configure Kibana
+   sudo nano /etc/kibana/kibana.yml
+   # Set: server.host: "0.0.0.0"
+
+   # Start Kibana service
+   sudo systemctl start kibana
+   sudo systemctl enable kibana
+   ```
+
+2. **Access from Windows**
+   - Kibana will be available at: `http://localhost:5601`
+
 ## Testing Your Installation
 
 ### 1. Quick Test
@@ -238,8 +388,17 @@ curl http://localhost:9200
 
 ### 3. Search Test
 Open browser and go to your app: http://localhost:3000/search
-- Search for "金刚经" or "心经"
+- Search for "般若" or "金刚"
 - You should see results with highlighting
+
+### 4. Kibana Test (if installed)
+Open browser: http://localhost:5601
+- Navigate to Dev Tools (Menu → Management → Dev Tools)
+- Run test query:
+  ```javascript
+  GET /buddhist_texts/_count
+  ```
+- You should see the document count
 
 ## Troubleshooting
 
@@ -282,11 +441,33 @@ C:\elasticsearch-8.12.0\bin\elasticsearch-plugin list
 - Use SSD for Elasticsearch data
 - Reduce number of shards to 1
 
+#### 6. Kibana Won't Start
+```powershell
+# Check if Kibana can reach Elasticsearch
+curl http://localhost:9200
+
+# View Kibana logs (Docker)
+docker logs kibana
+
+# View Kibana logs (Direct install)
+type C:\kibana-8.12.0\logs\kibana.log
+
+# Common fix: Restart Elasticsearch first, then Kibana
+docker restart elasticsearch
+docker restart kibana
+```
+
+#### 7. Kibana Shows "Kibana server is not ready yet"
+- Wait 2-3 minutes for initialization
+- Check Elasticsearch is running
+- Verify `ELASTICSEARCH_HOSTS` setting is correct
+
 ### Windows Firewall Configuration
-If needed, allow Elasticsearch through firewall:
+If needed, allow Elasticsearch and Kibana through firewall:
 ```powershell
 # Run as Administrator
 netsh advfirewall firewall add rule name="Elasticsearch" dir=in action=allow protocol=TCP localport=9200
+netsh advfirewall firewall add rule name="Kibana" dir=in action=allow protocol=TCP localport=5601
 ```
 
 ## Performance Optimization for Windows
@@ -300,6 +481,7 @@ Add exclusions for better performance:
 - Settings → Windows Security → Virus & threat protection
 - Manage settings → Add exclusions
 - Add folder: Elasticsearch installation directory
+- Add folder: Kibana installation directory (if using direct install)
 
 ### 3. Power Settings
 - Set to High Performance mode
@@ -308,17 +490,40 @@ Add exclusions for better performance:
 
 ## Development Workflow
 
-### Daily Usage
+### Daily Usage (Docker)
 ```powershell
-# Start Docker Elasticsearch
+# Start Elasticsearch and Kibana (if installed)
 docker start elasticsearch
+docker start kibana  # optional
 
 # Start your app
 cd D:\Projects\Cursor\qldazangjingweb
 npm run dev
 
+# Access services
+# - App: http://localhost:3000
+# - Elasticsearch: http://localhost:9200
+# - Kibana: http://localhost:5601
+
 # Stop when done
-docker stop elasticsearch
+docker stop elasticsearch kibana
+```
+
+### Daily Usage (Direct Install)
+```powershell
+# Terminal 1: Start Elasticsearch
+cd C:\elasticsearch-8.12.0
+.\bin\elasticsearch.bat
+
+# Terminal 2: Start Kibana (optional)
+cd C:\kibana-8.12.0
+.\bin\kibana.bat
+
+# Terminal 3: Start your app
+cd D:\Projects\Cursor\qldazangjingweb
+npm run dev
+
+# Close terminals when done (Ctrl+C)
 ```
 
 ### Reset Data
@@ -330,15 +535,22 @@ npm run es:import:force
 
 ### View Logs
 ```powershell
-# Docker logs
+# Docker logs - Elasticsearch
 docker logs elasticsearch --tail 50 -f
 
-# Direct installation logs
+# Docker logs - Kibana
+docker logs kibana --tail 50 -f
+
+# Direct installation logs - Elasticsearch
 type C:\elasticsearch-8.12.0\logs\buddhist-texts-cluster.log
+
+# Direct installation logs - Kibana
+type C:\kibana-8.12.0\logs\kibana.log
 ```
 
 ## Quick Commands Cheat Sheet
 
+### Elasticsearch Commands
 ```powershell
 # Check ES status
 curl http://localhost:9200/_cluster/health?pretty
@@ -347,16 +559,66 @@ curl http://localhost:9200/_cluster/health?pretty
 curl http://localhost:9200/buddhist_texts/_count
 
 # Search test
-curl -X POST http://localhost:9200/buddhist_texts/_search -H "Content-Type: application/json" -d "{\"query\":{\"match\":{\"content\":\"金刚经\"}}}"
+curl -X POST http://localhost:9200/buddhist_texts/_search -H "Content-Type: application/json" -d "{\"query\":{\"match\":{\"content\":\"般若\"}}}"
 
 # Delete all data (careful!)
 curl -X DELETE http://localhost:9200/buddhist_texts
 
-# Restart Docker container
+# Restart Docker containers
 docker restart elasticsearch
+docker restart kibana
 
 # View Docker resource usage
-docker stats elasticsearch
+docker stats elasticsearch kibana
+```
+
+### Kibana Quick Queries (in Dev Tools)
+```javascript
+// Check cluster health
+GET /_cluster/health
+
+// View index info
+GET /buddhist_texts
+
+// Count all documents
+GET /buddhist_texts/_count
+
+// Search by content
+POST /buddhist_texts/_search
+{
+  "query": {
+    "match": {
+      "content": "般若波罗蜜"
+    }
+  },
+  "size": 10
+}
+
+// Search by title
+POST /buddhist_texts/_search
+{
+  "query": {
+    "match": {
+      "title": "金刚"
+    }
+  }
+}
+
+// Test IK analyzer
+POST /buddhist_texts/_analyze
+{
+  "analyzer": "buddhist_analyzer",
+  "text": "金刚般若波罗蜜经"
+}
+
+// Get index statistics
+GET /buddhist_texts/_stats
+
+// View first 10 documents
+GET /buddhist_texts/_search
+{
+  "size": 10
+}
 ```
 
 ## Recommended VS Code Extensions
@@ -369,21 +631,45 @@ For better development experience:
 ## Next Steps
 
 1. ✅ Verify Elasticsearch is running: http://localhost:9200
-2. ✅ Run setup: `npm run es:setup`
-3. ✅ Import books: `npm run es:import`
-4. ✅ Enable in `.env.local`: `NEXT_PUBLIC_USE_ELASTICSEARCH=true`
-5. ✅ Start app: `npm run dev`
-6. ✅ Test search at: http://localhost:3000/search
+2. ✅ (Optional) Verify Kibana is running: http://localhost:5601
+3. ✅ Run setup: `npm run es:setup`
+4. ✅ Import books: `npm run es:import`
+5. ✅ Enable in `.env.local`: `NEXT_PUBLIC_USE_ELASTICSEARCH=true`
+6. ✅ Start app: `npm run dev`
+7. ✅ Test search at: http://localhost:3000/search
+8. ✅ (Optional) Explore data in Kibana Dev Tools
 
 ## Support
 
 If you encounter issues:
-1. Check Docker container logs: `docker logs elasticsearch`
-2. Verify connectivity: `curl http://localhost:9200`
+1. Check Docker container logs: `docker logs elasticsearch` or `docker logs kibana`
+2. Verify connectivity: `curl http://localhost:9200` and `curl http://localhost:5601`
 3. Run tests: `npm run es:test`
 4. Check app console for errors (F12 in browser)
+5. Use Kibana Dev Tools to debug Elasticsearch queries
 
-Remember to stop Elasticsearch when not in use to save resources:
+Remember to stop services when not in use to save resources:
 ```powershell
-docker stop elasticsearch
+# Docker
+docker stop elasticsearch kibana
+
+# Direct install: Press Ctrl+C in terminal windows
 ```
+
+## Summary
+
+**With Docker (Recommended):**
+- Elasticsearch: `docker run` → Port 9200
+- Kibana: `docker run` → Port 5601
+- Easy to start/stop/manage
+
+**Direct Installation:**
+- More control, better for learning
+- Run `elasticsearch.bat` and `kibana.bat`
+- Requires Java 17+
+
+**Kibana Benefits:**
+- Visual query builder
+- Index management interface
+- Real-time log viewing
+- Query testing without code

@@ -7,89 +7,59 @@ const args = process.argv.slice(2);
 const forceRecreate = args.includes('--force');
 const skipExisting = args.includes('--skip-existing');
 
-async function parseBookMetadata(content, id) {
-  const lines = content.split('\n');
+async function parseBookJSON(jsonData, id) {
+  // Extract metadata
+  const { meta, juans } = jsonData;
 
-  // Extract title (usually first line)
-  const title = lines[0]?.trim() || `Book ${id}`;
-
-  // Extract author from second line (format varies)
-  let author = '';
-  let dynasty = '';
-
-  if (lines[1]) {
-    const secondLine = lines[1].trim();
-    // Common patterns: "【朝代】作者" or "作者" or "朝代 作者"
-    const dynastyMatch = secondLine.match(/【(.+?)】/);
-    if (dynastyMatch) {
-      dynasty = dynastyMatch[1];
-      author = secondLine.replace(dynastyMatch[0], '').trim();
-    } else if (secondLine.includes(' ')) {
-      const parts = secondLine.split(' ');
-      dynasty = parts[0];
-      author = parts.slice(1).join(' ');
-    } else {
-      author = secondLine;
+  // Combine all content from juans
+  let allContent = '';
+  if (juans && Array.isArray(juans)) {
+    for (const juan of juans) {
+      if (juan.content && Array.isArray(juan.content)) {
+        allContent += juan.content.join('') + '\n';
+      }
     }
   }
 
-  // Extract part/bu information from filename or metadata
-  let part = '';
-  let juan = 0;
-
-  if (id.includes('-')) {
-    const parts = id.split('-');
-    part = parts[0];
-    juan = parseInt(parts[1]) || 0;
-  }
-
-  // Get content (skip metadata lines)
-  const contentStartIndex = lines.findIndex(line =>
-    line.trim() &&
-    !line.includes('【') &&
-    !line.includes('作者') &&
-    !line.includes('朝代')
-  );
-
-  const content = lines.slice(Math.max(2, contentStartIndex)).join('\n');
-
   return {
-    id,
-    title,
-    author: author || '佚名',
-    dynasty: dynasty || '未知',
-    part,
-    juan,
-    content,
-    content_length: content.length,
+    id: meta.id || id,
+    bu: meta.Bu || '',
+    title: meta.title || `Book ${id}`,
+    author: meta.Arthur || '佚名',
+    last_bu: meta.last_bu || null,
+    next_bu: meta.next_bu || null,
+    juans: juans || [],
+    content: allContent.trim(),
+    content_length: allContent.length,
     created_at: new Date(),
     updated_at: new Date()
   };
 }
 
 async function loadBooks() {
-  const booksDir = path.join(__dirname, '..', 'public', 'books');
+  const booksDir = path.join(__dirname, '..', 'public', 'data', 'books');
 
   try {
     const files = await fs.readdir(booksDir);
-    const txtFiles = files.filter(file => file.endsWith('.txt'));
+    const jsonFiles = files.filter(file => file.endsWith('.json'));
 
-    console.log(`Found ${txtFiles.length} book files`);
+    console.log(`Found ${jsonFiles.length} book files`);
 
     const books = [];
     let errorCount = 0;
 
-    for (const file of txtFiles) {
+    for (const file of jsonFiles) {
       try {
-        const id = file.replace('.txt', '');
-        const content = await fs.readFile(path.join(booksDir, file), 'utf-8');
+        const id = file.replace('.json', '');
+        const fileContent = await fs.readFile(path.join(booksDir, file), 'utf-8');
 
-        if (!content || content.trim().length === 0) {
+        if (!fileContent || fileContent.trim().length === 0) {
           console.log(`Skipping empty file: ${file}`);
           continue;
         }
 
-        const book = await parseBookMetadata(content, id);
+        const jsonData = JSON.parse(fileContent);
+        const book = await parseBookJSON(jsonData, id);
         books.push(book);
 
         if (books.length % 100 === 0) {
@@ -185,13 +155,15 @@ async function main() {
 
     // Test search
     console.log('\n6. Testing search...');
-    const testResult = await esService.search('金刚经', { size: 5 });
-    console.log(`Test search for "金刚经": found ${testResult.total} results`);
+    const testResult = await esService.search('般若', { size: 5 });
+    console.log(`Test search for "般若": found ${testResult.total} results`);
 
     if (testResult.hits.length > 0) {
       console.log('First result:', {
+        id: testResult.hits[0].id,
         title: testResult.hits[0].title,
         author: testResult.hits[0].author,
+        bu: testResult.hits[0].bu,
         score: testResult.hits[0].score
       });
     }
@@ -215,4 +187,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { parseBookMetadata, loadBooks };
+module.exports = { parseBookJSON, loadBooks };
