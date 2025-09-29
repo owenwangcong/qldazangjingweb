@@ -6,9 +6,15 @@
     "dev": "node server.js",
     "build": "node generate-sitemap.js && next build",
     "start": "NODE_ENV=production node server.js",
-    "lint": "next lint"
+    "lint": "next lint",
+    "es:setup": "node scripts/setup-elasticsearch.js",
+    "es:setup:reset": "node scripts/setup-elasticsearch.js --reset",
+    "es:import": "node scripts/import-to-elasticsearch.js",
+    "es:import:force": "node scripts/import-to-elasticsearch.js --force",
+    "es:test": "node scripts/test-elasticsearch.js"
   },
   "dependencies": {
+    "@elastic/elasticsearch": "^9.1.1",
     "@radix-ui/react-context-menu": "^2.2.2",
     "@radix-ui/react-dialog": "^1.1.2",
     "@radix-ui/react-dropdown-menu": "^2.0.2",
