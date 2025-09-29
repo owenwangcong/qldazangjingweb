@@ -522,7 +522,7 @@ indices.queries.cache.size: 15%
 ```bash
 # 下载对应版本的 IK 分词器
 cd /usr/share/elasticsearch
-sudo bin/elasticsearch-plugin install https://github.com/medcl/elasticsearch-analysis-ik/releases/download/v8.12.0/elasticsearch-analysis-ik-8.12.0.zip
+sudo bin/elasticsearch-plugin install https://release.infinilabs.com/analysis-ik/stable/elasticsearch-analysis-ik-8.12.0.zip
 
 # 创建自定义词典目录
 sudo mkdir -p /etc/elasticsearch/analysis
