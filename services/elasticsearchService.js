@@ -1,9 +1,30 @@
 const { Client } = require('@elastic/elasticsearch');
-const OpenCC = require('opencc-js');
 const config = require('../config/elasticsearch.config');
 
-// Initialize OpenCC converter for Traditional to Simplified Chinese
-const converter = OpenCC.Converter({ from: 't', to: 's' });
+// OpenCC initialization - handle both browser and Node.js environments
+let converter = null;
+try {
+  const OpenCC = require('opencc-js');
+  // Only initialize if OpenCC is available and working
+  if (OpenCC && OpenCC.Converter) {
+    converter = (text) => {
+      try {
+        return OpenCC.Converter({ from: 't', to: 's' })(text);
+      } catch (e) {
+        console.warn('OpenCC conversion failed, returning original text:', e.message);
+        return text;
+      }
+    };
+  }
+} catch (error) {
+  console.warn('OpenCC not available in Node.js environment, traditional to simplified conversion disabled');
+}
+
+// Ensure converter is always defined
+if (!converter) {
+  // Fallback converter that returns text as-is
+  converter = (text) => text;
+}
 
 class ElasticsearchService {
   constructor() {

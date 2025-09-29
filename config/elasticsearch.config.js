@@ -19,6 +19,7 @@ module.exports = {
     settings: {
       number_of_shards: 3,
       number_of_replicas: 1,
+      'index.max_ngram_diff': 10,  // Allow larger n-gram differences
       analysis: {
         tokenizer: {
           buddhist_tokenizer: {
