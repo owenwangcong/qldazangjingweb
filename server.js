@@ -369,12 +369,7 @@ app.prepare().then(async () => {
     // Write PID file after server starts successfully
     writePidFile();
 
-    // Start application monitoring
-    try {
-      const { default: monitor } = await import('./src/app/utils/monitor.js');
-      monitor.start();
-    } catch (monitorError) {
-      console.error('Failed to start monitoring:', monitorError);
-    }
+    // Note: Application monitoring is available via Next.js API routes
+    // See src/app/api/health/route.ts for health checks
   });
 });
