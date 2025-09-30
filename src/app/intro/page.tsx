@@ -178,7 +178,24 @@ const DictsPage: React.FC = () => {
 
         <h2 id="contextMenuDescription" className="w-full max-w-4xl text-2xl font-bold flex justify-center p-2 m-2 bg-secondary"><Text>搜索</Text></h2>
         <div className="w-full max-w-4xl">
-            <Text>在搜索页面中，您可以搜索经书的标题和作者。输入关键词后点击搜索按钮或按回车键即可搜索。搜索结果会显示经书的标题、部类和作者，点击任意一条搜索结果即可进入该经书的阅读页面。</Text>
+            <Text>在搜索页面中，您可以使用两种搜索模式来查找经书：</Text>
+        </div>
+        <div className="w-full max-w-4xl">
+            <h3 className="text-xl font-semibold mb-2"><Text>全文搜索</Text></h3>
+            <Text>在整个大藏经的内容中搜索关键词或短语。搜索结果会显示匹配的经书，并高亮显示匹配的内容片段。全文搜索还支持以下功能：</Text>
+            <ul className="list-disc list-inside ml-4 mt-2 space-y-1">
+                <li><Text>智能匹配：系统会自动处理繁简转换，智能匹配相关内容</Text></li>
+                <li><Text>精确短语匹配：勾选此选项后，只会显示完全匹配搜索词的结果</Text></li>
+                <li><Text>匹配度评分：每个搜索结果会显示匹配度分数，帮助您找到最相关的内容</Text></li>
+                <li><Text>内容预览：搜索结果会显示匹配的内容片段，并高亮显示关键词</Text></li>
+            </ul>
+        </div>
+        <div className="w-full max-w-4xl mt-4">
+            <h3 className="text-xl font-semibold mb-2"><Text>标题搜索</Text></h3>
+            <Text>在经书的标题和作者中搜索关键词。适合您知道经书名称或作者，需要快速定位特定经书的情况。</Text>
+        </div>
+        <div className="w-full max-w-4xl mt-4">
+            <Text>输入关键词后点击搜索按钮或按回车键即可搜索。搜索结果支持分页浏览，点击任意一条搜索结果即可进入该经书的阅读页面。</Text>
         </div>
 
         <h2 id="contextMenuDescription" className="w-full max-w-4xl text-2xl font-bold flex justify-center p-2 m-2 bg-secondary"><Text>辞典</Text></h2>
