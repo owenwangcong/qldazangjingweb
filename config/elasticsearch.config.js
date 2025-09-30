@@ -8,7 +8,7 @@ module.exports = {
       password: process.env.ELASTICSEARCH_PASSWORD || ''
     },
     maxRetries: 5,
-    requestTimeout: 30000,
+    requestTimeout: 120000,
     sniffOnStart: false,
     sniffInterval: false
   },

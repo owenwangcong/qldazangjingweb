@@ -131,7 +131,7 @@ class ElasticsearchService {
   }
 
   // Bulk index documents
-  async bulkIndex(documents, batchSize = 100) {
+  async bulkIndex(documents, batchSize = 50) {
     try {
       let indexed = 0;
       const errors = [];
