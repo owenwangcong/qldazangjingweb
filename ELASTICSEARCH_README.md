@@ -47,15 +47,134 @@ qldazangjingweb/
 
 ### 2. Installation
 
-```bash
-# Install dependencies (already done)
-npm install
+#### Option A: Install on Ubuntu/Linux
 
-# Start Elasticsearch (on Ubuntu/Linux)
+**Step 1: Import Elasticsearch GPG Key**
+```bash
+wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo gpg --dearmor -o /usr/share/keyrings/elasticsearch-keyring.gpg
+```
+
+**Step 2: Add Elasticsearch Repository**
+```bash
+sudo apt-get install apt-transport-https
+echo "deb [signed-by=/usr/share/keyrings/elasticsearch-keyring.gpg] https://artifacts.elastic.co/packages/8.x/apt stable main" | sudo tee /etc/apt/sources.list.d/elastic-8.x.list
+```
+
+**Step 3: Install Elasticsearch**
+```bash
+sudo apt-get update && sudo apt-get install elasticsearch
+```
+
+**Step 4: Configure Elasticsearch**
+```bash
+# Edit configuration file
+sudo nano /etc/elasticsearch/elasticsearch.yml
+```
+
+Add or modify these settings:
+```yaml
+cluster.name: buddhist-texts-cluster
+node.name: node-1
+network.host: 127.0.0.1
+http.port: 9200
+discovery.type: single-node
+
+# Disable security for local development (enable in production!)
+xpack.security.enabled: false
+xpack.security.enrollment.enabled: false
+xpack.security.http.ssl.enabled: false
+xpack.security.transport.ssl.enabled: false
+```
+
+**Step 5: Set JVM Heap Size**
+```bash
+# Edit JVM options
+sudo nano /etc/elasticsearch/jvm.options.d/heap.options
+```
+
+Add these lines (adjust based on your RAM):
+```
+-Xms2g
+-Xmx2g
+```
+
+**Step 6: Install IK Analyzer Plugin**
+```bash
+# Navigate to Elasticsearch directory
+cd /usr/share/elasticsearch
+
+# Install IK analyzer plugin (use infinilabs mirror for reliability)
+sudo bin/elasticsearch-plugin install https://release.infinilabs.com/analysis-ik/stable/elasticsearch-analysis-ik-8.12.0.zip
+
+# Alternative: Official GitHub release (may be slower)
+# sudo bin/elasticsearch-plugin install https://github.com/medcl/elasticsearch-analysis-ik/releases/download/v8.12.0/elasticsearch-analysis-ik-8.12.0.zip
+```
+
+**Step 7: Start and Enable Elasticsearch**
+```bash
+# Reload systemd daemon
+sudo systemctl daemon-reload
+
+# Enable Elasticsearch to start on boot
+sudo systemctl enable elasticsearch
+
+# Start Elasticsearch service
 sudo systemctl start elasticsearch
 
-# Or on Windows/Mac with Docker
-docker run -d -p 9200:9200 -e "discovery.type=single-node" elasticsearch:8.12.0
+# Check status
+sudo systemctl status elasticsearch
+
+# View logs if needed
+sudo journalctl -u elasticsearch -f
+```
+
+**Step 8: Verify Installation**
+```bash
+# Wait ~30 seconds for Elasticsearch to start, then test
+curl -X GET "localhost:9200/?pretty"
+
+# Should return something like:
+# {
+#   "name" : "node-1",
+#   "cluster_name" : "buddhist-texts-cluster",
+#   "version" : {
+#     "number" : "8.12.0"
+#   }
+# }
+```
+
+**Step 9: Install Project Dependencies**
+```bash
+# Navigate to project directory
+cd /path/to/qldazangjingweb
+
+# Install dependencies (if not already done)
+npm install
+```
+
+#### Option B: Install with Docker (Ubuntu/Windows/Mac)
+
+```bash
+# Pull and run Elasticsearch container
+docker run -d \
+  --name elasticsearch \
+  -p 9200:9200 \
+  -p 9300:9300 \
+  -e "discovery.type=single-node" \
+  -e "xpack.security.enabled=false" \
+  -e "ES_JAVA_OPTS=-Xms2g -Xmx2g" \
+  elasticsearch:8.12.0
+
+# Install IK Analyzer Plugin in Docker
+docker exec -it elasticsearch bash
+bin/elasticsearch-plugin install https://release.infinilabs.com/analysis-ik/stable/elasticsearch-analysis-ik-8.12.0.zip
+exit
+
+# Restart container to load plugin
+docker restart elasticsearch
+
+# Verify it's running
+curl -X GET "localhost:9200/?pretty"
 ```
 
 ### 3. Setup Elasticsearch
@@ -296,24 +415,138 @@ npm run es:import:force
 ### Common Issues
 
 1. **Connection Refused**
-   - Check if Elasticsearch is running: `sudo systemctl status elasticsearch`
-   - Verify URL in `.env.local`
+   ```bash
+   # Check if Elasticsearch is running
+   sudo systemctl status elasticsearch
 
-2. **Index Not Found**
-   - Run: `npm run es:setup`
-   - Check index name in config
+   # If not running, start it
+   sudo systemctl start elasticsearch
 
-3. **No Search Results**
-   - Verify data is imported: `npm run es:import`
-   - Check `NEXT_PUBLIC_USE_ELASTICSEARCH=true` in `.env.local`
+   # Check logs for errors
+   sudo journalctl -u elasticsearch -n 100
 
-4. **IK Analyzer Not Working**
-   - Install IK plugin for your ES version
-   - Restart Elasticsearch after plugin installation
+   # Verify URL in .env.local matches your ES configuration
+   ```
 
-5. **Memory Issues**
-   - Increase JVM heap: Edit `/etc/elasticsearch/jvm.options`
-   - Set `-Xms3g -Xmx3g` for 3GB heap
+2. **Elasticsearch Won't Start (Ubuntu)**
+   ```bash
+   # Check for port conflicts
+   sudo lsof -i :9200
+
+   # Check file permissions
+   sudo chown -R elasticsearch:elasticsearch /var/lib/elasticsearch
+   sudo chown -R elasticsearch:elasticsearch /var/log/elasticsearch
+
+   # Check disk space
+   df -h
+
+   # View detailed logs
+   sudo tail -f /var/log/elasticsearch/buddhist-texts-cluster.log
+   ```
+
+3. **Index Not Found**
+   ```bash
+   # Run setup script
+   npm run es:setup
+
+   # Verify index was created
+   curl -X GET "localhost:9200/_cat/indices?v"
+
+   # Check index name in config/elasticsearch.config.js
+   ```
+
+4. **No Search Results**
+   ```bash
+   # Verify data is imported
+   npm run es:import
+
+   # Check document count
+   curl -X GET "localhost:9200/buddhist_texts/_count?pretty"
+
+   # Verify environment variable
+   # Check NEXT_PUBLIC_USE_ELASTICSEARCH=true in .env.local
+   ```
+
+5. **IK Analyzer Not Working**
+   ```bash
+   # Verify plugin is installed
+   sudo /usr/share/elasticsearch/bin/elasticsearch-plugin list
+
+   # Should show: analysis-ik
+
+   # If not installed, install it
+   cd /usr/share/elasticsearch
+   sudo bin/elasticsearch-plugin install https://release.infinilabs.com/analysis-ik/stable/elasticsearch-analysis-ik-8.12.0.zip
+
+   # Restart Elasticsearch
+   sudo systemctl restart elasticsearch
+   ```
+
+6. **Memory Issues**
+   ```bash
+   # Check current heap size
+   curl -X GET "localhost:9200/_nodes/stats/jvm?pretty"
+
+   # Increase JVM heap
+   sudo nano /etc/elasticsearch/jvm.options.d/heap.options
+   # Set: -Xms3g and -Xmx3g for 3GB heap
+
+   # Restart Elasticsearch
+   sudo systemctl restart elasticsearch
+
+   # Check available system memory
+   free -h
+   ```
+
+7. **Permission Denied Errors (Ubuntu)**
+   ```bash
+   # Fix ownership of Elasticsearch directories
+   sudo chown -R elasticsearch:elasticsearch /etc/elasticsearch
+   sudo chown -R elasticsearch:elasticsearch /var/lib/elasticsearch
+   sudo chown -R elasticsearch:elasticsearch /var/log/elasticsearch
+   sudo chown -R elasticsearch:elasticsearch /usr/share/elasticsearch
+
+   # Fix permissions
+   sudo chmod 750 /etc/elasticsearch
+   sudo chmod 750 /var/lib/elasticsearch
+   sudo chmod 750 /var/log/elasticsearch
+   ```
+
+8. **"java.lang.OutOfMemoryError"**
+   ```bash
+   # This means heap is too small
+   # Increase heap size (use 50% of available RAM, max 32GB)
+   sudo nano /etc/elasticsearch/jvm.options.d/heap.options
+
+   # For 8GB system: -Xms4g -Xmx4g
+   # For 16GB system: -Xms8g -Xmx8g
+
+   sudo systemctl restart elasticsearch
+   ```
+
+9. **Slow Search Performance**
+   ```bash
+   # Check index stats
+   curl -X GET "localhost:9200/buddhist_texts/_stats?pretty"
+
+   # Force merge segments (do this after initial import)
+   curl -X POST "localhost:9200/buddhist_texts/_forcemerge?max_num_segments=1"
+
+   # Clear cache
+   curl -X POST "localhost:9200/buddhist_texts/_cache/clear?pretty"
+   ```
+
+10. **Ubuntu Firewall Issues**
+    ```bash
+    # If connecting from another machine, allow port 9200
+    sudo ufw allow 9200/tcp
+
+    # Check firewall status
+    sudo ufw status
+
+    # WARNING: Only do this if you need remote access
+    # It's more secure to keep Elasticsearch local-only
+    ```
 
 ### Debug Mode
 
@@ -384,13 +617,84 @@ connection: {
    - Add APM integration
    - Query performance tracking
 
+## Ubuntu Quick Reference
+
+### Useful Commands
+
+```bash
+# Service Management
+sudo systemctl start elasticsearch      # Start service
+sudo systemctl stop elasticsearch       # Stop service
+sudo systemctl restart elasticsearch    # Restart service
+sudo systemctl status elasticsearch     # Check status
+sudo systemctl enable elasticsearch     # Enable on boot
+sudo systemctl disable elasticsearch    # Disable on boot
+
+# Logs
+sudo journalctl -u elasticsearch -f                    # Follow logs
+sudo journalctl -u elasticsearch -n 100                # Last 100 lines
+sudo tail -f /var/log/elasticsearch/*.log              # Tail log files
+sudo cat /var/log/elasticsearch/buddhist-texts-cluster.log  # View full log
+
+# Configuration
+sudo nano /etc/elasticsearch/elasticsearch.yml         # Edit config
+sudo nano /etc/elasticsearch/jvm.options.d/heap.options  # Edit JVM heap
+
+# Plugin Management
+sudo /usr/share/elasticsearch/bin/elasticsearch-plugin list       # List plugins
+sudo /usr/share/elasticsearch/bin/elasticsearch-plugin install <url>  # Install plugin
+sudo /usr/share/elasticsearch/bin/elasticsearch-plugin remove analysis-ik  # Remove plugin
+
+# Index Management
+curl -X GET "localhost:9200/_cat/indices?v"            # List all indices
+curl -X GET "localhost:9200/buddhist_texts/_count"     # Count documents
+curl -X DELETE "localhost:9200/buddhist_texts"         # Delete index
+curl -X GET "localhost:9200/_cluster/health?pretty"    # Cluster health
+
+# Performance Monitoring
+curl -X GET "localhost:9200/_nodes/stats?pretty"       # Node stats
+curl -X GET "localhost:9200/_cat/nodes?v"              # Node info
+curl -X GET "localhost:9200/_cat/thread_pool?v"        # Thread pool stats
+```
+
+### File Locations (Ubuntu)
+
+```
+Configuration:  /etc/elasticsearch/
+Data:          /var/lib/elasticsearch/
+Logs:          /var/log/elasticsearch/
+Plugins:       /usr/share/elasticsearch/plugins/
+Binary:        /usr/share/elasticsearch/bin/
+Service:       /usr/lib/systemd/system/elasticsearch.service
+```
+
+### Recommended Ubuntu System Setup
+
+```bash
+# Disable swap for better performance (optional)
+sudo swapoff -a
+# To make permanent, comment out swap line in /etc/fstab
+
+# Increase file descriptor limits
+sudo nano /etc/security/limits.conf
+# Add these lines:
+# elasticsearch soft nofile 65536
+# elasticsearch hard nofile 65536
+
+# Increase max map count
+sudo sysctl -w vm.max_map_count=262144
+# To make permanent:
+echo "vm.max_map_count=262144" | sudo tee -a /etc/sysctl.conf
+```
+
 ## Support
 
 For issues or questions:
 1. Check the [design document](./elasticsearch-design.md)
-2. Review test output: `npm run es:test`
-3. Check Elasticsearch logs
-4. Verify configuration in `config/elasticsearch.config.js`
+2. Check the [Windows setup guide](./ELASTICSEARCH_WINDOWS_SETUP.md)
+3. Review test output: `npm run es:test`
+4. Check Elasticsearch logs: `sudo journalctl -u elasticsearch -n 100`
+5. Verify configuration in `config/elasticsearch.config.js`
 
 ## License
 
