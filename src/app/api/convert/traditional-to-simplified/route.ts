@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import * as OpenCC from 'opencc-js';
 
-// Initialize converter
-const converter = OpenCC.Converter({ from: 't', to: 's' });
-
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -15,6 +12,9 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Initialize converter at runtime (not at build time)
+    const converter = OpenCC.Converter({ from: 't', to: 's' });
 
     // Convert traditional to simplified
     const simplified = converter(text);
