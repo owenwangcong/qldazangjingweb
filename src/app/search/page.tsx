@@ -27,12 +27,18 @@ interface MlsEntry {
 
 interface Book {
   id: string;
-  name: string;
-  href: string;
+  name?: string;
+  href?: string;
   bu: string;
   title: string;
   author: string;
   volume: string;
+  score?: number;
+  highlights?: {
+    title?: string[];
+    author?: string[];
+    content?: string[];
+  };
 }
 
 const SearchPage: React.FC = () => {
@@ -43,7 +49,10 @@ const SearchPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   // Search mode: 'title' or 'fulltext'
-  const [searchMode, setSearchMode] = useState<'title' | 'fulltext'>('title');
+  const [searchMode, setSearchMode] = useState<'title' | 'fulltext'>('fulltext');
+
+  // Phrase match mode for fulltext search
+  const [usePhraseMatch, setUsePhraseMatch] = useState<boolean>(false);
 
   // New state to track search button clicks
   const [isSearchClicked, setIsSearchClicked] = useState<boolean>(false);
@@ -54,15 +63,23 @@ const SearchPage: React.FC = () => {
   // Pagination states
   const [currentPage, setCurrentPage] = useState<number>(1);
   const itemsPerPage = 10;
-  const totalPages = searchMode === 'fulltext'
-    ? Math.ceil(totalResults / itemsPerPage)
-    : Math.ceil(filteredBooks.length / itemsPerPage);
+  const maxPages = 50; // Limit to 50 pages (500 results max)
+  const totalPages = Math.min(
+    searchMode === 'fulltext'
+      ? Math.ceil(totalResults / itemsPerPage)
+      : Math.ceil(filteredBooks.length / itemsPerPage),
+    maxPages
+  );
 
   // Calculate currentBooks for the current page
-  const currentBooks = filteredBooks.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  // For fulltext search, Elasticsearch already returns only the current page's results
+  // For title search, we need to slice the local array
+  const currentBooks = searchMode === 'fulltext'
+    ? filteredBooks
+    : filteredBooks.slice(
+        (currentPage - 1) * itemsPerPage,
+        currentPage * itemsPerPage
+      );
 
   // Fetch and parse mls.json data
   useEffect(() => {
@@ -98,7 +115,7 @@ const SearchPage: React.FC = () => {
   };
 
   // Handle search trigger
-  const handleSearch = async () => {
+  const handleSearch = async (pageOverride?: number) => {
     setIsSearchClicked(true);
     setLoading(true);
     setError(null);
@@ -110,6 +127,9 @@ const SearchPage: React.FC = () => {
       setLoading(false);
       return;
     }
+
+    // Use pageOverride if provided, otherwise use currentPage, default to 1
+    const page = pageOverride ?? currentPage ?? 1;
 
     try {
       if (searchMode === 'title') {
@@ -128,6 +148,9 @@ const SearchPage: React.FC = () => {
         const converter = OpenCC.Converter({ from: 'tw', to: 'cn' });
         const simplifiedTerm = converter(term);
 
+        const fromValue = (page - 1) * itemsPerPage;
+        console.log('Search params:', { page, itemsPerPage, from: fromValue });
+
         const response = await fetch('/api/elasticsearch/search', {
           method: 'POST',
           headers: {
@@ -136,9 +159,9 @@ const SearchPage: React.FC = () => {
           body: JSON.stringify({
             query: simplifiedTerm,
             originalQuery: term,
-            mode: 'smart',
+            mode: usePhraseMatch ? 'phrase' : 'smart',
             fields: ['title', 'author', 'content'],
-            from: (currentPage - 1) * itemsPerPage,
+            from: fromValue,
             size: itemsPerPage,
             highlight: true
           }),
@@ -160,6 +183,8 @@ const SearchPage: React.FC = () => {
           bu: '',
           title: hit.title || '',
           author: hit.author || '',
+          volume: '',
+          score: hit.score,
           highlights: hit.highlights
         }));
 
@@ -179,8 +204,8 @@ const SearchPage: React.FC = () => {
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
     if (searchMode === 'fulltext') {
-      // Re-run search for new page in fulltext mode
-      handleSearch();
+      // Re-run search for new page in fulltext mode with the new page number
+      handleSearch(page);
     }
   };
 
@@ -202,18 +227,6 @@ const SearchPage: React.FC = () => {
         {/* Search Mode Toggle */}
         <div className="flex gap-4 mb-2">
           <button
-            onClick={() => handleSearchModeChange('title')}
-            className={classNames(
-              'px-6 py-2 rounded-md font-medium transition-all',
-              searchMode === 'title'
-                ? 'bg-primary text-white'
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-            )}
-            aria-label="按标题搜索"
-          >
-            <Text>标题搜索</Text>
-          </button>
-          <button
             onClick={() => handleSearchModeChange('fulltext')}
             className={classNames(
               'px-6 py-2 rounded-md font-medium transition-all',
@@ -225,6 +238,33 @@ const SearchPage: React.FC = () => {
           >
             <Text>全文搜索</Text>
           </button>
+          <button
+            onClick={() => handleSearchModeChange('title')}
+            className={classNames(
+              'px-6 py-2 rounded-md font-medium transition-all',
+              searchMode === 'title'
+                ? 'bg-primary text-white'
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            )}
+            aria-label="按标题搜索"
+          >
+            <Text>标题搜索</Text>
+          </button>
+        </div>
+
+        {/* Search mode description and options */}
+        <div className="flex flex-col items-center gap-2 mb-2">
+          {searchMode === 'fulltext' && (
+            <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={usePhraseMatch}
+                onChange={(e) => setUsePhraseMatch(e.target.checked)}
+                className="rounded border-gray-300"
+              />
+              <Text>精确短语匹配（完整匹配搜索词）</Text>
+            </label>
+          )}
         </div>
 
         <div className="w-full max-w-md flex items-center">
@@ -243,7 +283,7 @@ const SearchPage: React.FC = () => {
               aria-label="搜索经书"
             />
             <button
-              onClick={handleSearch}
+              onClick={() => handleSearch()}
               className="px-4 py-2 w-full sm:w-32 bg-primary text-white rounded-md hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-primary"
               aria-label="触发搜索"
             >
@@ -251,15 +291,6 @@ const SearchPage: React.FC = () => {
             </button>
           </div>
         </div>
-
-        {/* Search mode description */}
-        <p className="text-sm text-gray-600 text-center max-w-md">
-          {searchMode === 'title' ? (
-            <Text>在经书标题和作者中搜索</Text>
-          ) : (
-            <Text>在经书全文内容中搜索关键词和短语</Text>
-          )}
-        </p>
         {loading && <p className="mt-4 text-gray-600">加载中...</p>}
         {error && <p className="mt-4 text-red-500">错误: {error}</p>}
         {!loading && !error && filteredBooks.length > 0 && (
@@ -268,17 +299,36 @@ const SearchPage: React.FC = () => {
               <ul className="space-y-4">
                 {currentBooks.map(book => (
                   <li key={book.id} className="p-4 border border-border rounded-lg shadow-md hover:bg-primary-hover transition">
-                    <Link href={`/books/${book.id}`} className="flex justify-between items-center">
-                      <div className="flex flex-col sm:flex-row w-full">
-                        <span className="text-xl font-medium text-foreground flex-grow sm:flex-grow-0 text-center sm:text-left" style={{ flexBasis: '55%' }}>
-                          <Text>{book.title}</Text>
-                        </span>
-                        <span className="text-md text-muted-foreground flex-none text-center hidden sm:block" style={{ flexBasis: '20%' }}>
-                          <Text>{book.bu}</Text>
-                        </span>
-                        <span className="text-md text-muted-foreground flex-none text-center" style={{ flexBasis: '25%' }}>
-                          <Text>{book.author}</Text>
-                        </span>
+                    <Link href={`/books/${book.id}`} className="block">
+                      <div className="flex flex-col sm:flex-row w-full items-start">
+                        <div className="flex-grow w-full sm:w-auto">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-xl font-medium text-foreground">
+                              {book.highlights?.title?.[0] ? (
+                                <span dangerouslySetInnerHTML={{ __html: book.highlights.title[0] }} />
+                              ) : (
+                                <Text>{book.title}</Text>
+                              )}
+                            </span>
+                            {searchMode === 'fulltext' && book.score && (
+                              <span className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded-full">
+                                匹配度: {book.score.toFixed(1)}
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-sm text-muted-foreground mb-2">
+                            {book.highlights?.author?.[0] ? (
+                              <span dangerouslySetInnerHTML={{ __html: book.highlights.author[0] }} />
+                            ) : (
+                              <Text>{book.author}</Text>
+                            )}
+                          </div>
+                          {searchMode === 'fulltext' && book.highlights?.content && book.highlights.content.length > 0 && (
+                            <div className="text-sm text-gray-600 mt-2 line-clamp-2">
+                              <span dangerouslySetInnerHTML={{ __html: '...' + book.highlights.content[0] + '...' }} />
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </Link>
                   </li>
