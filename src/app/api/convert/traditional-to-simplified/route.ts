@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import OpenCC from 'opencc-js';
+import * as OpenCC from 'opencc-js';
 
 // Initialize converter
 const converter = OpenCC.Converter({ from: 't', to: 's' });
