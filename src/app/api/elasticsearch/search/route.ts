@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Search API error:', error);
     return NextResponse.json(
-      { error: 'Search failed', message: error.message },
+      { error: 'Search failed', message: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }
@@ -89,7 +89,7 @@ export async function GET(request: NextRequest) {
     console.error('Status check error:', error);
     return NextResponse.json({
       status: 'error',
-      message: error.message
+      message: error instanceof Error ? error.message : 'Unknown error'
     });
   }
 }
