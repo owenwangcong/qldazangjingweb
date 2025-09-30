@@ -129,18 +129,138 @@ sudo journalctl -u elasticsearch -f
 ```
 
 **Step 8: Verify Installation**
+
+Wait ~30 seconds for Elasticsearch to start, then test with any of these methods:
+
+**Method 1: Using curl (basic)**
 ```bash
-# Wait ~30 seconds for Elasticsearch to start, then test
 curl -X GET "localhost:9200/?pretty"
 
-# Should return something like:
+# Should return cluster info like:
 # {
 #   "name" : "node-1",
 #   "cluster_name" : "buddhist-texts-cluster",
-#   "version" : {
-#     "number" : "8.12.0"
-#   }
+#   "version" : { "number" : "8.12.0" }
 # }
+```
+
+**Method 2: Using curl (detailed health check)**
+```bash
+# Check cluster health
+curl -X GET "localhost:9200/_cluster/health?pretty"
+
+# Check node info
+curl -X GET "localhost:9200/_nodes?pretty" | head -50
+
+# List all indices
+curl -X GET "localhost:9200/_cat/indices?v"
+
+# Check plugins are loaded
+curl -X GET "localhost:9200/_cat/plugins?v"
+```
+
+**Method 3: Using wget**
+```bash
+wget -qO- http://localhost:9200
+wget -qO- http://localhost:9200/_cluster/health?pretty
+```
+
+**Method 4: Using httpie (more readable output)**
+```bash
+# Install httpie if not installed
+sudo apt install httpie
+
+# Test
+http :9200
+http :9200/_cluster/health
+http :9200/_cat/indices
+```
+
+**Method 5: Open in browser**
+```bash
+# Install a terminal browser
+sudo apt install lynx
+
+# Browse Elasticsearch
+lynx http://localhost:9200
+
+# Or use your desktop browser if on Ubuntu Desktop
+firefox http://localhost:9200
+```
+
+**Method 6: Check systemd status**
+```bash
+# Detailed service status
+sudo systemctl status elasticsearch -l
+
+# Check if port is listening
+sudo netstat -tulpn | grep 9200
+# OR
+sudo ss -tulpn | grep 9200
+# OR
+sudo lsof -i :9200
+```
+
+**Method 7: Test with telnet/nc**
+```bash
+# Using telnet
+telnet localhost 9200
+
+# Using netcat
+echo -e "GET / HTTP/1.1\r\nHost: localhost\r\n\r\n" | nc localhost 9200
+```
+
+**Method 8: Check logs for successful startup**
+```bash
+# Check recent logs
+sudo journalctl -u elasticsearch -n 50
+
+# Look for these success messages:
+# "started"
+# "Cluster health status changed"
+# "Node started"
+
+# Check log file
+sudo tail -50 /var/log/elasticsearch/buddhist-texts-cluster.log | grep -i "started"
+```
+
+**Method 9: Comprehensive test script**
+```bash
+# Create a test script
+cat > test-es.sh << 'EOF'
+#!/bin/bash
+echo "=== Testing Elasticsearch ==="
+echo ""
+
+echo "1. Service Status:"
+sudo systemctl is-active elasticsearch
+echo ""
+
+echo "2. Port Check:"
+sudo ss -tulpn | grep 9200
+echo ""
+
+echo "3. Basic Info:"
+curl -s localhost:9200 | grep -E '"name"|"cluster_name"|"version"'
+echo ""
+
+echo "4. Cluster Health:"
+curl -s localhost:9200/_cluster/health | grep -o '"status":"[^"]*"'
+echo ""
+
+echo "5. Installed Plugins:"
+curl -s localhost:9200/_cat/plugins?v
+echo ""
+
+echo "6. Node Stats:"
+curl -s localhost:9200/_nodes/stats/jvm | grep -o '"heap_used_percent":[^,]*'
+echo ""
+
+echo "Test complete!"
+EOF
+
+chmod +x test-es.sh
+./test-es.sh
 ```
 
 **Step 9: Install Project Dependencies**
@@ -366,8 +486,9 @@ const suggestions = await searchService.getSuggestions('金刚');
 npm run es:test
 ```
 
-### Manual Testing
+### Manual Testing with curl
 
+**Basic Queries:**
 ```bash
 # Test connection
 curl -X GET "localhost:9200/_cluster/health?pretty"
@@ -382,6 +503,317 @@ curl -X POST "localhost:9200/buddhist_texts/_search?pretty" \
       }
     }
   }'
+
+# Search with highlighting
+curl -X POST "localhost:9200/buddhist_texts/_search?pretty" \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "query": { "match": { "content": "金刚经" } },
+    "highlight": {
+      "fields": { "content": {} }
+    }
+  }'
+
+# Phrase search
+curl -X POST "localhost:9200/buddhist_texts/_search?pretty" \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "query": {
+      "match_phrase": {
+        "content": "般若波罗蜜"
+      }
+    }
+  }'
+
+# Multi-field search
+curl -X POST "localhost:9200/buddhist_texts/_search?pretty" \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "query": {
+      "multi_match": {
+        "query": "心经",
+        "fields": ["title^3", "author^2", "content"]
+      }
+    }
+  }'
+```
+
+### Testing IK Analyzer
+
+**Test Chinese word segmentation:**
+```bash
+# Test IK analyzer
+curl -X POST "localhost:9200/buddhist_texts/_analyze?pretty" \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "analyzer": "buddhist_analyzer",
+    "text": "观自在菩萨行深般若波罗蜜多时"
+  }'
+
+# Should return tokens like: 观自在, 菩萨, 行, 深, 般若波罗蜜多, 时
+
+# Test with different texts
+curl -X POST "localhost:9200/buddhist_texts/_analyze?pretty" \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "analyzer": "ik_max_word",
+    "text": "金刚般若波罗蜜经"
+  }'
+```
+
+### Advanced Testing
+
+**1. Test Aggregations (Statistics):**
+```bash
+# Count documents by author
+curl -X POST "localhost:9200/buddhist_texts/_search?pretty" \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "size": 0,
+    "aggs": {
+      "authors": {
+        "terms": {
+          "field": "author.keyword",
+          "size": 10
+        }
+      }
+    }
+  }'
+```
+
+**2. Test Fuzzy Search:**
+```bash
+# Find similar terms (handles typos)
+curl -X POST "localhost:9200/buddhist_texts/_search?pretty" \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "query": {
+      "fuzzy": {
+        "content": {
+          "value": "般若",
+          "fuzziness": "AUTO"
+        }
+      }
+    }
+  }'
+```
+
+**3. Test Boolean Queries:**
+```bash
+# Complex search with AND/OR/NOT
+curl -X POST "localhost:9200/buddhist_texts/_search?pretty" \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "query": {
+      "bool": {
+        "must": [
+          { "match": { "content": "般若" } }
+        ],
+        "should": [
+          { "match": { "title": "心经" } }
+        ],
+        "must_not": [
+          { "match": { "content": "注解" } }
+        ]
+      }
+    }
+  }'
+```
+
+**4. Test Performance:**
+```bash
+# Benchmark search speed
+time curl -X POST "localhost:9200/buddhist_texts/_search" \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "query": { "match": { "content": "佛" } }
+  }' > /dev/null
+
+# Test with large result set
+curl -X POST "localhost:9200/buddhist_texts/_search?pretty" \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "query": { "match_all": {} },
+    "size": 100
+  }' | head -100
+```
+
+### Testing with Python
+
+Create a test script `test_es.py`:
+```python
+#!/usr/bin/env python3
+from elasticsearch import Elasticsearch
+import json
+
+# Connect to Elasticsearch
+es = Elasticsearch(['http://localhost:9200'])
+
+# Test 1: Check cluster health
+print("=== Cluster Health ===")
+health = es.cluster.health()
+print(json.dumps(health, indent=2))
+
+# Test 2: Count documents
+print("\n=== Document Count ===")
+count = es.count(index='buddhist_texts')
+print(f"Total documents: {count['count']}")
+
+# Test 3: Simple search
+print("\n=== Search Test ===")
+result = es.search(
+    index='buddhist_texts',
+    body={
+        'query': {
+            'match': {
+                'content': '般若'
+            }
+        },
+        'size': 5
+    }
+)
+print(f"Found {result['hits']['total']['value']} results")
+for hit in result['hits']['hits']:
+    print(f"  - {hit['_source']['title']} (score: {hit['_score']})")
+
+# Test 4: Test IK analyzer
+print("\n=== IK Analyzer Test ===")
+analysis = es.indices.analyze(
+    index='buddhist_texts',
+    body={
+        'analyzer': 'buddhist_analyzer',
+        'text': '观自在菩萨行深般若波罗蜜多时'
+    }
+)
+tokens = [token['token'] for token in analysis['tokens']]
+print(f"Tokens: {', '.join(tokens)}")
+```
+
+Run it:
+```bash
+# Install elasticsearch-py if needed
+pip3 install elasticsearch
+
+# Run test
+python3 test_es.py
+```
+
+### Testing with Node.js
+
+Create `test_es.js`:
+```javascript
+const { Client } = require('@elastic/elasticsearch');
+
+const client = new Client({ node: 'http://localhost:9200' });
+
+async function testElasticsearch() {
+  try {
+    // Test 1: Cluster health
+    console.log('=== Cluster Health ===');
+    const health = await client.cluster.health();
+    console.log(health);
+
+    // Test 2: Count documents
+    console.log('\n=== Document Count ===');
+    const count = await client.count({ index: 'buddhist_texts' });
+    console.log(`Total documents: ${count.count}`);
+
+    // Test 3: Search
+    console.log('\n=== Search Test ===');
+    const result = await client.search({
+      index: 'buddhist_texts',
+      body: {
+        query: {
+          match: { content: '般若' }
+        },
+        size: 5
+      }
+    });
+    console.log(`Found ${result.hits.total.value} results`);
+    result.hits.hits.forEach(hit => {
+      console.log(`  - ${hit._source.title} (score: ${hit._score})`);
+    });
+
+    // Test 4: IK Analyzer
+    console.log('\n=== IK Analyzer Test ===');
+    const analysis = await client.indices.analyze({
+      index: 'buddhist_texts',
+      body: {
+        analyzer: 'buddhist_analyzer',
+        text: '观自在菩萨行深般若波罗蜜多时'
+      }
+    });
+    const tokens = analysis.tokens.map(t => t.token);
+    console.log(`Tokens: ${tokens.join(', ')}`);
+
+  } catch (error) {
+    console.error('Error:', error);
+  }
+}
+
+testElasticsearch();
+```
+
+Run it:
+```bash
+# Install client if needed
+npm install @elastic/elasticsearch
+
+# Run test
+node test_es.js
+```
+
+### Quick Health Check Script
+
+Create `es-health.sh` for daily health checks:
+```bash
+#!/bin/bash
+
+echo "=== Elasticsearch Health Check ==="
+echo "Date: $(date)"
+echo ""
+
+# Service status
+echo "Service Status:"
+sudo systemctl is-active elasticsearch && echo "✓ Running" || echo "✗ Not running"
+echo ""
+
+# Cluster health
+echo "Cluster Health:"
+HEALTH=$(curl -s localhost:9200/_cluster/health | grep -o '"status":"[^"]*"' | cut -d'"' -f4)
+if [ "$HEALTH" = "green" ]; then
+    echo "✓ $HEALTH"
+elif [ "$HEALTH" = "yellow" ]; then
+    echo "⚠ $HEALTH"
+else
+    echo "✗ $HEALTH"
+fi
+echo ""
+
+# Document count
+echo "Document Count:"
+COUNT=$(curl -s localhost:9200/buddhist_texts/_count | grep -o '"count":[^,}]*' | cut -d':' -f2)
+echo "buddhist_texts: $COUNT documents"
+echo ""
+
+# Memory usage
+echo "Memory Usage:"
+HEAP=$(curl -s localhost:9200/_nodes/stats/jvm | grep -o '"heap_used_percent":[^,]*' | cut -d':' -f2)
+echo "JVM Heap: ${HEAP}%"
+echo ""
+
+# Disk usage
+echo "Disk Usage:"
+df -h /var/lib/elasticsearch | tail -1 | awk '{print $3 " used of " $2 " (" $5 ")"}'
+echo ""
+
+echo "Health check complete!"
+```
+
+Make it executable and run:
+```bash
+chmod +x es-health.sh
+./es-health.sh
 ```
 
 ## Maintenance
