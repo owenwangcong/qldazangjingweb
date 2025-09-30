@@ -37,8 +37,10 @@ export async function POST(req: NextRequest) {
           '--disable-accelerated-2d-canvas',
           '--no-first-run',
           '--no-zygote',
-          '--single-process',
-          '--disable-gpu'
+          '--disable-gpu',
+          '--disable-software-rasterizer',
+          '--disable-extensions',
+          '--max-old-space-size=4096'
         ]
     });
 
@@ -62,15 +64,19 @@ export async function POST(req: NextRequest) {
     }, fontFamily, fontSize, isSimplified, selectedFont, selectedWidth, theme);
 
     logger.debug('Navigating to URL', { url }, userIp);
-    await page.goto(url, { 
-      waitUntil: 'networkidle0',
-      timeout: 60000 
+    await page.goto(url, {
+      waitUntil: 'networkidle2',
+      timeout: 90000
     });
     
     logger.debug('Waiting for content to render', {}, userIp);
     // Wait for the content to be rendered
     await page.waitForSelector('#recogito-container', { timeout: 30000 });
-    
+
+    // Additional wait to ensure fonts and images are loaded
+    await page.evaluate(() => document.fonts.ready);
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
     logger.debug('Hiding header and footer elements', {}, userIp);
     // Hide the header element before generating PDF
     await page.evaluate(() => {
@@ -82,6 +88,34 @@ export async function POST(req: NextRequest) {
         if (footer) {
             footer.style.display = 'none';
         }
+
+        // Add print-specific CSS to reduce gaps between pages
+        const style = document.createElement('style');
+        style.textContent = `
+            @media print {
+                @page {
+                    margin: 0;
+                }
+                html, body {
+                    margin: 0 !important;
+                    padding: 0 !important;
+                    height: auto !important;
+                }
+                #recogito-container {
+                    padding: 20px !important;
+                    margin: 0 !important;
+                }
+                h1, h2, h3, h4, h5, h6 {
+                    page-break-after: avoid !important;
+                    break-after: avoid !important;
+                }
+                p {
+                    orphans: 3;
+                    widows: 3;
+                }
+            }
+        `;
+        document.head.appendChild(style);
     });
 
     logger.debug('Generating PDF', {}, userIp);
@@ -89,18 +123,16 @@ export async function POST(req: NextRequest) {
     const pdf = await page.pdf({
       format: 'A4',
       margin: {
-        top: '0mm',
-        bottom: '0mm',
-        left: '0mm',
-        right: '0mm'
+        top: '10mm',
+        bottom: '10mm',
+        left: '15mm',
+        right: '15mm'
       },
       printBackground: true,
+      preferCSSPageSize: false,
       timeout: 120000
     });
     const pdfGenerationTime = Date.now() - startPdfTime;
-
-    await browser.close();
-    browser = null;
 
     logger.log(`POST /download-pdf - PDF generated successfully (${pdfGenerationTime}ms, ${Math.round(pdf.length / 1024)}KB)`, userIp, userAgent, method, requestUrl);
 
@@ -113,22 +145,25 @@ export async function POST(req: NextRequest) {
     });
 
   } catch (error: any) {
-    // Clean up browser if still open
-    if (browser) {
-      try {
-        await browser.close();
-      } catch (closeError) {
-        logger.warn('Failed to close browser during error cleanup', userIp, userAgent, method, requestUrl);
-      }
-    }
-
     logger.error('POST /download-pdf - PDF generation failed', error, userIp, userAgent, method, requestUrl);
-    
-    return NextResponse.json({ 
+
+    return NextResponse.json({
       error: 'Failed to generate PDF',
       details: error.message,
       timestamp: new Date().toISOString(),
       requestId: Math.random().toString(36).substring(7)
     }, { status: 500 });
+  } finally {
+    // Always ensure browser is closed
+    if (browser) {
+      try {
+        if (page && !page.isClosed()) {
+          await page.close();
+        }
+        await browser.close();
+      } catch (closeError) {
+        logger.warn('Failed to close browser during cleanup', userIp, userAgent, method, requestUrl);
+      }
+    }
   }
 }
