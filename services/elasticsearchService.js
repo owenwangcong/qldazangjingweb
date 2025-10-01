@@ -277,7 +277,10 @@ class ElasticsearchService {
       };
 
       if (highlight) {
-        searchParams.body.highlight = config.search.highlightConfig;
+        searchParams.body.highlight = {
+          ...config.search.highlightConfig,
+          highlight_query: esQuery
+        };
       }
 
       const startTime = Date.now();

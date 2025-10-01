@@ -324,8 +324,12 @@ const SearchPage: React.FC = () => {
                             )}
                           </div>
                           {searchMode === 'fulltext' && book.highlights?.content && book.highlights.content.length > 0 && (
-                            <div className="text-sm text-gray-600 mt-2 line-clamp-2">
-                              <span dangerouslySetInnerHTML={{ __html: '...' + book.highlights.content[0] + '...' }} />
+                            <div className="text-sm text-gray-600 mt-2 space-y-1">
+                              {book.highlights.content.map((fragment, index) => (
+                                <div key={index} className="leading-relaxed">
+                                  <span dangerouslySetInnerHTML={{ __html: '...' + fragment + '...' }} />
+                                </div>
+                              ))}
                             </div>
                           )}
                         </div>

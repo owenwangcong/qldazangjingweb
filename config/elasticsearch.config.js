@@ -149,20 +149,27 @@ module.exports = {
     maxSize: 100,
     scrollTimeout: '1m',
     highlightConfig: {
+      pre_tags: ['<mark class="search-highlight">'],
+      post_tags: ['</mark>'],
+      require_field_match: false,
       fields: {
         content: {
-          fragment_size: 200,
-          number_of_fragments: 3,
-          pre_tags: ['<mark class="search-highlight">'],
-          post_tags: ['</mark>']
+          fragment_size: 30,
+          number_of_fragments: 5,
+          type: 'unified',
+          order: 'score',
+          no_match_size: 0,
+          boundary_scanner: 'sentence',
+          boundary_chars: '。，！？ ；\n\t',
+          boundary_max_scan: 20
         },
         title: {
-          pre_tags: ['<mark class="search-highlight">'],
-          post_tags: ['</mark>']
+          type: 'unified',
+          number_of_fragments: 0
         },
         author: {
-          pre_tags: ['<mark class="search-highlight">'],
-          post_tags: ['</mark>']
+          type: 'unified',
+          number_of_fragments: 0
         }
       }
     }
