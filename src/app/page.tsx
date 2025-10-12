@@ -7,6 +7,13 @@ import Link from 'next/link';
 import { FontContext } from './context/FontContext';
 import Text from '@/app/components/Text';
 import Head from 'next/head';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface MlsItem {
   id: string;
@@ -137,17 +144,20 @@ export default function Home() {
               </h2>
 
               {/* Mobile: Dropdown selector */}
-              <select
-                value={activeTab}
-                onChange={(e) => handleTabChange(e.target.value)}
-                className="flex-1 md:hidden px-2 py-1.5 text-sm rounded border border-border bg-background text-foreground"
-              >
-                {Object.keys(classicTexts).map((category) => (
-                  <option key={category} value={category}>
-                    {category}
-                  </option>
-                ))}
-              </select>
+              <div className="flex-1 md:hidden">
+                <Select value={activeTab} onValueChange={handleTabChange}>
+                  <SelectTrigger className="h-8 text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.keys(classicTexts).map((category) => (
+                      <SelectItem key={category} value={category}>
+                        <Text>{category}</Text>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
               {/* Desktop: Tabs */}
               <div className="hidden md:flex flex-1 items-center gap-2 overflow-x-auto">
