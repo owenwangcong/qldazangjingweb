@@ -160,7 +160,7 @@ module.exports = {
           order: 'score',
           no_match_size: 0,
           boundary_scanner: 'sentence',
-          boundary_chars: '。，！？ ；\n\t',
+          "boundary_chars": "。！？；：，、,.!?;: \t\n\r（）《》〈〉「」『』“”‘’【】〔〕…—",
           boundary_max_scan: 20
         },
         title: {

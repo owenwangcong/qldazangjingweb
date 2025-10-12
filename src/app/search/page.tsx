@@ -299,9 +299,9 @@ const SearchPage: React.FC = () => {
               <ul className="space-y-4">
                 {currentBooks.map(book => (
                   <li key={book.id} className="p-4 border border-border rounded-lg shadow-md hover:bg-primary-hover transition">
-                    <Link href={`/books/${book.id}`} className="block">
-                      <div className="flex flex-col sm:flex-row w-full items-start">
-                        <div className="flex-grow w-full sm:w-auto">
+                    <div className="flex flex-col sm:flex-row w-full items-start">
+                      <div className="flex-grow w-full sm:w-auto">
+                        <Link href={`/books/${book.id}`} className="block">
                           <div className="flex items-center gap-2 mb-1">
                             <span className="text-xl font-medium text-foreground">
                               {book.highlights?.title?.[0] ? (
@@ -323,18 +323,58 @@ const SearchPage: React.FC = () => {
                               <Text>{book.author}</Text>
                             )}
                           </div>
-                          {searchMode === 'fulltext' && book.highlights?.content && book.highlights.content.length > 0 && (
-                            <div className="text-sm text-gray-600 mt-2 space-y-1">
-                              {book.highlights.content.map((fragment, index) => (
-                                <div key={index} className="leading-relaxed">
+                        </Link>
+                        {searchMode === 'fulltext' && book.highlights?.content && book.highlights.content.length > 0 && (
+                          <div className="text-sm text-gray-600 mt-2 space-y-1">
+                            {book.highlights.content.map((fragment, index) => {
+                              // Use the original search term for highlighting, not the fragment
+                              const highlightQuery = encodeURIComponent(searchTerm.trim());
+                              // Clean HTML tags from fragment to get the text content
+                              const cleanFragment = fragment.replace(/<[^>]+>/g, '');
+
+                              // Find the search term in the fragment
+                              const searchTermClean = searchTerm.trim();
+                              const matchIndex = cleanFragment.indexOf(searchTermClean);
+
+                              let shortContext = '';
+                              if (matchIndex !== -1) {
+                                // Find first symbol before the match
+                                const symbolRegex = /[，。、；：！？""''（）【】《》\s]/;
+                                let startIdx = matchIndex - 1;
+                                while (startIdx >= 0 && !symbolRegex.test(cleanFragment[startIdx])) {
+                                  startIdx--;
+                                }
+                                startIdx = Math.max(0, startIdx + 1); // Don't include the symbol itself
+
+                                // Find first symbol after the match
+                                let endIdx = matchIndex + searchTermClean.length;
+                                while (endIdx < cleanFragment.length && !symbolRegex.test(cleanFragment[endIdx])) {
+                                  endIdx++;
+                                }
+
+                                // Extract context and normalize it
+                                const contextText = cleanFragment.substring(startIdx, endIdx);
+                                shortContext = contextText.replace(/[，。、；：！？""''（）【】《》\s]/g, '_');
+                              } else {
+                                // Fallback: normalize the whole fragment
+                                shortContext = cleanFragment.replace(/[，。、；：！？""''（）【】《》\s]/g, '_').split('_').filter(l => l.length > 0).slice(0, 3).join('_');
+                              }
+
+                              const fragmentContext = encodeURIComponent(shortContext);
+                              return (
+                                <Link
+                                  key={index}
+                                  href={`/books/${book.id}?highlight=${highlightQuery}&context=${fragmentContext}`}
+                                  className="block leading-relaxed hover:bg-gray-100 px-2 py-1 rounded cursor-pointer transition"
+                                >
                                   <span dangerouslySetInnerHTML={{ __html: '...' + fragment + '...' }} />
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
+                                </Link>
+                              );
+                            })}
+                          </div>
+                        )}
                       </div>
-                    </Link>
+                    </div>
                   </li>
                 ))}
               </ul>

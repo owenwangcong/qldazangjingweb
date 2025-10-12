@@ -35,7 +35,9 @@
       "mcp__playwright__browser_press_key",
       "Bash(findstr:*)",
       "Bash(cmd /c:*)",
-      "Bash(netstat:*)"
+      "Bash(netstat:*)",
+      "Bash(timeout:*)",
+      "mcp__playwright__browser_navigate_back"
     ],
     "deny": [
       "Read(./out/**)",

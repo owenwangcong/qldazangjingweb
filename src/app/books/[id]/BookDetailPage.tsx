@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useContext } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import Header from '@/app/components/Header';
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
 import { FontContext } from '@/app/context/FontContext';
@@ -42,6 +42,9 @@ type BookDetailPageProps = {
 
 const BookDetailPage: React.FC = () => {
   const { id } = useParams();
+  const searchParams = useSearchParams();
+  const highlightText = searchParams.get('highlight');
+  const contextParam = searchParams.get('context');
   const { book, setBook } = useContext(BookContext);
   const [selectedText, setSelectedText] = useState<string>('');
   const [contextMenuPosition, setContextMenuPosition] = useState<{ x: number, y: number } | null>(null);
@@ -529,7 +532,7 @@ const BookDetailPage: React.FC = () => {
   useEffect(() => {
     const parts = document.querySelectorAll('span[id^="part-"]');
     const visiblePartIdsSet = new Set<string>();
-  
+
     const observer = new IntersectionObserver(
       (entries: IntersectionObserverEntry[]) => {
         entries.forEach(entry => {
@@ -547,13 +550,280 @@ const BookDetailPage: React.FC = () => {
       },
       { threshold: 0.01 }
     );
-  
+
     parts.forEach(p => observer.observe(p));
-  
+
     return () => {
       parts.forEach(p => observer.unobserve(p));
     };
   }, [book]); // Only depend on book
+
+  // Track the last completed highlight to prevent double execution during same render
+  const lastHighlightedRef = useRef<string>('');
+
+  // Highlight search term and scroll to specific match by context
+  useEffect(() => {
+    if (!highlightText || !book) {
+      return;
+    }
+
+    // Create a unique key for this highlight request
+    const highlightKey = `${book.meta.id}-${highlightText}-${contextParam || ''}`;
+    console.log('Highlight useEffect triggered', { highlightKey, lastHighlighted: lastHighlightedRef.current });
+
+    // Skip if we already highlighted this exact combination
+    if (lastHighlightedRef.current === highlightKey) {
+      console.log('Already highlighted this exact search, skipping');
+      return;
+    }
+
+    const container = recogitoContainerRef.current;
+    if (!container) {
+      console.log('Container not found');
+      return;
+    }
+
+    let highlightApplied = false;
+
+    // Use MutationObserver to wait for DOM to stabilize
+    const observer = new MutationObserver(() => {
+      // Check if we have article elements rendered
+      const articles = container.querySelectorAll('article');
+      if (articles.length > 0 && !highlightApplied) {
+        highlightApplied = true;
+        observer.disconnect();
+
+        // Wait a bit more to ensure all Text components have rendered
+        setTimeout(() => {
+          applyHighlights();
+        }, 300);
+      }
+    });
+
+    observer.observe(container, {
+      childList: true,
+      subtree: true
+    });
+
+    // Fallback timeout in case MutationObserver doesn't trigger
+    const fallbackTimer = setTimeout(() => {
+      if (!highlightApplied) {
+        highlightApplied = true;
+        observer.disconnect();
+        applyHighlights();
+      }
+    }, 2000);
+
+    const applyHighlights = () => {
+      const container = recogitoContainerRef.current;
+      if (!container) {
+        console.log('Container not found');
+        return;
+      }
+      console.log('Starting highlight process');
+
+      // Clear previous highlights by removing wrapper spans
+      const previousWrappers = container.querySelectorAll('.search-highlighted');
+      previousWrappers.forEach(wrapper => {
+        const parent = wrapper.parentNode;
+        if (parent) {
+          // Move all child nodes out of the wrapper
+          while (wrapper.firstChild) {
+            parent.insertBefore(wrapper.firstChild, wrapper);
+          }
+          // Remove the empty wrapper
+          parent.removeChild(wrapper);
+        }
+      });
+
+      // Properly decode and normalize the search text
+      const searchText = decodeURIComponent(highlightText).trim();
+
+      // Get the fragment context from URL parameter
+      const fragmentContext = searchParams.get('context')
+        ? decodeURIComponent(searchParams.get('context')!)
+        : null;
+
+      // Normalize function to handle whitespace and punctuation variations
+      // Replace symbols with underscore to match the context parameter format
+      const normalize = (str: string) => str.replace(/[，。、；：！？""''（）【】《》\s]/g, '_');
+      const normalizedSearch = normalize(searchText);
+      const normalizedContext = fragmentContext ? normalize(fragmentContext) : null;
+
+      const allMatches: { element: HTMLElement; context: string }[] = [];
+
+      // Function to get surrounding context for a match
+      const getContext = (element: HTMLElement, startParent?: HTMLElement | null): string => {
+        // Start from the provided parent or traverse up from the element
+        let current: HTMLElement | null = startParent || element;
+        let paragraph: HTMLElement | null = null;
+
+        // Find the containing paragraph element
+        while (current) {
+          if (current.tagName === 'P') {
+            paragraph = current;
+            break;
+          }
+          if (current.tagName === 'ARTICLE') {
+            return element.textContent || '';
+          }
+          current = current.parentElement;
+        }
+
+        if (!paragraph) {
+          return element.textContent || '';
+        }
+
+        // Collect text from previous paragraphs (up to 3)
+        let beforeText = '';
+        let prevPara = paragraph.previousElementSibling;
+        for (let i = 0; i < 3 && prevPara; i++) {
+          beforeText = (prevPara.textContent || '') + beforeText;
+          prevPara = prevPara.previousElementSibling;
+        }
+
+        // Get current paragraph text
+        const currentText = paragraph.textContent || '';
+
+        // Collect text from next paragraphs (up to 3)
+        let afterText = '';
+        let nextPara = paragraph.nextElementSibling;
+        for (let i = 0; i < 3 && nextPara; i++) {
+          afterText = afterText + (nextPara.textContent || '');
+          nextPara = nextPara.nextElementSibling;
+        }
+
+        return beforeText + currentText + afterText;
+      };
+
+      // Function to recursively search and highlight text
+      const highlightInElement = (element: HTMLElement) => {
+        // Skip if already processed or is a script/style tag
+        if (element.classList.contains('search-highlighted') ||
+            element.tagName === 'SCRIPT' ||
+            element.tagName === 'STYLE' ||
+            element.tagName === 'MARK') {
+          return;
+        }
+
+        // Process child nodes
+        const childNodes = Array.from(element.childNodes);
+        childNodes.forEach(node => {
+          if (node.nodeType === Node.TEXT_NODE) {
+            const text = node.textContent || '';
+            const normalizedText = normalize(text);
+
+            // Check if the normalized text contains the search term
+            if (normalizedText.includes(normalizedSearch)) {
+              // Find exact position in original text
+              const searchIndex = text.indexOf(searchText);
+
+              if (searchIndex !== -1) {
+                // Create wrapper with highlighted text
+                const wrapper = document.createElement('span');
+                wrapper.className = 'search-highlighted';
+
+                const before = text.substring(0, searchIndex);
+                const match = text.substring(searchIndex, searchIndex + searchText.length);
+                const after = text.substring(searchIndex + searchText.length);
+
+                if (before) wrapper.appendChild(document.createTextNode(before));
+
+                const mark = document.createElement('mark');
+                mark.className = 'search-result-highlight';
+                mark.style.backgroundColor = '#fef08a';
+                mark.style.padding = '2px 0';
+                mark.style.borderRadius = '2px';
+                mark.style.fontWeight = 'bold';
+                mark.textContent = match;
+                wrapper.appendChild(mark);
+
+                if (after) wrapper.appendChild(document.createTextNode(after));
+
+                // Get the parent element before replacing the node
+                const parentElement = node.parentNode;
+                node.parentNode?.replaceChild(wrapper, node);
+
+                // Store match with its context (pass both mark and parent for context)
+                const contextStr = getContext(mark, parentElement as HTMLElement);
+                allMatches.push({ element: mark, context: contextStr });
+              }
+            }
+          } else if (node.nodeType === Node.ELEMENT_NODE) {
+            highlightInElement(node as HTMLElement);
+          }
+        });
+      };
+
+      // Start highlighting from the article content
+      const articles = container.querySelectorAll('article');
+      console.log('Found articles to search:', articles.length);
+      articles.forEach(article => {
+        highlightInElement(article as HTMLElement);
+      });
+      console.log('Total matches found:', allMatches.length);
+
+      // Mark as highlighted now that highlighting is complete
+      lastHighlightedRef.current = highlightKey;
+
+      // Find the target match
+      let targetMatch: HTMLElement | null = null;
+
+      if (normalizedContext && allMatches.length > 0) {
+        // Find match by context similarity
+        for (const match of allMatches) {
+          const normalizedMatchContext = normalize(match.context);
+          if (normalizedMatchContext.includes(normalizedContext)) {
+            targetMatch = match.element;
+            break;
+          }
+        }
+      }
+
+      // Fallback to first match if context matching fails
+      if (!targetMatch && allMatches.length > 0) {
+        targetMatch = allMatches[0].element;
+      }
+
+      // Scroll to the target match
+      if (targetMatch) {
+        console.log('Found target match, scrolling to it:', {
+          text: targetMatch.textContent,
+          context: normalizedContext,
+          totalMatches: allMatches.length
+        });
+        setTimeout(() => {
+          targetMatch.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          targetMatch.style.animation = 'pulse 1s ease-in-out 2';
+          console.log('✅ Highlight and jump completed successfully');
+
+          // Check if highlights still exist in DOM after scrolling
+          setTimeout(() => {
+            const remainingHighlights = container.querySelectorAll('.search-result-highlight');
+            console.log('Highlights still in DOM after scroll:', remainingHighlights.length);
+            if (remainingHighlights.length === 0) {
+              console.error('❌ All highlights were removed from DOM!');
+            } else {
+              console.log('First highlight element:', remainingHighlights[0], 'Styles:', (remainingHighlights[0] as HTMLElement).style.cssText);
+            }
+          }, 1000);
+        }, 200);
+      } else {
+        console.log('⚠️ No target match found', {
+          searchText,
+          context: fragmentContext,
+          totalMatches: allMatches.length
+        });
+      }
+    };
+
+    return () => {
+      observer.disconnect();
+      clearTimeout(fallbackTimer);
+      // Don't clear the ref here - it persists to prevent double execution
+      // It will be naturally cleared when component unmounts (ref resets to initial value)
+    };
+  }, [highlightText, contextParam, book]);
   
   if (!book) {
     return (
@@ -568,6 +838,16 @@ const BookDetailPage: React.FC = () => {
 
   return (
     <main>
+      <style jsx global>{`
+        @keyframes pulse {
+          0%, 100% {
+            background-color: #fef08a;
+          }
+          50% {
+            background-color: #fde047;
+          }
+        }
+      `}</style>
       <Header />
       <section  
         id="recogito-container"

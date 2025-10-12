@@ -12,11 +12,13 @@ async function parseBookJSON(jsonData, id) {
   const { meta, juans } = jsonData;
 
   // Combine all content from juans
+  // Use newline to separate lines within each juan, preserving structure
   let allContent = '';
   if (juans && Array.isArray(juans)) {
     for (const juan of juans) {
       if (juan.content && Array.isArray(juan.content)) {
-        allContent += juan.content.join('') + '\n';
+        // Join lines with newline to preserve structure
+        allContent += juan.content.join('\n') + '\n\n';
       }
     }
   }
