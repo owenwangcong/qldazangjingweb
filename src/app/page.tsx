@@ -34,11 +34,16 @@ export default function Home() {
   const wrapperRef = React.useRef<HTMLDivElement>(null);
   const [contentHeight, setContentHeight] = useState<number | 'auto'>('auto');
 
-  // Load saved tab from localStorage on mount
+  // Load saved tab and visibility from localStorage on mount
   useEffect(() => {
     const savedTab = localStorage.getItem('classicTextsActiveTab');
     if (savedTab) {
       setActiveTab(savedTab);
+    }
+
+    const savedVisibility = localStorage.getItem('classicTextsVisible');
+    if (savedVisibility !== null) {
+      setShowClassics(savedVisibility === 'true');
     }
   }, []);
 
@@ -62,7 +67,10 @@ export default function Home() {
       localStorage.setItem('classicTextsActiveTab', tab);
     }
 
-    if (!showClassics) setShowClassics(true);
+    if (!showClassics) {
+      setShowClassics(true);
+      localStorage.setItem('classicTextsVisible', 'true');
+    }
   };
 
   // Update content height when tab changes
@@ -178,7 +186,11 @@ export default function Home() {
 
               {/* Toggle button */}
               <button
-                onClick={() => setShowClassics(!showClassics)}
+                onClick={() => {
+                  const newVisibility = !showClassics;
+                  setShowClassics(newVisibility);
+                  localStorage.setItem('classicTextsVisible', String(newVisibility));
+                }}
                 className="hover:bg-muted/50 p-1.5 rounded transition-colors flex-shrink-0"
               >
                 <svg
