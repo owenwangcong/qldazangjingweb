@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { Settings, ChevronDown, ChevronUp, Heart, Book, Download, Home, Search, Sun, Maximize, Info } from 'lucide-react';
 import Link from "next/link";
@@ -32,8 +32,18 @@ const Header: React.FC = () => {
   const { theme, setTheme } = useTheme();
   const { toast } = useToast()
 
+  // Load header visibility state from localStorage on mount
+  useEffect(() => {
+    const savedVisibility = localStorage.getItem('isHeaderVisible');
+    if (savedVisibility !== null) {
+      setIsHeaderVisible(savedVisibility === 'true');
+    }
+  }, []);
+
   const toggleHeaderVisibility = () => {
-    setIsHeaderVisible(!isHeaderVisible);
+    const newVisibility = !isHeaderVisible;
+    setIsHeaderVisible(newVisibility);
+    localStorage.setItem('isHeaderVisible', String(newVisibility));
   };
 
   const isBookPage = pathname.startsWith('/books/');
