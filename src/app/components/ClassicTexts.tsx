@@ -39,12 +39,12 @@ export function ClassicTextsContent({ activeTab, classicTexts }: ClassicTextsCon
 
   return (
     <div className="w-full p-4 md:p-6 pt-3 md:pt-4">
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2 md:gap-2.5">
         {texts.map((text) => (
           <Link
             key={text.id}
             href={`/books/${text.id}`}
-            className="inline-block px-2 py-1.5 md:px-3 md:py-2 border border-border rounded-lg hover:bg-primary-hover transition-colors text-xs md:text-sm"
+            className="inline-block px-3 py-1.5 md:px-4 md:py-2 border border-border/50 rounded-lg bg-background/40 backdrop-blur-sm hover:bg-primary-hover hover:text-primary-foreground-hover hover:shadow-sm transition-all duration-200 text-xs md:text-sm"
           >
             <Text>{text.title}</Text>
           </Link>

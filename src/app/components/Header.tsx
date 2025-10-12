@@ -191,22 +191,22 @@ const Header: React.FC = () => {
 
   return (
     <div id="header" className="bg-background text-foreground">
-      <div data-nosnippet="true" className="fixed top-2 right-2 space-y-4 z-50 flex flex-col">
+      <div data-nosnippet="true" className="fixed top-3 right-3 space-y-2.5 z-50 flex flex-col">
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
               <button
                 onClick={toggleHeaderVisibility}
-                className="p-2 bg-card rounded-full shadow-md focus:outline-none hover:bg-primary-hover hover:text-primary-foreground-hover"
+                className="w-10 h-10 bg-card/80 backdrop-blur-sm rounded-full shadow-md hover:shadow-lg focus:outline-none hover:bg-primary-hover hover:text-primary-foreground-hover transition-all duration-200"
                 aria-label={isHeaderVisible ? "Hide Header" : "Show Header"}
               >
-                {isHeaderVisible ? 
-                  <div data-nosnippet="true" className="w-5 h-5 flex items-center justify-center">隐</div> : 
-                  <div data-nosnippet="true" className="w-5 h-5 flex items-center justify-center">显</div>
+                {isHeaderVisible ?
+                  <div data-nosnippet="true" className="w-full h-full flex items-center justify-center text-base">隐</div> :
+                  <div data-nosnippet="true" className="w-full h-full flex items-center justify-center text-base">显</div>
                 }
               </button>
             </TooltipTrigger>
-            <TooltipContent>  
+            <TooltipContent>
               <Text>{isHeaderVisible ? "隐藏控制界面" : "显示控制界面"}</Text>
             </TooltipContent>
           </Tooltip>
@@ -218,10 +218,10 @@ const Header: React.FC = () => {
                   <TooltipTrigger asChild>
                     <DropdownMenu.Trigger asChild>
                       <button
-                        className="p-2 bg-card rounded-full shadow-md focus:outline-none hover:bg-primary-hover hover:text-primary-foreground-hover"
+                        className="w-10 h-10 bg-card/80 backdrop-blur-sm rounded-full shadow-md hover:shadow-lg focus:outline-none hover:bg-primary-hover hover:text-primary-foreground-hover transition-all duration-200"
                         aria-label="Select Theme"
                       >
-                        <div data-nosnippet="true" className="w-5 h-5 flex items-center justify-center">色</div>
+                        <div data-nosnippet="true" className="w-full h-full flex items-center justify-center text-base">色</div>
                       </button>
                     </DropdownMenu.Trigger>
                   </TooltipTrigger>
@@ -229,7 +229,7 @@ const Header: React.FC = () => {
                     <Text>更换网站颜色主题</Text>
                   </TooltipContent>
                 </Tooltip>
-                <DropdownMenu.Content className="bg-popover p-4 rounded-md shadow-lg">
+                <DropdownMenu.Content className="bg-popover/90 backdrop-blur-sm p-4 rounded-xl shadow-lg border border-border/50">
                   {[
                     { value: 'lianchichanyun', label: '莲池禅韵' },
                     { value: 'zhulinyoujing', label: '竹林幽径' },
@@ -258,13 +258,13 @@ const Header: React.FC = () => {
                 <TooltipTrigger asChild>
                   <button
                     onClick={handleToggleLanguage}
-                    className="p-2 bg-card rounded-full shadow-md focus:outline-none hover:bg-primary-hover hover:text-primary-foreground-hover"
+                    className="w-10 h-10 bg-card/80 backdrop-blur-sm rounded-full shadow-md hover:shadow-lg focus:outline-none hover:bg-primary-hover hover:text-primary-foreground-hover transition-all duration-200"
                     aria-label={isSimplified ? "Switch to Traditional Chinese" : "Switch to Simplified Chinese"}
                   >
                     {isSimplified ? (
-                      <div data-nosnippet="true" className="w-5 h-5 flex items-center justify-center">繁</div>
+                      <div data-nosnippet="true" className="w-full h-full flex items-center justify-center text-base">繁</div>
                     ) : (
-                      <div data-nosnippet="true" className="w-5 h-5 flex items-center justify-center">简</div>
+                      <div data-nosnippet="true" className="w-full h-full flex items-center justify-center text-base">简</div>
                     )}
                   </button>
                 </TooltipTrigger>
@@ -278,11 +278,11 @@ const Header: React.FC = () => {
                   <TooltipTrigger asChild>
                     <DialogTrigger asChild>
                       <button
-                        className="p-2 bg-card rounded-full shadow-md focus:outline-none hover:bg-primary-hover hover:text-primary-foreground-hover"
+                        className="w-10 h-10 bg-card/80 backdrop-blur-sm rounded-full shadow-md hover:shadow-lg focus:outline-none hover:bg-primary-hover hover:text-primary-foreground-hover transition-all duration-200"
                         aria-label="Select Font and Width"
                       >
-                        <div className="w-5 h-5 flex items-center justify-center">
-                          <div data-nosnippet="true" className="w-5 h-5 flex items-center justify-center">字</div>
+                        <div className="w-full h-full flex items-center justify-center">
+                          <div data-nosnippet="true" className="w-full h-full flex items-center justify-center text-base">字</div>
                         </div>
                       </button>
                     </DialogTrigger>
@@ -291,7 +291,7 @@ const Header: React.FC = () => {
                     <Text>更换网站字体</Text>
                   </TooltipContent>
                 </Tooltip>
-                <DialogContent className="p-6 bg-card max-w-md md:max-w-lg lg:max-w-xl mx-auto max-h-[80vh] overflow-y-auto">
+                <DialogContent className="p-6 bg-card/90 backdrop-blur-sm rounded-xl shadow-lg border border-border/50 max-w-md md:max-w-lg lg:max-w-xl mx-auto max-h-[80vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle><Text>选择字体和宽度</Text></DialogTitle>
                     <DialogDescription>
@@ -399,10 +399,10 @@ const Header: React.FC = () => {
                     <TooltipTrigger asChild>
                       <DropdownMenu.Trigger asChild>
                         <button
-                          className="p-2 bg-card rounded-full shadow-md focus:outline-none hover:bg-primary-hover hover:text-primary-foreground-hover"
+                          className="w-10 h-10 bg-card/80 backdrop-blur-sm rounded-full shadow-md hover:shadow-lg focus:outline-none hover:bg-primary-hover hover:text-primary-foreground-hover transition-all duration-200"
                           aria-label="Select Theme"
                         >
-                          <div data-nosnippet="true" className="w-5 h-5 flex items-center justify-center">目</div>
+                          <div data-nosnippet="true" className="w-full h-full flex items-center justify-center text-base">目</div>
                         </button>
                       </DropdownMenu.Trigger>
                     </TooltipTrigger>
@@ -410,8 +410,8 @@ const Header: React.FC = () => {
                       <Text>显示书籍目录</Text>
                     </TooltipContent>
                   </Tooltip>
-                  <DropdownMenu.Content 
-                    className="bg-popover p-4 rounded-md shadow-lg max-h-80 overflow-y-auto"
+                  <DropdownMenu.Content
+                    className="bg-popover/90 backdrop-blur-sm p-4 rounded-xl shadow-lg border border-border/50 max-h-80 overflow-y-auto"
                     style={{ fontFamily }}
                   >
                     {book?.juans.filter(juan => juan.type === 'bt' || juan.type === 'bm').map(juan => (
@@ -440,12 +440,12 @@ const Header: React.FC = () => {
                   <TooltipTrigger asChild>
                     <button
                       onClick={toggleFavoriteBook}
-                      className={`p-2 rounded-full shadow-md focus:outline-none hover:bg-primary-hover hover:text-primary-foreground-hover ${
-                        book && favoriteBooks.some(fav => fav.bookId === book?.meta?.id) ? 'bg-accentalert' : 'bg-card'
+                      className={`w-10 h-10 backdrop-blur-sm rounded-full shadow-md hover:shadow-lg focus:outline-none hover:bg-primary-hover hover:text-primary-foreground-hover transition-all duration-200 ${
+                        book && favoriteBooks.some(fav => fav.bookId === book?.meta?.id) ? 'bg-accentalert/80' : 'bg-card/80'
                       }`}
                       aria-label="Add to Favorites"
                     >
-                      <div data-nosnippet="true" className="w-5 h-5 flex items-center justify-center">藏</div>
+                      <div data-nosnippet="true" className="w-full h-full flex items-center justify-center text-base">藏</div>
                     </button>
                   </TooltipTrigger>
                   <TooltipContent>
@@ -459,11 +459,10 @@ const Header: React.FC = () => {
                   <TooltipTrigger asChild>
                     <button
                       onClick={handleAddBookmark}
-                      className={`p-2 bg-card rounded-full shadow-md focus:outline-none hover:bg-primary-hover hover:text-primary-foreground-hover
-                      }`}
+                      className="w-10 h-10 bg-card/80 backdrop-blur-sm rounded-full shadow-md hover:shadow-lg focus:outline-none hover:bg-primary-hover hover:text-primary-foreground-hover transition-all duration-200"
                       aria-label="Add to Bookmarks"
                     >
-                      <div data-nosnippet="true" className="w-5 h-5 flex items-center justify-center">签</div>
+                      <div data-nosnippet="true" className="w-full h-full flex items-center justify-center text-base">签</div>
                     </button>
                   </TooltipTrigger>
                   <TooltipContent>
@@ -477,10 +476,10 @@ const Header: React.FC = () => {
                   <TooltipTrigger asChild>
                     <button
                       onClick={handleDownload}
-                      className={`p-2 bg-card rounded-full shadow-md focus:outline-none hover:bg-primary-hover hover:text-primary-foreground-hover`}
+                      className="w-10 h-10 bg-card/80 backdrop-blur-sm rounded-full shadow-md hover:shadow-lg focus:outline-none hover:bg-primary-hover hover:text-primary-foreground-hover transition-all duration-200"
                       aria-label="Download"
                     >
-                      <div data-nosnippet="true" className="w-5 h-5 flex items-center justify-center">存</div>
+                      <div data-nosnippet="true" className="w-full h-full flex items-center justify-center text-base">存</div>
                     </button>
                   </TooltipTrigger>
                   <TooltipContent>
@@ -498,26 +497,26 @@ const Header: React.FC = () => {
         <header className="w-full p-2">
           <nav className="flex flex-col md:flex-row justify-center items-center mx-auto p-5">
             <div className="flex-1 text-center">
-              <h1 className="text-5xl font-bold"><Text>乾隆大藏经</Text></h1>
+              <h1 className="text-5xl font-bold text-foreground tracking-wide"><Text>乾隆大藏经</Text></h1>
             </div>
           </nav>
 
-          <div className="flex justify-center text-md py-4 text-xl">
-            <nav className="flex flex-wrap justify-center w-full gap-4">
-            <Link href="/" className={`flex items-center px-4 py-2 rounded-md border border-border hover:bg-primary-hover hover:text-primary-foreground-hover`}>
-                <Home className="w-5 h-5 mr-3" aria-hidden="true" /> <Text>首页</Text>
+          <div className="flex justify-center text-md py-5 text-xl">
+            <nav className="flex flex-wrap justify-center w-full gap-3">
+            <Link href="/" className="flex items-center px-4 py-2.5 rounded-xl bg-card/50 backdrop-blur-sm shadow-sm border border-border/50 hover:bg-primary-hover hover:text-primary-foreground-hover hover:shadow-md transition-all duration-200">
+                <Home className="w-5 h-5 mr-2" aria-hidden="true" /> <Text>首页</Text>
               </Link>
-              <Link href="/intro" className={`flex items-center px-4 py-2 rounded-md border border-border hover:bg-primary-hover hover:text-primary-foreground-hover`}>
-                <Info className="w-5 h-5 mr-3" aria-hidden="true" /> <Text>简介</Text>
+              <Link href="/intro" className="flex items-center px-4 py-2.5 rounded-xl bg-card/50 backdrop-blur-sm shadow-sm border border-border/50 hover:bg-primary-hover hover:text-primary-foreground-hover hover:shadow-md transition-all duration-200">
+                <Info className="w-5 h-5 mr-2" aria-hidden="true" /> <Text>简介</Text>
               </Link>
-              <Link href="/search" className={`flex items-center px-4 py-2 rounded-md border border-border hover:bg-primary-hover hover:text-primary-foreground-hover`}>
-                <Search className="w-5 h-5 mr-3" aria-hidden="true" /> <Text>搜索</Text>
+              <Link href="/search" className="flex items-center px-4 py-2.5 rounded-xl bg-card/50 backdrop-blur-sm shadow-sm border border-border/50 hover:bg-primary-hover hover:text-primary-foreground-hover hover:shadow-md transition-all duration-200">
+                <Search className="w-5 h-5 mr-2" aria-hidden="true" /> <Text>搜索</Text>
               </Link>
-              <Link href="/dicts" className={`flex items-center px-4 py-2 rounded-md border border-border hover:bg-primary-hover hover:text-primary-foreground-hover`}>
-                <Book className="w-5 h-5 mr-3" aria-hidden="true" /> <Text>辞典</Text>
+              <Link href="/dicts" className="flex items-center px-4 py-2.5 rounded-xl bg-card/50 backdrop-blur-sm shadow-sm border border-border/50 hover:bg-primary-hover hover:text-primary-foreground-hover hover:shadow-md transition-all duration-200">
+                <Book className="w-5 h-5 mr-2" aria-hidden="true" /> <Text>辞典</Text>
               </Link>
-              <Link href="/mystudy" className={`flex items-center px-4 py-2 rounded-md border border-border hover:bg-primary-hover hover:text-primary-foreground-hover`}>
-                <Heart className="w-5 h-5 mr-3" aria-hidden="true" /> <Text>我的书房</Text>
+              <Link href="/mystudy" className="flex items-center px-4 py-2.5 rounded-xl bg-card/50 backdrop-blur-sm shadow-sm border border-border/50 hover:bg-primary-hover hover:text-primary-foreground-hover hover:shadow-md transition-all duration-200">
+                <Heart className="w-5 h-5 mr-2" aria-hidden="true" /> <Text>我的书房</Text>
               </Link>
             </nav>
           </div>

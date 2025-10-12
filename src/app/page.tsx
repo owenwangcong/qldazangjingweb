@@ -144,9 +144,9 @@ export default function Home() {
       >
         {/* Classic Texts Section with toggle */}
         <div ref={classicsRef} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-8 items-start">
-          <div className="col-span-full border border-border rounded-lg overflow-hidden bg-background shadow-md">
+          <div className="col-span-full border border-border/50 rounded-xl overflow-hidden bg-card/50 backdrop-blur-sm shadow-md">
             {/* Header with tabs - always visible */}
-            <div className="px-3 py-2 md:px-5 md:py-3 bg-muted/50 flex items-center gap-3 md:gap-4">
+            <div className="px-3 py-2 md:px-5 md:py-3 bg-muted/30 backdrop-blur-sm flex items-center gap-3 md:gap-4">
               <h2 className="text-base md:text-lg font-semibold text-foreground whitespace-nowrap">
                 <Text>常用经典</Text>
               </h2>
@@ -173,9 +173,9 @@ export default function Home() {
                   <button
                     key={category}
                     onClick={() => handleTabChange(category)}
-                    className={`px-3 py-1.5 rounded-full text-sm whitespace-nowrap transition-all ${
+                    className={`px-3 py-1.5 rounded-full text-sm whitespace-nowrap transition-all duration-200 ${
                       activeTab === category
-                        ? 'bg-primary/20 text-primary font-medium'
+                        ? 'bg-primary/20 text-primary font-medium shadow-sm'
                         : 'text-foreground/70 hover:bg-muted/50 hover:text-foreground'
                     }`}
                   >
@@ -240,9 +240,9 @@ export default function Home() {
                   key={key}
                   href={`/juans/${id}`}
                   passHref
-                  className="p-4 border border-border rounded-lg shadow-md w-full max-w-md block hover:bg-primary-hover transition-colors"
+                  className="p-5 border border-border/50 rounded-xl shadow-md w-full max-w-md block bg-card/50 backdrop-blur-sm hover:bg-primary-hover hover:text-primary-foreground-hover hover:shadow-lg transition-all duration-200"
                 >
-                  <h2 className="text-xl font-semibold text-center text-foreground"><Text>{name}</Text></h2>
+                  <h2 className="text-xl font-semibold text-center"><Text>{name}</Text></h2>
                 </Link>
           ))}
         </main>

@@ -46,6 +46,29 @@ html {
   .text-balance {
     text-wrap: balance;
   }
+
+  /* Smooth animations for interactive elements */
+  @keyframes gentle-float {
+    0%, 100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-2px);
+    }
+  }
+
+  .animate-gentle-float {
+    animation: gentle-float 3s ease-in-out infinite;
+  }
+
+  /* Soft glow effect for buttons */
+  .glow-on-hover {
+    transition: all 0.3s ease;
+  }
+
+  .glow-on-hover:hover {
+    box-shadow: 0 0 20px rgba(var(--primary), 0.4);
+  }
 }
 
 @layer base {
