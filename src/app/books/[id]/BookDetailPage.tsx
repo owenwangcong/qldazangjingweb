@@ -530,7 +530,7 @@ const BookDetailPage: React.FC = () => {
 
   // 滚动到选中的段落
   useEffect(() => {
-    const parts = document.querySelectorAll('span[id^="part-"]');
+    const parts = document.querySelectorAll('p[id^="part-"]');
     const visiblePartIdsSet = new Set<string>();
 
     const observer = new IntersectionObserver(
@@ -546,7 +546,9 @@ const BookDetailPage: React.FC = () => {
         const visibleIds = Array.from(visiblePartIdsSet);
         setVisiblePartIds(visibleIds);
         visibleIds.sort((a, b) => a.localeCompare(b));
-        setCurrentPartId(visibleIds[0]);
+        if (visibleIds.length > 0) {
+          setCurrentPartId(visibleIds[0]);
+        }
       },
       { threshold: 0.01 }
     );
