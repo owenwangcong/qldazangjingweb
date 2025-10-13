@@ -69,6 +69,19 @@ html {
   .glow-on-hover:hover {
     box-shadow: 0 0 20px rgba(var(--primary), 0.4);
   }
+
+  /* Z-index layering for overlays */
+  [data-radix-popper-content-wrapper] {
+    z-index: 100 !important;
+  }
+
+  [data-radix-dialog-overlay] {
+    z-index: 100 !important;
+  }
+
+  [data-radix-dialog-content] {
+    z-index: 101 !important;
+  }
 }
 
 @layer base {

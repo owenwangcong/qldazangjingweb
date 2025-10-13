@@ -229,7 +229,11 @@ const Header: React.FC = () => {
                     <Text>更换网站颜色主题</Text>
                   </TooltipContent>
                 </Tooltip>
-                <DropdownMenu.Content className="bg-popover/90 backdrop-blur-sm p-4 rounded-xl shadow-lg border border-border/50">
+                <DropdownMenu.Content
+                  className="bg-popover/90 backdrop-blur-sm p-4 rounded-xl shadow-lg border border-border/50 z-[100]"
+                  align="end"
+                  sideOffset={5}
+                >
                   {[
                     { value: 'lianchichanyun', label: '莲池禅韵' },
                     { value: 'zhulinyoujing', label: '竹林幽径' },
@@ -291,7 +295,7 @@ const Header: React.FC = () => {
                     <Text>更换网站字体</Text>
                   </TooltipContent>
                 </Tooltip>
-                <DialogContent className="p-6 bg-card/90 backdrop-blur-sm rounded-xl shadow-lg border border-border/50 max-w-md md:max-w-lg lg:max-w-xl mx-auto max-h-[80vh] overflow-y-auto">
+                <DialogContent className="p-6 bg-card/90 backdrop-blur-sm rounded-xl shadow-lg border border-border/50 max-w-md md:max-w-lg lg:max-w-xl mx-auto max-h-[80vh] overflow-y-auto z-[100]">
                   <DialogHeader>
                     <DialogTitle><Text>选择字体和宽度</Text></DialogTitle>
                     <DialogDescription>
@@ -411,7 +415,9 @@ const Header: React.FC = () => {
                     </TooltipContent>
                   </Tooltip>
                   <DropdownMenu.Content
-                    className="bg-popover/90 backdrop-blur-sm p-4 rounded-xl shadow-lg border border-border/50 max-h-80 overflow-y-auto"
+                    className="bg-popover/90 backdrop-blur-sm p-4 rounded-xl shadow-lg border border-border/50 max-h-80 overflow-y-auto z-[100]"
+                    align="end"
+                    sideOffset={5}
                     style={{ fontFamily }}
                   >
                     {book?.juans.filter(juan => juan.type === 'bt' || juan.type === 'bm').map(juan => (
