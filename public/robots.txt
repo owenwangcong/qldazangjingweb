@@ -1,6 +1,23 @@
+# Robots.txt for qldazangjing.com
+# Allow all search engines to index the site
+
 User-agent: *
-Disallow: /api/
-Disallow: /admin/
 Allow: /
 
+# Disallow private and user-specific pages
+Disallow: /api/
+Disallow: /admin/
+Disallow: /mystudy
+Disallow: /favorites
+Disallow: /downloads
+Disallow: /settings
+
+# Allow indexing of public pages
+Allow: /search
+Allow: /dicts
+Allow: /intro
+Allow: /books/
+Allow: /juans/
+
+# Sitemap location
 Sitemap: https://qldazangjing.com/sitemap.xml 

@@ -1,3 +1,16 @@
+import { Metadata } from 'next';
+
+export async function generateMetadata(): Promise<Metadata> {
+  return {
+    title: "设置",
+    description: "个人设置页面。",
+    robots: {
+      index: false,
+      follow: false,
+    },
+  };
+}
+
 import React from 'react';
 import Header from '@/app/components/Header';
 

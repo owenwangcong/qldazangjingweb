@@ -24,29 +24,29 @@ const generateMainSitemap = (data) => {
     <url>
         <loc>https://qldazangjing.com/</loc>
         <lastmod>${currentDate}</lastmod>
-        <changefreq>weekly</changefreq>
+        <changefreq>daily</changefreq>
         <priority>1.0</priority>
     </url>
-  
+
+    <url>
+        <loc>https://qldazangjing.com/intro</loc>
+        <lastmod>${currentDate}</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.9</priority>
+    </url>
+
     <url>
         <loc>https://qldazangjing.com/search</loc>
         <lastmod>${currentDate}</lastmod>
         <changefreq>weekly</changefreq>
-        <priority>1.0</priority>
+        <priority>0.9</priority>
     </url>
 
     <url>
-        <loc>https://qldazangjing.com/dict</loc>
+        <loc>https://qldazangjing.com/dicts</loc>
         <lastmod>${currentDate}</lastmod>
         <changefreq>weekly</changefreq>
-        <priority>1.0</priority>
-    </url>
-
-    <url>
-        <loc>https://qldazangjing.com/mystudy</loc>
-        <lastmod>${currentDate}</lastmod>
-        <changefreq>weekly</changefreq>
-        <priority>1.0</priority>
+        <priority>0.8</priority>
     </url>
   `;
 

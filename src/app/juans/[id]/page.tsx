@@ -28,6 +28,7 @@ async function loadMlsData(): Promise<Record<string, JuanData>> {
 // Generate metadata for SEO
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
   const { id } = params;
+  const siteUrl = "https://www.qldazangjing.com";
 
   try {
     const mlsData = await loadMlsData();
@@ -35,16 +36,73 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
     const juan = (Object.values(mlsData) as JuanData[]).find((item) => item.id === id);
 
     if (juan) {
+      const description = `${juan.name}，收录${juan.bus.length}部经书。来自清代乾隆年间编纂的乾隆大藏经目录。`;
+      const bookTitles = juan.bus.slice(0, 5).map(b => b.title).join("、");
+
       return {
         title: juan.name,
-        description: `卷名: ${juan.name}`,
+        description: description,
+        keywords: [juan.name, "大藏经目录", "经书目录", "佛经", "Buddhist Scripture Index"],
+        alternates: {
+          canonical: `/juans/${id}`,
+        },
+        openGraph: {
+          title: `${juan.name} | 乾隆大藏经`,
+          description: description,
+          url: `${siteUrl}/juans/${id}`,
+          type: "website",
+          locale: "zh_CN",
+          siteName: "乾隆大藏经",
+        },
+        twitter: {
+          card: "summary",
+          title: `${juan.name} | 乾隆大藏经`,
+          description: description,
+        },
         other: {
-          "application/ld+json": JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "Book",
-            "name": juan.name,
-            "description": `卷名: ${juan.name}`,
-          }),
+          "application/ld+json": JSON.stringify([
+            {
+              "@context": "https://schema.org",
+              "@type": "CollectionPage",
+              "name": juan.name,
+              "description": description,
+              "inLanguage": "zh-CN",
+              "url": `${siteUrl}/juans/${id}`,
+              "isPartOf": {
+                "@type": "Collection",
+                "name": "乾隆大藏经",
+                "url": siteUrl
+              },
+              "numberOfItems": juan.bus.length,
+              "hasPart": juan.bus.slice(0, 10).map(book => ({
+                "@type": "Book",
+                "name": book.title,
+                "author": {
+                  "@type": "Person",
+                  "name": book.author
+                },
+                "url": `${siteUrl}/books/${book.id}`
+              }))
+            },
+            {
+              "@context": "https://schema.org",
+              "@type": "BreadcrumbList",
+              "itemListElement": [
+                {
+                  "@type": "ListItem",
+                  "position": 1,
+                  "name": "首页",
+                  "item": siteUrl
+                },
+                {
+                  "@type": "ListItem",
+                  "position": 2,
+                  "name": juan.name,
+                  "item": `${siteUrl}/juans/${id}`
+                }
+              ]
+            }
+          ])
         },
       };
     }
@@ -53,7 +111,12 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
   }
 
   return {
-    title: 'Juan not found',
+    title: '找不到卷',
+    description: '请求的卷不存在。',
+    robots: {
+      index: false,
+      follow: false,
+    }
   };
 }
 

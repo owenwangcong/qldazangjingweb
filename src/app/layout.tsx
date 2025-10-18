@@ -49,18 +49,85 @@ const wqwh = localFont({
 const GA_TRACKING_ID = 'G-YYK959RPCX';
 
 export async function generateMetadata(): Promise<Metadata> {
+    const siteUrl = "https://www.qldazangjing.com";
+    const description = "乾隆大藏经是清代乾隆年间编纂的一部重要佛教典籍，收录了大量佛教经典、论著和注疏。本网站提供乾隆大藏经的在线阅读、检索、注释和研究功能，让读者能够方便地查阅和学习这部珍贵的佛教文献。乾隆大藏经。龙藏。";
+
     return {
-        title: "乾隆大藏经 | 大藏经",
-        description: "乾隆大藏经是清代乾隆年间编纂的一部重要佛教典籍，收录了大量佛教经典、论著和注疏。本网站提供乾隆大藏经的在线阅读、检索、注释和研究功能，让读者能够方便地查阅和学习这部珍贵的佛教文献。乾隆大藏经。龙藏。",
+        metadataBase: new URL(siteUrl),
+        title: {
+            default: "乾隆大藏经 | 大藏经",
+            template: "%s | 乾隆大藏经"
+        },
+        description: description,
+        keywords: ["乾隆大藏经", "龙藏", "佛教典籍", "佛经", "大藏经", "佛教经典", "佛学", "Buddhist Scripture", "Qianlong Dazangjing"],
+        authors: [{ name: "乾隆大藏经" }],
+        creator: "乾隆大藏经",
+        publisher: "乾隆大藏经",
+        alternates: {
+            canonical: "/",
+            languages: {
+                'zh-CN': '/',
+                'zh-TW': '/',
+            }
+        },
         openGraph: {
+            type: "website",
+            locale: "zh_CN",
+            url: siteUrl,
+            siteName: "乾隆大藏经",
             title: "乾隆大藏经 | 大藏经",
-            description: "乾隆大藏经是清代乾隆年间编纂的一部重要佛教典籍，收录了大量佛教经典、论著和注疏。本网站提供乾隆大藏经的在线阅读、检索、注释和研究功能，让读者能够方便地查阅和学习这部珍贵的佛教文献。乾隆大藏经。龙藏。",
-            url: "https://www.qldazangjing.com",
+            description: description,
         },
         twitter: {
+            card: "summary_large_image",
             title: "乾隆大藏经 | 大藏经",
-            description: "乾隆大藏经是清代乾隆年间编纂的一部重要佛教典籍，收录了大量佛教经典、论著和注疏。本网站提供乾隆大藏经的在线阅读、检索、注释和研究功能，让读者能够方便地查阅和学习这部珍贵的佛教文献。乾隆大藏经。龙藏。",
+            description: description,
         },
+        viewport: {
+            width: "device-width",
+            initialScale: 1,
+            maximumScale: 5,
+        },
+        robots: {
+            index: true,
+            follow: true,
+            googleBot: {
+                index: true,
+                follow: true,
+                'max-video-preview': -1,
+                'max-image-preview': 'large',
+                'max-snippet': -1,
+            },
+        },
+        other: {
+            "application/ld+json": JSON.stringify([
+                {
+                    "@context": "https://schema.org",
+                    "@type": "Organization",
+                    "name": "乾隆大藏经",
+                    "url": siteUrl,
+                    "logo": `${siteUrl}/images/BELL.png`,
+                    "description": "清代乾隆年间编纂的重要佛教典籍数字化平台",
+                    "sameAs": []
+                },
+                {
+                    "@context": "https://schema.org",
+                    "@type": "WebSite",
+                    "name": "乾隆大藏经",
+                    "url": siteUrl,
+                    "description": description,
+                    "inLanguage": "zh-CN",
+                    "potentialAction": {
+                        "@type": "SearchAction",
+                        "target": {
+                            "@type": "EntryPoint",
+                            "urlTemplate": `${siteUrl}/search?q={search_term_string}`
+                        },
+                        "query-input": "required name=search_term_string"
+                    }
+                }
+            ])
+        }
     };
 }
 
@@ -71,9 +138,10 @@ export default function RootLayout({
 }>) {
 
   return (
-    <html lang="en">
+    <html lang="zh-CN">
       <head>
-        <meta name="description" content="乾隆大藏经是清代乾隆年间编纂的一部重要佛教典籍，收录了大量佛教经典、论著和注疏。本网站提供乾隆大藏经的在线阅读、检索、注释和研究功能，让读者能够方便地查阅和学习这部珍贵的佛教文献。乾隆大藏经。龙藏。" />
+        <link rel="preconnect" href="https://www.googletagmanager.com" />
+        <link rel="dns-prefetch" href="https://www.google-analytics.com" />
         <Script
           src={`https://www.googletagmanager.com/gtag/js?id=${GA_TRACKING_ID}`}
           strategy="afterInteractive"

@@ -24,6 +24,7 @@ async function loadBookMetaData(): Promise<BookMetaData> {
 // Generate metadata for SEO
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
   const { id } = params;
+  const siteUrl = "https://www.qldazangjing.com";
 
   try {
     const bookMetaData = await loadBookMetaData();
@@ -31,16 +32,74 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
     const bookMeta: BookMeta | undefined = bookMetaData[id];
 
     if (bookMeta) {
+      const description = `${bookMeta.title}，作者：${bookMeta.author}。来自清代乾隆年间编纂的乾隆大藏经，在线阅读佛教经典原文。`;
+
       return {
-        title: `${bookMeta.title}`,
-        description: `经名: ${bookMeta.title}. 作者: ${bookMeta.author}`,
+        title: bookMeta.title,
+        description: description,
+        keywords: [bookMeta.title, bookMeta.author, "佛经", "大藏经", "乾隆大藏经", "Buddhist Scripture"],
+        authors: [{ name: bookMeta.author }],
+        alternates: {
+          canonical: `/books/${id}`,
+        },
+        openGraph: {
+          title: `${bookMeta.title} | 乾隆大藏经`,
+          description: description,
+          url: `${siteUrl}/books/${id}`,
+          type: "article",
+          locale: "zh_CN",
+          siteName: "乾隆大藏经",
+          article: {
+            authors: [bookMeta.author],
+          }
+        },
+        twitter: {
+          card: "summary_large_image",
+          title: `${bookMeta.title} | 乾隆大藏经`,
+          description: description,
+        },
         other: {
-          "application/ld+json": JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "Book",
-            "name": bookMeta.title,
-            "description": `经名: ${bookMeta.title}. 作者: ${bookMeta.author}`,
-          }),
+          "application/ld+json": JSON.stringify([
+            {
+              "@context": "https://schema.org",
+              "@type": "Book",
+              "name": bookMeta.title,
+              "author": {
+                "@type": "Person",
+                "name": bookMeta.author
+              },
+              "description": description,
+              "inLanguage": "zh-CN",
+              "publisher": {
+                "@type": "Organization",
+                "name": "乾隆大藏经"
+              },
+              "url": `${siteUrl}/books/${id}`,
+              "isPartOf": {
+                "@type": "Collection",
+                "name": "乾隆大藏经",
+                "url": siteUrl
+              }
+            },
+            {
+              "@context": "https://schema.org",
+              "@type": "BreadcrumbList",
+              "itemListElement": [
+                {
+                  "@type": "ListItem",
+                  "position": 1,
+                  "name": "首页",
+                  "item": siteUrl
+                },
+                {
+                  "@type": "ListItem",
+                  "position": 2,
+                  "name": bookMeta.title,
+                  "item": `${siteUrl}/books/${id}`
+                }
+              ]
+            }
+          ])
         },
       };
     }
@@ -51,6 +110,10 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
   return {
     title: '找不到经书',
     description: '请求的经书不存在。',
+    robots: {
+      index: false,
+      follow: false,
+    }
   };
 }
 

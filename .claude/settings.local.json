@@ -37,7 +37,9 @@
       "Bash(cmd /c:*)",
       "Bash(netstat:*)",
       "Bash(timeout:*)",
-      "mcp__playwright__browser_navigate_back"
+      "mcp__playwright__browser_navigate_back",
+      "Bash(cat \"D:\\Projects\\Cursor\\qldazangjingweb\\README.md\")",
+      "Bash(cat \"D:\\Projects\\Cursor\\qldazangjingweb\\.eslintrc.json\")"
     ],
     "deny": [
       "Read(./out/**)",
