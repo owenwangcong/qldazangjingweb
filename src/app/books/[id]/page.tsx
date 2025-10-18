@@ -49,9 +49,7 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
           type: "article",
           locale: "zh_CN",
           siteName: "乾隆大藏经",
-          article: {
-            authors: [bookMeta.author],
-          }
+          authors: [bookMeta.author],
         },
         twitter: {
           card: "summary_large_image",
