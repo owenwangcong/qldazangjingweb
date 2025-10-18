@@ -10,6 +10,7 @@ import FontWrapper from './components/FontWrapper';
 import { Toaster } from '@/components/ui/toaster';
 import Script from 'next/script';
 import { usePathname } from 'next/navigation';
+import ChunkErrorHandler from './components/ChunkErrorHandler';
 
 const GA_TRACKING_ID = 'G-YYK959RPCX';
 
@@ -38,6 +39,7 @@ const ClientProviders = ({ children }: { children: React.ReactNode }) => {
   return (
     <>
       <Script src="/scripts/opencc.min.js" strategy="beforeInteractive" />
+      <ChunkErrorHandler />
       <AnnotationProvider>
         <MyStudyProvider>
           <FontProvider>
