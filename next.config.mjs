@@ -13,6 +13,10 @@ const nextConfig = {
         source: '/:path*',
         headers: [
           {
+            key: 'Strict-Transport-Security',
+            value: 'max-age=16070400; includeSubDomains'
+          },
+          {
             key: 'X-DNS-Prefetch-Control',
             value: 'on'
           },

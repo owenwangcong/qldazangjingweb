@@ -9,41 +9,49 @@ const aakai = localFont({
     src: "../../public/website_fonts/aaKaiTi_website_text.woff",
     variable: "--font-aakai",
     weight: "100 900",
+    display: "swap",
 });
 const aakaiSong = localFont({
     src: "../../public/website_fonts/aaKaiSong_website_text.woff",
     variable: "--font-aakaiSong",
     weight: "100 900",
+    display: "swap",
 });
 const lxgw = localFont({
     src: "../../public/website_fonts/lxgw_website_text.woff",
     variable: "--font-lxgw",
     weight: "100 900",
+    display: "swap",
 });
 const hyfs = localFont({
     src: "../../public/website_fonts/hyFangSong_website_text.woff",
     variable: "--font-hyfs",
     weight: "200 1000",
+    display: "swap",
 });
 const qnlb = localFont({
     src: "../../public/website_fonts/qnBianLi_website_text.woff",
     variable: "--font-qnlb",
     weight: "100 900",
+    display: "swap",
 });
 const rzykt = localFont({
     src: "../../public/website_fonts/rzyKaiTi_website_text.woff",
     variable: "--font-rzykt",
     weight: "100 900",
+    display: "swap",
 });
 const twzk = localFont({
     src: "../../public/website_fonts/twZhengKai_website_text.woff",
     variable: "--font-twzk",
     weight: "100 900",
+    display: "swap",
 });
 const wqwh = localFont({
     src: "../../public/website_fonts/wqwMiHei_website_text.woff",
     variable: "--font-wqwh",
     weight: "100 900",
+    display: "swap",
 });
 
 const GA_TRACKING_ID = 'G-YYK959RPCX';
@@ -161,7 +169,6 @@ export default function RootLayout({
             `,
           }}
         />
-        <link rel="stylesheet" href="/styles/recogito.min.css" />
         <link rel="preload" href="/scripts/opencc.min.js" as="script" />
       </head>
       <body className={`antialiased ${aakai.variable} ${aakaiSong.variable} ${lxgw.variable} ${hyfs.variable} ${qnlb.variable} ${rzykt.variable} ${twzk.variable} ${wqwh.variable}`}>

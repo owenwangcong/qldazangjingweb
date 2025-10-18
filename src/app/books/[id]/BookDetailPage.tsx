@@ -11,6 +11,16 @@ import Link from 'next/link';
 import classNames from 'classnames'; // Import classNames for conditional classes
 import { Annotation, Recogito } from '@/app/scripts/recogito.min.js';
 
+// Dynamically load recogito CSS only when this page is rendered
+if (typeof window !== 'undefined') {
+  const link = document.createElement('link');
+  link.rel = 'stylesheet';
+  link.href = '/styles/recogito.min.css';
+  if (!document.querySelector('link[href="/styles/recogito.min.css"]')) {
+    document.head.appendChild(link);
+  }
+}
+
 import ReactMarkdown from 'react-markdown';
 import { convertResultsToMarkdown } from '@/app/utils/convertResultsToMarkdown';
 import { AnnotationProvider, useAnnotations } from '@/app/context/AnnotationContext';
