@@ -372,123 +372,125 @@ const Header: React.FC = () => {
                     </div>
                   </RadioGroup>
 
-                  <div className="mt-4">
-                    <label className="text-xs font-medium mb-1 block">
-                      <Text>字体大小</Text>
-                    </label>
-                    <Slider.Root
-                      className="relative flex items-center select-none touch-none w-full h-5"
-                      value={[fontSizeToNumber(fontSize)]}
-                      min={0}
-                      max={fontSizeOptions.length - 1}
-                      step={1}
-                      onValueChange={(value) => setFontSize(numberToFontSize(value[0]))}
-                      aria-label="Font Size Slider"
-                    >
-                      <Slider.Track className="bg-secondary relative flex-1 h-1 rounded-full">
-                        <Slider.Range className="absolute bg-primary h-full rounded-full" />
-                      </Slider.Track>
-                      <Slider.Thumb className="block w-4 h-4 bg-primary rounded-full focus:outline-none" />
-                    </Slider.Root>
-                    <div className="flex justify-between text-xs mt-1">
-                      <span><Text>小</Text></span>
-                      <span><Text>大</Text></span>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                    <div>
+                      <label className="text-xs font-medium mb-1 block">
+                        <Text>字体大小</Text>
+                      </label>
+                      <Slider.Root
+                        className="relative flex items-center select-none touch-none w-full h-5"
+                        value={[fontSizeToNumber(fontSize)]}
+                        min={0}
+                        max={fontSizeOptions.length - 1}
+                        step={1}
+                        onValueChange={(value) => setFontSize(numberToFontSize(value[0]))}
+                        aria-label="Font Size Slider"
+                      >
+                        <Slider.Track className="bg-secondary relative flex-1 h-1 rounded-full">
+                          <Slider.Range className="absolute bg-primary h-full rounded-full" />
+                        </Slider.Track>
+                        <Slider.Thumb className="block w-4 h-4 bg-primary rounded-full focus:outline-none" />
+                      </Slider.Root>
+                      <div className="flex justify-between text-xs mt-1">
+                        <span><Text>小</Text></span>
+                        <span><Text>大</Text></span>
+                      </div>
                     </div>
-                  </div>
 
-                  <div className="mt-4">
-                    <label className="text-xs font-medium mb-1 block">
-                      <Text>内容宽度</Text>
-                    </label>
-                    <Slider.Root
-                      className="relative flex items-center select-none touch-none w-full h-5"
-                      value={[widthToNumber(selectedWidth)]}
-                      min={0}
-                      max={widthOptions.length - 1}
-                      step={1}
-                      onValueChange={(value) => setSelectedWidth(numberToWidth(value[0]))}
-                      aria-label="Content Width Slider"
-                    >
-                      <Slider.Track className="bg-secondary relative flex-1 h-1 rounded-full">
-                        <Slider.Range className="absolute bg-primary h-full rounded-full" />
-                      </Slider.Track>
-                      <Slider.Thumb className="block w-4 h-4 bg-primary rounded-full focus:outline-none" />
-                    </Slider.Root>
-                    <div className="flex justify-between text-xs mt-1">
-                      <span><Text>窄</Text></span>
-                      <span><Text>宽</Text></span>
+                    <div>
+                      <label className="text-xs font-medium mb-1 block">
+                        <Text>内容宽度</Text>
+                      </label>
+                      <Slider.Root
+                        className="relative flex items-center select-none touch-none w-full h-5"
+                        value={[widthToNumber(selectedWidth)]}
+                        min={0}
+                        max={widthOptions.length - 1}
+                        step={1}
+                        onValueChange={(value) => setSelectedWidth(numberToWidth(value[0]))}
+                        aria-label="Content Width Slider"
+                      >
+                        <Slider.Track className="bg-secondary relative flex-1 h-1 rounded-full">
+                          <Slider.Range className="absolute bg-primary h-full rounded-full" />
+                        </Slider.Track>
+                        <Slider.Thumb className="block w-4 h-4 bg-primary rounded-full focus:outline-none" />
+                      </Slider.Root>
+                      <div className="flex justify-between text-xs mt-1">
+                        <span><Text>窄</Text></span>
+                        <span><Text>宽</Text></span>
+                      </div>
                     </div>
-                  </div>
 
-                  <div className="mt-4">
-                    <label className="text-xs font-medium mb-1 block">
-                      <Text>行间距</Text>
-                    </label>
-                    <Slider.Root
-                      className="relative flex items-center select-none touch-none w-full h-5"
-                      value={[lineHeightToNumber(lineHeight)]}
-                      min={0}
-                      max={lineHeightOptions.length - 1}
-                      step={1}
-                      onValueChange={(value) => setLineHeight(numberToLineHeight(value[0]))}
-                      aria-label="Line Height Slider"
-                    >
-                      <Slider.Track className="bg-secondary relative flex-1 h-1 rounded-full">
-                        <Slider.Range className="absolute bg-primary h-full rounded-full" />
-                      </Slider.Track>
-                      <Slider.Thumb className="block w-4 h-4 bg-primary rounded-full focus:outline-none" />
-                    </Slider.Root>
-                    <div className="flex justify-between text-xs mt-1">
-                      <span><Text>紧凑</Text></span>
-                      <span><Text>宽松</Text></span>
+                    <div>
+                      <label className="text-xs font-medium mb-1 block">
+                        <Text>行间距</Text>
+                      </label>
+                      <Slider.Root
+                        className="relative flex items-center select-none touch-none w-full h-5"
+                        value={[lineHeightToNumber(lineHeight)]}
+                        min={0}
+                        max={lineHeightOptions.length - 1}
+                        step={1}
+                        onValueChange={(value) => setLineHeight(numberToLineHeight(value[0]))}
+                        aria-label="Line Height Slider"
+                      >
+                        <Slider.Track className="bg-secondary relative flex-1 h-1 rounded-full">
+                          <Slider.Range className="absolute bg-primary h-full rounded-full" />
+                        </Slider.Track>
+                        <Slider.Thumb className="block w-4 h-4 bg-primary rounded-full focus:outline-none" />
+                      </Slider.Root>
+                      <div className="flex justify-between text-xs mt-1">
+                        <span><Text>紧凑</Text></span>
+                        <span><Text>宽松</Text></span>
+                      </div>
                     </div>
-                  </div>
 
-                  <div className="mt-4">
-                    <label className="text-xs font-medium mb-1 block">
-                      <Text>段落间距</Text>
-                    </label>
-                    <Slider.Root
-                      className="relative flex items-center select-none touch-none w-full h-5"
-                      value={[paragraphSpacingToNumber(paragraphSpacing)]}
-                      min={0}
-                      max={paragraphSpacingOptions.length - 1}
-                      step={1}
-                      onValueChange={(value) => setParagraphSpacing(numberToParagraphSpacing(value[0]))}
-                      aria-label="Paragraph Spacing Slider"
-                    >
-                      <Slider.Track className="bg-secondary relative flex-1 h-1 rounded-full">
-                        <Slider.Range className="absolute bg-primary h-full rounded-full" />
-                      </Slider.Track>
-                      <Slider.Thumb className="block w-4 h-4 bg-primary rounded-full focus:outline-none" />
-                    </Slider.Root>
-                    <div className="flex justify-between text-xs mt-1">
-                      <span><Text>紧凑</Text></span>
-                      <span><Text>宽松</Text></span>
+                    <div>
+                      <label className="text-xs font-medium mb-1 block">
+                        <Text>段落间距</Text>
+                      </label>
+                      <Slider.Root
+                        className="relative flex items-center select-none touch-none w-full h-5"
+                        value={[paragraphSpacingToNumber(paragraphSpacing)]}
+                        min={0}
+                        max={paragraphSpacingOptions.length - 1}
+                        step={1}
+                        onValueChange={(value) => setParagraphSpacing(numberToParagraphSpacing(value[0]))}
+                        aria-label="Paragraph Spacing Slider"
+                      >
+                        <Slider.Track className="bg-secondary relative flex-1 h-1 rounded-full">
+                          <Slider.Range className="absolute bg-primary h-full rounded-full" />
+                        </Slider.Track>
+                        <Slider.Thumb className="block w-4 h-4 bg-primary rounded-full focus:outline-none" />
+                      </Slider.Root>
+                      <div className="flex justify-between text-xs mt-1">
+                        <span><Text>紧凑</Text></span>
+                        <span><Text>宽松</Text></span>
+                      </div>
                     </div>
-                  </div>
 
-                  <div className="mt-4">
-                    <label className="text-xs font-medium mb-1 block">
-                      <Text>字符间距</Text>
-                    </label>
-                    <Slider.Root
-                      className="relative flex items-center select-none touch-none w-full h-5"
-                      value={[letterSpacingToNumber(letterSpacing)]}
-                      min={0}
-                      max={letterSpacingOptions.length - 1}
-                      step={1}
-                      onValueChange={(value) => setLetterSpacing(numberToLetterSpacing(value[0]))}
-                      aria-label="Letter Spacing Slider"
-                    >
-                      <Slider.Track className="bg-secondary relative flex-1 h-1 rounded-full">
-                        <Slider.Range className="absolute bg-primary h-full rounded-full" />
-                      </Slider.Track>
-                      <Slider.Thumb className="block w-4 h-4 bg-primary rounded-full focus:outline-none" />
-                    </Slider.Root>
-                    <div className="flex justify-between text-xs mt-1">
-                      <span><Text>紧密</Text></span>
-                      <span><Text>稀疏</Text></span>
+                    <div>
+                      <label className="text-xs font-medium mb-1 block">
+                        <Text>字符间距</Text>
+                      </label>
+                      <Slider.Root
+                        className="relative flex items-center select-none touch-none w-full h-5"
+                        value={[letterSpacingToNumber(letterSpacing)]}
+                        min={0}
+                        max={letterSpacingOptions.length - 1}
+                        step={1}
+                        onValueChange={(value) => setLetterSpacing(numberToLetterSpacing(value[0]))}
+                        aria-label="Letter Spacing Slider"
+                      >
+                        <Slider.Track className="bg-secondary relative flex-1 h-1 rounded-full">
+                          <Slider.Range className="absolute bg-primary h-full rounded-full" />
+                        </Slider.Track>
+                        <Slider.Thumb className="block w-4 h-4 bg-primary rounded-full focus:outline-none" />
+                      </Slider.Root>
+                      <div className="flex justify-between text-xs mt-1">
+                        <span><Text>紧密</Text></span>
+                        <span><Text>稀疏</Text></span>
+                      </div>
                     </div>
                   </div>
 
