@@ -8,6 +8,8 @@ import classNames from 'classnames';
 import Text from '@/app/components/Text';
 import Pagination from '@/app/components/Pagination';
 import * as OpenCC from 'opencc-js';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 
 interface BusItem {
   id: string;
@@ -255,15 +257,19 @@ const SearchPageClient: React.FC = () => {
         {/* Search mode description and options */}
         <div className="flex flex-col items-center gap-2 mb-2">
           {searchMode === 'fulltext' && (
-            <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
-              <input
-                type="checkbox"
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="phrase-match"
                 checked={usePhraseMatch}
-                onChange={(e) => setUsePhraseMatch(e.target.checked)}
-                className="rounded border-gray-300"
+                onCheckedChange={(checked) => setUsePhraseMatch(checked as boolean)}
               />
-              <Text>精确短语匹配（完整匹配搜索词）</Text>
-            </label>
+              <Label
+                htmlFor="phrase-match"
+                className="text-sm text-gray-600 cursor-pointer"
+              >
+                <Text>精确短语匹配（完整匹配搜索词）</Text>
+              </Label>
+            </div>
           )}
         </div>
 
