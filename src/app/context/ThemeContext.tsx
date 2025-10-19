@@ -2,10 +2,10 @@
 
 import React, { createContext, useState, useContext, useEffect } from 'react';
 
-const DEFAULT_THEME: Theme = 'sangaijingtu';
+const DEFAULT_THEME: Theme = 'hupochangguang';
 
 // Define and export the Theme type
-export type Theme = 'lianchichanyun' | 'zhulinyoujing' | 'yueyingqinghui' | 'sangaijingtu' | 'guchayese' | 'fagufanyin';
+export type Theme = 'lianchichanyun' | 'zhulinyoujing' | 'yueyingqinghui' | 'hupochangguang' | 'guchayese' | 'fagufanyin';
 
 // Define the shape of the context value
 interface ThemeContextType {
@@ -33,7 +33,7 @@ interface ThemeProviderProps {
 // Create a provider component
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const storedTheme = typeof window !== 'undefined' ? localStorage.getItem('theme') : null;
-  const validThemes: Theme[] = ['lianchichanyun', 'zhulinyoujing', 'yueyingqinghui', 'sangaijingtu', 'guchayese', 'fagufanyin'];
+  const validThemes: Theme[] = ['lianchichanyun', 'zhulinyoujing', 'yueyingqinghui', 'hupochangguang', 'guchayese', 'fagufanyin'];
   const initialTheme = validThemes.includes(storedTheme as Theme) ? (storedTheme as Theme) : DEFAULT_THEME;
   const [theme, setTheme] = useState<Theme>(initialTheme); // Default theme
 
@@ -44,7 +44,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
       const themeToApply = actualStoredTheme || DEFAULT_THEME;
       setTheme(themeToApply as Theme);
 
-      document.body.classList.remove('lianchichanyun', 'zhulinyoujing', 'yueyingqinghui', 'sangaijingtu', 'guchayese', 'fagufanyin');
+      document.body.classList.remove('lianchichanyun', 'zhulinyoujing', 'yueyingqinghui', 'hupochangguang', 'guchayese', 'fagufanyin');
       document.body.classList.add(themeToApply);
     }
   }, []); // Empty dependency array - only run once on mount
@@ -62,7 +62,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     setTheme(newTheme);
     
     // Apply the theme to the document body
-    document.body.classList.remove('lianchichanyun', 'zhulinyoujing', 'yueyingqinghui', 'sangaijingtu', 'guchayese', 'fagufanyin');
+    document.body.classList.remove('lianchichanyun', 'zhulinyoujing', 'yueyingqinghui', 'hupochangguang', 'guchayese', 'fagufanyin');
     document.body.classList.add(newTheme);
 
     // Persist the theme to localStorage

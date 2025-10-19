@@ -273,38 +273,38 @@ html {
     --accent-alert: 230 40% 70%; /* Lighter blue */
   }
 
-  .sangaijingtu {
-    --background: 200 10% 98%; /* 更浅的浅青灰色 */
-    --foreground: 200 5% 35%; /* 更浅的深青灰色文字 */
-    --card: 200 8% 96%; /* 更浅的卡片背景 */
-    --card-foreground: 200 5% 35%; /* 更浅的卡片文字 */
-    --popover: 200 8% 96%; /* 更浅的弹出层背景 */
-    --popover-foreground: 200 5% 35%; /* 更浅的弹出层文字 */
-    --primary: 210 15% 72%; /* 更浅的淡雅青色 */
-    --primary-foreground: 200 5% 28%; /* 更浅的主色文字 */
-    --secondary: 190 10% 83%; /* 更浅的浅灰青色 */
-    --secondary-foreground: 200 5% 35%; /* 更浅的次色文字 */
-    --muted: 200 5% 93%; /* 更浅的浅灰色 */
-    --muted-foreground: 200 5% 43%; /* 更浅的静音文字 */
-    --accent: 210 12% 78%; /* 更浅的柔和浅青色 */
-    --accent-foreground: 200 5% 35%; /* 更浅的强调文字 */
-    --destructive: 0 30% 68%; /* 更浅的浅红色 */
-    --destructive-foreground: 200 5% 28%; /* 更浅的破坏文字 */
-    --border: 200 5% 88%; /* 更浅的边框颜色 */
-    --input: 200 5% 88%; /* 更浅的输入框背景 */
-    --ring: 200 5% 28%; /* 更浅的环形颜色 */
-    --chart-1: 210 15% 72%; /* 更浅的图表颜色1 */
-    --chart-2: 190 10% 83%; /* 更浅的图表颜色2 */
-    --chart-3: 200 5% 93%; /* 更浅的图表颜色3 */
-    --chart-4: 210 12% 78%; /* 更浅的图表颜色4 */
-    --chart-5: 0 30% 68%; /* 更浅的图表颜色5 */
+  .hupochangguang {
+    --background: 35 30% 95%; /* 琥珀白 */
+    --foreground: 30 50% 22%; /* 深褐色文字 */
+    --card: 35 28% 93%; /* 卡片背景 */
+    --card-foreground: 30 50% 22%;
+    --popover: 35 28% 93%; /* 弹出层背景 */
+    --popover-foreground: 30 50% 22%;
+    --primary: 38 60% 58%; /* 琥珀金主色 */
+    --primary-foreground: 30 50% 20%;
+    --secondary: 40 35% 80%; /* 浅金次色 */
+    --secondary-foreground: 30 50% 22%;
+    --muted: 35 25% 88%; /* 柔和灰金 */
+    --muted-foreground: 30 40% 35%;
+    --accent: 38 55% 65%; /* 明亮金色 */
+    --accent-foreground: 30 50% 22%;
+    --destructive: 0 50% 55%; /* 温和红色 */
+    --destructive-foreground: 30 50% 20%;
+    --border: 35 25% 82%; /* 边框 */
+    --input: 35 25% 82%; /* 输入框 */
+    --ring: 30 50% 20%; /* 聚焦环 */
+    --chart-1: 38 60% 58%;
+    --chart-2: 40 35% 80%;
+    --chart-3: 35 25% 88%;
+    --chart-4: 38 55% 65%;
+    --chart-5: 0 50% 55%;
 
     /* 悬停效果 */
-    --primary-hover: 210 15% 75%; /* 由74%增至75%，更浅 */
-    --primary-foreground-hover: 200 5% 28%; /* 保持不变 */
-    --secondary-hover: 190 10% 85%; /* 由81%增至85%，更浅 */
-    --secondary-foreground-hover: 200 5% 35%; /* 保持不变 */
-    --accent-alert: 210 40% 70%; /* Softer blue */
+    --primary-hover: 38 60% 60%; /* 亮度增加 */
+    --primary-foreground-hover: 30 50% 20%;
+    --secondary-hover: 40 35% 78%; /* 亮度减少 */
+    --secondary-foreground-hover: 30 50% 22%;
+    --accent-alert: 38 65% 60%; /* 明亮琥珀金 */
   }
 
   .guchayese {
