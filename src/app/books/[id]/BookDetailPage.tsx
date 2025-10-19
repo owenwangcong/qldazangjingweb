@@ -59,7 +59,7 @@ const BookDetailPage: React.FC = () => {
   const [selectedText, setSelectedText] = useState<string>('');
   const [contextMenuPosition, setContextMenuPosition] = useState<{ x: number, y: number } | null>(null);
   const contextMenuRef = useRef<HTMLDivElement>(null);
-  const { selectedFont, fontSize, selectedWidth } = useContext(FontContext);
+  const { selectedFont, fontSize, selectedWidth, lineHeight, paragraphSpacing, letterSpacing } = useContext(FontContext);
   const { fontFamily, setFontFamily } = useContext(FontContext);
  
   const [menuLevel, setMenuLevel] = useState('main');
@@ -876,7 +876,7 @@ const BookDetailPage: React.FC = () => {
           <h1 className="text-3xl"><Text>{book.meta.title}</Text></h1>
           <h2 className="text-xl text-center p-6"><Text>{book.meta.Arthur}</Text></h2>
         </header>
-        <article className={`${fontSize} ${selectedWidth}`} style={{ fontFamily }}>
+        <article className={`${fontSize} ${selectedWidth}`} style={{ fontFamily, lineHeight, letterSpacing }}>
           {book.juans.map((juan: any) => {
             if (juan.type === 'bt') {
               return (
@@ -899,7 +899,7 @@ const BookDetailPage: React.FC = () => {
                 <article key={juan.id} id={juan.id} className="mb-8">
                   {juan.content.map((content: any, index: number) => (
                     <React.Fragment key={index}>
-                      <p id={`part-${juan.id}-${index}`} className="inline-block pt-3">
+                      <p id={`part-${juan.id}-${index}`} className="inline-block pt-3" style={{ marginBottom: paragraphSpacing }}>
                         {content.replace("“", '').replace("”", '').split(/(<img[^>]*>)/g).map((part: any, idx: number) => (
                           part.match(/<img[^>]*>/) ? (
                             <img

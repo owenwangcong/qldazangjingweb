@@ -13,6 +13,9 @@ const DEFAULT_FONT = "--font-lxgw";
 const DEFAULT_FONT_SIZE = "text-xl";
 const DEFAULT_WIDTH = "max-w-4xl";
 const DEFAULT_FONT_FAMILY = "inherit";
+const DEFAULT_LINE_HEIGHT = 1.75;
+const DEFAULT_PARAGRAPH_SPACING = "0.75rem";
+const DEFAULT_LETTER_SPACING = "normal";
 
 // Define the shape of the context data
 interface FontContextProps {
@@ -24,6 +27,12 @@ interface FontContextProps {
   setSelectedWidth: (width: string) => void;
   fontFamily: string; // The current font family
   setFontFamily: (family: string) => void; // Function to update the font family
+  lineHeight: number; // Line height
+  setLineHeight: (height: number) => void; // Function to update line height
+  paragraphSpacing: string; // Paragraph spacing
+  setParagraphSpacing: (spacing: string) => void; // Function to update paragraph spacing
+  letterSpacing: string; // Letter spacing
+  setLetterSpacing: (spacing: string) => void; // Function to update letter spacing
 }
 
 // Create the FontContext with default values
@@ -36,6 +45,12 @@ export const FontContext = createContext<FontContextProps>({
   setSelectedWidth: () => {},
   fontFamily: DEFAULT_FONT_FAMILY,
   setFontFamily: () => {},
+  lineHeight: DEFAULT_LINE_HEIGHT,
+  setLineHeight: () => {},
+  paragraphSpacing: DEFAULT_PARAGRAPH_SPACING,
+  setParagraphSpacing: () => {},
+  letterSpacing: DEFAULT_LETTER_SPACING,
+  setLetterSpacing: () => {},
 });
 
 // FontProvider component to wrap around parts of the app that need access to the font context
@@ -49,6 +64,12 @@ export const FontProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     typeof window !== "undefined" ? localStorage.getItem("selectedWidth") : null;
   const storedFontFamily =
     typeof window !== "undefined" ? localStorage.getItem("fontFamily") : null;
+  const storedLineHeight =
+    typeof window !== "undefined" ? localStorage.getItem("lineHeight") : null;
+  const storedParagraphSpacing =
+    typeof window !== "undefined" ? localStorage.getItem("paragraphSpacing") : null;
+  const storedLetterSpacing =
+    typeof window !== "undefined" ? localStorage.getItem("letterSpacing") : null;
 
   const [selectedFont, setSelectedFont] = useState<string>(
     storedFont || DEFAULT_FONT
@@ -62,6 +83,15 @@ export const FontProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [fontFamily, setFontFamily] = useState<string>(
     storedFontFamily || DEFAULT_FONT_FAMILY
   );
+  const [lineHeight, setLineHeight] = useState<number>(
+    storedLineHeight ? parseFloat(storedLineHeight) : DEFAULT_LINE_HEIGHT
+  );
+  const [paragraphSpacing, setParagraphSpacing] = useState<string>(
+    storedParagraphSpacing || DEFAULT_PARAGRAPH_SPACING
+  );
+  const [letterSpacing, setLetterSpacing] = useState<string>(
+    storedLetterSpacing || DEFAULT_LETTER_SPACING
+  );
 
   // Effect to load the selected font, width, and fontFamily from localStorage on client side
   useEffect(() => {
@@ -70,6 +100,9 @@ export const FontProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const actualStoredFontSize = localStorage.getItem("fontSize");
       const actualStoredWidth = localStorage.getItem("selectedWidth");
       const actualStoredFontFamily = localStorage.getItem("fontFamily");
+      const actualStoredLineHeight = localStorage.getItem("lineHeight");
+      const actualStoredParagraphSpacing = localStorage.getItem("paragraphSpacing");
+      const actualStoredLetterSpacing = localStorage.getItem("letterSpacing");
 
       // Load the font from localStorage
       setSelectedFont(actualStoredFont || DEFAULT_FONT);
@@ -82,6 +115,15 @@ export const FontProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       // Load the fontFamily from localStorage
       setFontFamily(actualStoredFontFamily || DEFAULT_FONT_FAMILY);
+
+      // Load the line height from localStorage
+      setLineHeight(actualStoredLineHeight ? parseFloat(actualStoredLineHeight) : DEFAULT_LINE_HEIGHT);
+
+      // Load the paragraph spacing from localStorage
+      setParagraphSpacing(actualStoredParagraphSpacing || DEFAULT_PARAGRAPH_SPACING);
+
+      // Load the letter spacing from localStorage
+      setLetterSpacing(actualStoredLetterSpacing || DEFAULT_LETTER_SPACING);
     }
   }, []); // Empty dependency array - only run once on mount
 
@@ -117,6 +159,30 @@ export const FontProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, [fontFamily]);
 
+  // Effect to update localStorage whenever lineHeight changes
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      console.log("Setting lineHeight in localStorage:", lineHeight);
+      localStorage.setItem("lineHeight", lineHeight.toString());
+    }
+  }, [lineHeight]);
+
+  // Effect to update localStorage whenever paragraphSpacing changes
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      console.log("Setting paragraphSpacing in localStorage:", paragraphSpacing);
+      localStorage.setItem("paragraphSpacing", paragraphSpacing);
+    }
+  }, [paragraphSpacing]);
+
+  // Effect to update localStorage whenever letterSpacing changes
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      console.log("Setting letterSpacing in localStorage:", letterSpacing);
+      localStorage.setItem("letterSpacing", letterSpacing);
+    }
+  }, [letterSpacing]);
+
   return (
     // Provide all context values to the context consumers
     <FontContext.Provider
@@ -129,6 +195,12 @@ export const FontProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setSelectedWidth,
         fontFamily,
         setFontFamily,
+        lineHeight,
+        setLineHeight,
+        paragraphSpacing,
+        setParagraphSpacing,
+        letterSpacing,
+        setLetterSpacing,
       }}
     >
       {children}

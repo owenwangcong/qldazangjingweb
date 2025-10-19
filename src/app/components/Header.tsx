@@ -24,7 +24,7 @@ import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/comp
 const Header: React.FC = () => {
   const pathname = usePathname();
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
-  const { selectedFont, setSelectedFont, fontSize, setFontSize, selectedWidth, setSelectedWidth, fontFamily, setFontFamily } = useFont();
+  const { selectedFont, setSelectedFont, fontSize, setFontSize, selectedWidth, setSelectedWidth, fontFamily, setFontFamily, lineHeight, setLineHeight, paragraphSpacing, setParagraphSpacing, letterSpacing, setLetterSpacing } = useFont();
   const { book } = useContext(BookContext);
   const { favoriteBooks, addFavoriteBook, removeFavoriteBook, addBookmark, currentPartId } = useMyStudy();
 
@@ -105,6 +105,39 @@ const Header: React.FC = () => {
 
   const numberToWidth = (value: number): string => {
     return widthOptions[value] || 'max-w-4xl';
+  };
+
+  // Define line height options
+  const lineHeightOptions = [1, 1.5, 1.75, 2, 2.5, 3];
+
+  const lineHeightToNumber = (lineHeightValue: number): number => {
+    return lineHeightOptions.indexOf(lineHeightValue);
+  };
+
+  const numberToLineHeight = (value: number): number => {
+    return lineHeightOptions[value] || 1.75;
+  };
+
+  // Define paragraph spacing options
+  const paragraphSpacingOptions = ['0', '0.5rem', '0.75rem', '1rem', '1.5rem', '2rem'];
+
+  const paragraphSpacingToNumber = (spacingValue: string): number => {
+    return paragraphSpacingOptions.indexOf(spacingValue);
+  };
+
+  const numberToParagraphSpacing = (value: number): string => {
+    return paragraphSpacingOptions[value] || '0.75rem';
+  };
+
+  // Define letter spacing options
+  const letterSpacingOptions = ['-0.05em', '0', 'normal', '0.05em', '0.1em', '0.15em'];
+
+  const letterSpacingToNumber = (spacingValue: string): number => {
+    return letterSpacingOptions.indexOf(spacingValue);
+  };
+
+  const numberToLetterSpacing = (value: number): string => {
+    return letterSpacingOptions[value] || 'normal';
   };
 
   const handleAddBookmark = () => {
@@ -295,11 +328,11 @@ const Header: React.FC = () => {
                     <Text>更换网站字体</Text>
                   </TooltipContent>
                 </Tooltip>
-                <DialogContent className="p-6 bg-card/90 backdrop-blur-sm rounded-xl shadow-lg border border-border/50 max-w-md md:max-w-lg lg:max-w-xl mx-auto max-h-[80vh] overflow-y-auto z-[100]">
+                <DialogContent className="p-5 bg-card/90 backdrop-blur-sm rounded-xl shadow-lg border border-border/50 max-w-md md:max-w-lg lg:max-w-xl mx-auto max-h-[80vh] overflow-y-auto z-[100]">
                   <DialogHeader>
-                    <DialogTitle><Text>选择字体和宽度</Text></DialogTitle>
-                    <DialogDescription>
-                      <Text>请选择一种字体、字体大小和内容宽度</Text>
+                    <DialogTitle className="text-base"><Text>阅读设置</Text></DialogTitle>
+                    <DialogDescription className="text-xs">
+                      <Text>自定义您的阅读体验</Text>
                     </DialogDescription>
                   </DialogHeader>
                   <RadioGroup value={selectedFont} onValueChange={setSelectedFont} className="mt-4">
@@ -338,9 +371,9 @@ const Header: React.FC = () => {
                       </div>
                     </div>
                   </RadioGroup>
-                  
-                  <div className="mt-6">
-                    <label className="text-sm font-medium mb-2">
+
+                  <div className="mt-4">
+                    <label className="text-xs font-medium mb-1 block">
                       <Text>字体大小</Text>
                     </label>
                     <Slider.Root
@@ -357,14 +390,14 @@ const Header: React.FC = () => {
                       </Slider.Track>
                       <Slider.Thumb className="block w-4 h-4 bg-primary rounded-full focus:outline-none" />
                     </Slider.Root>
-                    <div className="flex justify-between text-sm mt-2">
-                      <span className="text-sm"><Text>小</Text></span>
-                      <span className="text-xl"><Text>大</Text></span>
+                    <div className="flex justify-between text-xs mt-1">
+                      <span><Text>小</Text></span>
+                      <span><Text>大</Text></span>
                     </div>
                   </div>
 
-                  <div className="mt-6">
-                    <label className="text-sm font-medium mb-2">
+                  <div className="mt-4">
+                    <label className="text-xs font-medium mb-1 block">
                       <Text>内容宽度</Text>
                     </label>
                     <Slider.Root
@@ -381,13 +414,85 @@ const Header: React.FC = () => {
                       </Slider.Track>
                       <Slider.Thumb className="block w-4 h-4 bg-primary rounded-full focus:outline-none" />
                     </Slider.Root>
-                    <div className="flex justify-between text-sm mt-2">
-                      <span className="text-base"><Text>窄</Text></span>
-                      <span className="text-base"><Text>宽</Text></span>
+                    <div className="flex justify-between text-xs mt-1">
+                      <span><Text>窄</Text></span>
+                      <span><Text>宽</Text></span>
                     </div>
                   </div>
 
-                  <div className="mt-6 flex justify-end">
+                  <div className="mt-4">
+                    <label className="text-xs font-medium mb-1 block">
+                      <Text>行间距</Text>
+                    </label>
+                    <Slider.Root
+                      className="relative flex items-center select-none touch-none w-full h-5"
+                      value={[lineHeightToNumber(lineHeight)]}
+                      min={0}
+                      max={lineHeightOptions.length - 1}
+                      step={1}
+                      onValueChange={(value) => setLineHeight(numberToLineHeight(value[0]))}
+                      aria-label="Line Height Slider"
+                    >
+                      <Slider.Track className="bg-secondary relative flex-1 h-1 rounded-full">
+                        <Slider.Range className="absolute bg-primary h-full rounded-full" />
+                      </Slider.Track>
+                      <Slider.Thumb className="block w-4 h-4 bg-primary rounded-full focus:outline-none" />
+                    </Slider.Root>
+                    <div className="flex justify-between text-xs mt-1">
+                      <span><Text>紧凑</Text></span>
+                      <span><Text>宽松</Text></span>
+                    </div>
+                  </div>
+
+                  <div className="mt-4">
+                    <label className="text-xs font-medium mb-1 block">
+                      <Text>段落间距</Text>
+                    </label>
+                    <Slider.Root
+                      className="relative flex items-center select-none touch-none w-full h-5"
+                      value={[paragraphSpacingToNumber(paragraphSpacing)]}
+                      min={0}
+                      max={paragraphSpacingOptions.length - 1}
+                      step={1}
+                      onValueChange={(value) => setParagraphSpacing(numberToParagraphSpacing(value[0]))}
+                      aria-label="Paragraph Spacing Slider"
+                    >
+                      <Slider.Track className="bg-secondary relative flex-1 h-1 rounded-full">
+                        <Slider.Range className="absolute bg-primary h-full rounded-full" />
+                      </Slider.Track>
+                      <Slider.Thumb className="block w-4 h-4 bg-primary rounded-full focus:outline-none" />
+                    </Slider.Root>
+                    <div className="flex justify-between text-xs mt-1">
+                      <span><Text>紧凑</Text></span>
+                      <span><Text>宽松</Text></span>
+                    </div>
+                  </div>
+
+                  <div className="mt-4">
+                    <label className="text-xs font-medium mb-1 block">
+                      <Text>字符间距</Text>
+                    </label>
+                    <Slider.Root
+                      className="relative flex items-center select-none touch-none w-full h-5"
+                      value={[letterSpacingToNumber(letterSpacing)]}
+                      min={0}
+                      max={letterSpacingOptions.length - 1}
+                      step={1}
+                      onValueChange={(value) => setLetterSpacing(numberToLetterSpacing(value[0]))}
+                      aria-label="Letter Spacing Slider"
+                    >
+                      <Slider.Track className="bg-secondary relative flex-1 h-1 rounded-full">
+                        <Slider.Range className="absolute bg-primary h-full rounded-full" />
+                      </Slider.Track>
+                      <Slider.Thumb className="block w-4 h-4 bg-primary rounded-full focus:outline-none" />
+                    </Slider.Root>
+                    <div className="flex justify-between text-xs mt-1">
+                      <span><Text>紧密</Text></span>
+                      <span><Text>稀疏</Text></span>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 flex justify-end">
                     <DialogClose asChild>
                       <Button className="hover:bg-primary-hover hover:text-primary-foreground-hover">
                         <Text>确定</Text>
