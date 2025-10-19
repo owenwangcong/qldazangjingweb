@@ -4,12 +4,12 @@ import React, { useState, useEffect } from 'react';
 import Header from '@/app/components/Header';
 import Link from 'next/link';
 import { Search as SearchIcon, ChevronLeft, ChevronRight } from 'lucide-react';
-import classNames from 'classnames';
 import Text from '@/app/components/Text';
 import Pagination from '@/app/components/Pagination';
 import * as OpenCC from 'opencc-js';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface BusItem {
   id: string;
@@ -227,76 +227,63 @@ const SearchPageClient: React.FC = () => {
         <h1 className="text-3xl font-bold"><Text>搜索经书</Text></h1>
 
         {/* Search Mode Toggle */}
-        <div className="flex gap-4 mb-2">
-          <button
-            onClick={() => handleSearchModeChange('fulltext')}
-            className={classNames(
-              'px-6 py-2 rounded-md font-medium transition-all',
-              searchMode === 'fulltext'
-                ? 'bg-primary text-white'
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-            )}
-            aria-label="全文搜索"
-          >
-            <Text>全文搜索</Text>
-          </button>
-          <button
-            onClick={() => handleSearchModeChange('title')}
-            className={classNames(
-              'px-6 py-2 rounded-md font-medium transition-all',
-              searchMode === 'title'
-                ? 'bg-primary text-white'
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-            )}
-            aria-label="按标题搜索"
-          >
-            <Text>标题搜索</Text>
-          </button>
-        </div>
+        <Tabs
+          value={searchMode}
+          onValueChange={(value) => handleSearchModeChange(value as 'title' | 'fulltext')}
+          className="w-full max-w-2xl"
+        >
+          <TabsList className="w-full">
+            <TabsTrigger value="fulltext" className="flex-1">
+              <Text>全文搜索</Text>
+            </TabsTrigger>
+            <TabsTrigger value="title" className="flex-1">
+              <Text>标题搜索</Text>
+            </TabsTrigger>
+          </TabsList>
 
-        {/* Search mode description and options */}
-        <div className="flex flex-col items-center gap-2 mb-2">
-          {searchMode === 'fulltext' && (
-            <div className="flex items-center gap-2">
-              <Checkbox
-                id="phrase-match"
-                checked={usePhraseMatch}
-                onCheckedChange={(checked) => setUsePhraseMatch(checked as boolean)}
+          {/* Tab content with border */}
+          <div className="mt-4 p-6 border border-border rounded-lg bg-card">
+            {/* Search mode description and options */}
+            {searchMode === 'fulltext' && (
+              <div className="flex items-center gap-2 mb-4">
+                <Checkbox
+                  id="phrase-match"
+                  checked={usePhraseMatch}
+                  onCheckedChange={(checked) => setUsePhraseMatch(checked as boolean)}
+                />
+                <Label
+                  htmlFor="phrase-match"
+                  className="text-sm text-gray-600 cursor-pointer"
+                >
+                  <Text>精确短语匹配（完整匹配搜索词）</Text>
+                </Label>
+              </div>
+            )}
+
+            <div className="flex flex-col sm:flex-row items-center gap-3">
+              <input
+                type="text"
+                value={searchTerm}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleSearch();
+                  }
+                }}
+                onChange={handleSearchChange}
+                className="w-full pl-3 pr-4 py-2 border border-border rounded-md bg-background font-sans"
+                placeholder={searchMode === 'title' ? '输入经书名或作者' : '输入关键词或短语进行全文搜索'}
+                aria-label="搜索经书"
               />
-              <Label
-                htmlFor="phrase-match"
-                className="text-sm text-gray-600 cursor-pointer"
+              <button
+                onClick={() => handleSearch()}
+                className="px-4 py-2 w-full sm:w-32 bg-primary text-white rounded-md hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-primary"
+                aria-label="触发搜索"
               >
-                <Text>精确短语匹配（完整匹配搜索词）</Text>
-              </Label>
+                <Text>搜索</Text>
+              </button>
             </div>
-          )}
-        </div>
-
-        <div className="w-full max-w-md flex items-center">
-          <div className="w-full flex flex-col sm:flex-row items-center">
-            <input
-              type="text"
-              value={searchTerm}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  handleSearch();
-                }
-              }}
-              onChange={handleSearchChange}
-              className="w-full pl-3 pr-4 py-2 border border-border rounded-md bg-background font-sans mb-3 sm:mb-0 sm:mr-3"
-              placeholder={searchMode === 'title' ? '输入经书名或作者' : '输入关键词或短语进行全文搜索'}
-              aria-label="搜索经书"
-            />
-            <button
-              onClick={() => handleSearch()}
-              className="px-4 py-2 w-full sm:w-32 bg-primary text-white rounded-md hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-primary"
-              aria-label="触发搜索"
-            >
-              <Text>搜索</Text>
-            </button>
           </div>
-        </div>
+        </Tabs>
         {loading && <p className="mt-4 text-gray-600">加载中...</p>}
         {error && <p className="mt-4 text-red-500">错误: {error}</p>}
         {!loading && !error && filteredBooks.length > 0 && (
