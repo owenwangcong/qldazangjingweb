@@ -278,12 +278,14 @@ const Header: React.FC = () => {
                     <React.Fragment key={theme.value}>
                       <DropdownMenu.Item
                         onSelect={() => handleThemeChange(theme.value as Theme)}
-                        className={`flex items-center px-4 py-2 cursor-pointer text-lg ${theme.value}
-                          hover:${theme.value} focus:${theme.value}
-                          hover:bg-primary hover:text-primary-foreground 
-                          focus:bg-primary focus:text-primary-foreground`}
+                        className={`flex items-center gap-3 px-4 py-3 cursor-pointer text-lg ${theme.value} bg-background text-foreground rounded-md transition-all hover:scale-[1.02] hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary/50`}
                       >
-                        <Text className={`text-${theme.value}-foreground`}>{theme.label}</Text>
+                        {/* 颜色预览色块 */}
+                        <div className="flex gap-1.5">
+                          <div className="w-3 h-8 rounded-sm bg-primary shadow-sm"></div>
+                          <div className="w-3 h-8 rounded-sm bg-secondary shadow-sm"></div>
+                        </div>
+                        <Text>{theme.label}</Text>
                       </DropdownMenu.Item>
                       {index < 5 && <DropdownMenu.Separator className="my-2 h-px bg-border" />}
                     </React.Fragment>
