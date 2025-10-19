@@ -86,7 +86,7 @@ const Header: React.FC = () => {
   };
 
   // Helper functions to map between font size classes and slider values
-  const fontSizeOptions = ['text-base', 'text-lg', 'text-xl', 'text-2xl', 'text-3xl', 'text-4xl', "text-5xl"];
+  const fontSizeOptions = ['text-sm', 'text-base', 'text-lg', 'text-xl', 'text-2xl', 'text-3xl', 'text-4xl', 'text-5xl', 'text-6xl'];
 
   const fontSizeToNumber = (fontSizeClass: string): number => {
     return fontSizeOptions.indexOf(fontSizeClass);
@@ -97,7 +97,7 @@ const Header: React.FC = () => {
   };
 
   // Define width options
-  const widthOptions = ['max-w-2xl', 'max-w-3xl', 'max-w-4xl', 'max-w-5xl', 'max-w-6xl', 'max-w-7xl'];
+  const widthOptions = ['max-w-xl', 'max-w-2xl', 'max-w-3xl', 'max-w-4xl', 'max-w-5xl', 'max-w-6xl', 'max-w-7xl', 'max-w-screen-xl', 'max-w-full'];
   
   const widthToNumber = (widthClass: string): number => {
     return widthOptions.indexOf(widthClass);
@@ -108,7 +108,7 @@ const Header: React.FC = () => {
   };
 
   // Define line height options
-  const lineHeightOptions = [1, 1.5, 1.75, 2, 2.5, 3];
+  const lineHeightOptions = [1, 1.25, 1.5, 1.75, 2, 2.25, 2.5, 2.75, 3];
 
   const lineHeightToNumber = (lineHeightValue: number): number => {
     return lineHeightOptions.indexOf(lineHeightValue);
@@ -119,7 +119,7 @@ const Header: React.FC = () => {
   };
 
   // Define paragraph spacing options
-  const paragraphSpacingOptions = ['0', '0.5rem', '0.75rem', '1rem', '1.5rem', '2rem'];
+  const paragraphSpacingOptions = ['0', '0.25rem', '0.5rem', '0.75rem', '1rem', '1.25rem', '1.5rem', '2rem', '2.5rem'];
 
   const paragraphSpacingToNumber = (spacingValue: string): number => {
     return paragraphSpacingOptions.indexOf(spacingValue);
