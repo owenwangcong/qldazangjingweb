@@ -1,0 +1,238 @@
+/* Custom styling for intro.js tour */
+
+/* Customize tooltip appearance to match site theme */
+.introjs-tooltip {
+  background-color: hsl(var(--card));
+  color: hsl(var(--foreground));
+  border: 1px solid hsl(var(--border));
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
+  padding: 20px;
+  max-width: 400px;
+  user-select: none; /* Prevent text selection on double-click */
+  -webkit-user-select: none; /* Safari */
+  -moz-user-select: none; /* Firefox */
+  -ms-user-select: none; /* IE10+/Edge */
+}
+
+.customIntroTooltip {
+  background-color: hsl(var(--card) / 0.95);
+  backdrop-filter: blur(10px);
+}
+
+/* Tooltip header */
+.introjs-tooltip-header {
+  padding-bottom: 1px;
+  border-bottom: 1px solid hsl(var(--border));
+}
+
+.introjs-skipbutton {
+  color: hsl(var(--muted-foreground));
+  font-weight: 500;
+  padding: 0 !important;
+  font-size: 0.85rem;
+  line-height: 1;
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  white-space: nowrap;
+  min-width: auto !important;
+}
+
+.introjs-skipbutton:hover {
+  color: hsl(var(--foreground));
+  background: none !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+/* Tooltip content */
+.introjs-tooltiptext {
+  padding: 15px 0;
+  color: hsl(var(--foreground));
+}
+
+.introjs-tooltiptext h3,
+.introjs-tooltiptext h4 {
+  margin: 0 0 10px 0;
+  color: hsl(var(--primary));
+}
+
+.introjs-tooltiptext p {
+  margin: 8px 0;
+  line-height: 1.6;
+}
+
+.introjs-tooltiptext ul {
+  margin: 8px 0;
+  padding-left: 20px;
+}
+
+.introjs-tooltiptext li {
+  margin: 4px 0;
+}
+
+.introjs-tooltiptext small {
+  color: hsl(var(--muted-foreground));
+  font-size: 0.875em;
+}
+
+/* Buttons */
+.introjs-button {
+  background-color: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 500;
+  transition: all 0.2s;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.introjs-button:hover {
+  background-color: hsl(var(--primary) / 0.9);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  transform: translateY(-1px);
+}
+
+.introjs-button:focus {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+
+.introjs-prevbutton,
+.introjs-skipbutton {
+  background-color: hsl(var(--secondary));
+  color: hsl(var(--secondary-foreground));
+}
+
+.introjs-prevbutton:hover,
+.introjs-skipbutton:hover {
+  background-color: hsl(var(--secondary) / 0.9);
+}
+
+.introjs-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.introjs-disabled:hover {
+  background-color: hsl(var(--secondary));
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transform: none;
+}
+
+/* Bullets (progress dots) */
+.introjs-bullets ul {
+  display: flex;
+  gap: 8px;
+  margin: 15px 0 0 0;
+  padding: 0;
+}
+
+.introjs-bullets ul li a {
+  width: 8px;
+  height: 8px;
+  background-color: hsl(var(--muted));
+  border-radius: 50%;
+}
+
+.introjs-bullets ul li a:hover,
+.introjs-bullets ul li a.active {
+  background-color: hsl(var(--primary));
+}
+
+/* Progress bar */
+.introjs-progress {
+  background-color: hsl(var(--muted));
+  border-radius: 4px;
+  overflow: hidden;
+  height: 4px;
+  margin: 10px 0;
+}
+
+.introjs-progressbar {
+  background-color: hsl(var(--primary));
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+/* Overlay */
+.introjs-overlay {
+  background-color: rgba(0, 0, 0, 0.8);
+}
+
+/* Highlight layer */
+.introjs-helperLayer {
+  background-color: transparent;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.8),
+              0 0 20px rgba(255, 255, 255, 0.5);
+  border-radius: 8px;
+  transition: all 0.3s ease-in-out;
+}
+
+/* Arrow pointing to elements */
+.introjs-arrow {
+  border: 5px solid transparent;
+}
+
+.introjs-arrow.top {
+  border-bottom-color: hsl(var(--card));
+}
+
+.introjs-arrow.bottom {
+  border-top-color: hsl(var(--card));
+}
+
+.introjs-arrow.left {
+  border-right-color: hsl(var(--card));
+}
+
+.introjs-arrow.right {
+  border-left-color: hsl(var(--card));
+}
+
+/* Tooltip positioning adjustments */
+.introjs-tooltipReferenceLayer {
+  z-index: 9999999;
+}
+
+/* Responsive adjustments for mobile */
+@media (max-width: 768px) {
+  .introjs-tooltip {
+    max-width: 90vw;
+    padding: 15px;
+  }
+
+  .introjs-tooltiptext {
+    font-size: 14px;
+  }
+
+  .introjs-button {
+    padding: 6px 12px;
+    font-size: 14px;
+  }
+}
+
+/* Smooth transitions for all intro.js elements */
+.introjs-tooltip,
+.introjs-overlay,
+.introjs-helperLayer {
+  transition: all 0.3s ease-in-out;
+}
+
+/* Ensure smooth appearance */
+.introjs-tooltip {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}

@@ -232,6 +232,7 @@ const Header: React.FC = () => {
                 onClick={toggleHeaderVisibility}
                 className="w-10 h-10 bg-card/80 backdrop-blur-sm rounded-full shadow-md hover:shadow-lg focus:outline-none hover:bg-primary-hover hover:text-primary-foreground-hover transition-all duration-200"
                 aria-label={isHeaderVisible ? "Hide Header" : "Show Header"}
+                data-tour="toggle-visibility"
               >
                 {isHeaderVisible ?
                   <div data-nosnippet="true" className="w-full h-full flex items-center justify-center text-base">隐</div> :
@@ -253,6 +254,7 @@ const Header: React.FC = () => {
                       <button
                         className="w-10 h-10 bg-card/80 backdrop-blur-sm rounded-full shadow-md hover:shadow-lg focus:outline-none hover:bg-primary-hover hover:text-primary-foreground-hover transition-all duration-200"
                         aria-label="Select Theme"
+                        data-tour="theme-selector"
                       >
                         <div data-nosnippet="true" className="w-full h-full flex items-center justify-center text-base">色</div>
                       </button>
@@ -299,6 +301,7 @@ const Header: React.FC = () => {
                     onClick={handleToggleLanguage}
                     className="w-10 h-10 bg-card/80 backdrop-blur-sm rounded-full shadow-md hover:shadow-lg focus:outline-none hover:bg-primary-hover hover:text-primary-foreground-hover transition-all duration-200"
                     aria-label={isSimplified ? "Switch to Traditional Chinese" : "Switch to Simplified Chinese"}
+                    data-tour="language-toggle"
                   >
                     {isSimplified ? (
                       <div data-nosnippet="true" className="w-full h-full flex items-center justify-center text-base">繁</div>
@@ -319,6 +322,7 @@ const Header: React.FC = () => {
                       <button
                         className="w-10 h-10 bg-card/80 backdrop-blur-sm rounded-full shadow-md hover:shadow-lg focus:outline-none hover:bg-primary-hover hover:text-primary-foreground-hover transition-all duration-200"
                         aria-label="Select Font and Width"
+                        data-tour="font-settings"
                       >
                         <div className="w-full h-full flex items-center justify-center">
                           <div data-nosnippet="true" className="w-full h-full flex items-center justify-center text-base">字</div>
@@ -514,6 +518,7 @@ const Header: React.FC = () => {
                         <button
                           className="w-10 h-10 bg-card/80 backdrop-blur-sm rounded-full shadow-md hover:shadow-lg focus:outline-none hover:bg-primary-hover hover:text-primary-foreground-hover transition-all duration-200"
                           aria-label="Select Theme"
+                          data-tour="table-of-contents"
                         >
                           <div data-nosnippet="true" className="w-full h-full flex items-center justify-center text-base">目</div>
                         </button>
@@ -559,6 +564,7 @@ const Header: React.FC = () => {
                         book && favoriteBooks.some(fav => fav.bookId === book?.meta?.id) ? 'bg-accentalert/80' : 'bg-card/80'
                       }`}
                       aria-label="Add to Favorites"
+                      data-tour="favorites"
                     >
                       <div data-nosnippet="true" className="w-full h-full flex items-center justify-center text-base">藏</div>
                     </button>
@@ -576,6 +582,7 @@ const Header: React.FC = () => {
                       onClick={handleAddBookmark}
                       className="w-10 h-10 bg-card/80 backdrop-blur-sm rounded-full shadow-md hover:shadow-lg focus:outline-none hover:bg-primary-hover hover:text-primary-foreground-hover transition-all duration-200"
                       aria-label="Add to Bookmarks"
+                      data-tour="bookmarks"
                     >
                       <div data-nosnippet="true" className="w-full h-full flex items-center justify-center text-base">签</div>
                     </button>
@@ -593,6 +600,7 @@ const Header: React.FC = () => {
                       onClick={handleDownload}
                       className="w-10 h-10 bg-card/80 backdrop-blur-sm rounded-full shadow-md hover:shadow-lg focus:outline-none hover:bg-primary-hover hover:text-primary-foreground-hover transition-all duration-200"
                       aria-label="Download"
+                      data-tour="download"
                     >
                       <div data-nosnippet="true" className="w-full h-full flex items-center justify-center text-base">存</div>
                     </button>

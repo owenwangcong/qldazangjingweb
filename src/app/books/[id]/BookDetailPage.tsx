@@ -27,6 +27,12 @@ import { AnnotationProvider, useAnnotations } from '@/app/context/AnnotationCont
 import { BookContext, BookProvider } from '@/app/context/BookContext';
 import { useMyStudy } from '@/app/context/MyStudyContext';
 import Head from 'next/head';
+import dynamic from 'next/dynamic';
+
+// Dynamically import IntroTour with SSR disabled
+const IntroTour = dynamic(() => import('@/app/components/IntroTour'), {
+  ssr: false,
+});
 
 // Define the MenuItem enum
 enum MenuItem {
@@ -79,6 +85,9 @@ const BookDetailPage: React.FC = () => {
   const LONG_PRESS_DURATION = 500; // Duration in ms for long press
 
   const [visiblePartIds, setVisiblePartIds] = useState<string[]>([]);
+
+  // Tour state
+  const [showTour, setShowTour] = useState(false);
 
   // Fetch the book data based on the id
   const fetchBookData = async (id: string) => {
@@ -153,6 +162,26 @@ const BookDetailPage: React.FC = () => {
       addToBrowserHistory(id as string);
     }
   }, [id]); // Only depend on id
+
+  // Check if user has seen the tour before
+  useEffect(() => {
+    if (book) {
+      const hasSeenTour = localStorage.getItem('hasSeenBookTour');
+      if (!hasSeenTour || hasSeenTour !== 'true') {
+        // Delay tour start to ensure all elements are rendered
+        const timer = setTimeout(() => {
+          setShowTour(true);
+        }, 400); // Reduced from 1000ms for faster UX
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [book]);
+
+  // Handle tour exit
+  const handleTourExit = () => {
+    setShowTour(false);
+    localStorage.setItem('hasSeenBookTour', 'true');
+  };
   
   // Initialize Recogito when the component mounts or id/book changes
   useEffect(() => {
@@ -950,7 +979,8 @@ const BookDetailPage: React.FC = () => {
 
           {menuLevel === 'main' && (
             <>
-              <DropdownMenu.Item 
+              <DropdownMenu.Item
+                data-tour="context-menu-copy"
                 className="flex cursor-pointer select-none items-center rounded-sm px-3 py-2 text-sm outline-none focus:bg-accent focus:text-primary-foreground whitespace-nowrap"
                 onSelect={handleCopy}
                 aria-label="Copy text"
@@ -959,6 +989,7 @@ const BookDetailPage: React.FC = () => {
               </DropdownMenu.Item>
               <DropdownMenu.Separator className="h-px my-1 bg-border" />
               <DropdownMenu.Item
+                data-tour="context-menu-search"
                 className="flex cursor-pointer select-none items-center rounded-sm px-3 py-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground whitespace-nowrap"
                 onSelect={handleSearch}
                 aria-label="Search text"
@@ -967,6 +998,7 @@ const BookDetailPage: React.FC = () => {
               </DropdownMenu.Item>
               <DropdownMenu.Separator className="h-px my-1 bg-border" />
               <DropdownMenu.Item
+                data-tour="context-menu-dictionary"
                 className="flex cursor-pointer select-none items-center rounded-sm px-3 py-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground whitespace-nowrap"
                 onSelect={handleDictionary}
                 aria-label="Lookup dictionary"
@@ -975,6 +1007,7 @@ const BookDetailPage: React.FC = () => {
               </DropdownMenu.Item>
               <DropdownMenu.Separator className="h-px my-1 bg-border" />
               <DropdownMenu.Item
+                data-tour="context-menu-translate"
                 className="flex cursor-pointer select-none items-center rounded-sm px-3 py-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground whitespace-nowrap"
                 onSelect={handleToModernChinese}
                 aria-label="Translate to modern Chinese"
@@ -983,6 +1016,7 @@ const BookDetailPage: React.FC = () => {
               </DropdownMenu.Item>
               <DropdownMenu.Separator className="h-px my-1 bg-border" />
               <DropdownMenu.Item
+                data-tour="context-menu-explain"
                 className="flex cursor-pointer select-none items-center rounded-sm px-3 py-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground whitespace-nowrap"
                 onSelect={handleExplain}
                 aria-label="Explain text"
@@ -991,6 +1025,7 @@ const BookDetailPage: React.FC = () => {
               </DropdownMenu.Item>
               <DropdownMenu.Separator className="h-px my-1 bg-border" />
               <DropdownMenu.Item
+                data-tour="context-menu-annotate"
                 className="flex cursor-pointer select-none items-center rounded-sm px-3 py-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground whitespace-nowrap"
                 onSelect={handleAnnotate}
                 aria-label="Annotate text"
@@ -1062,6 +1097,9 @@ const BookDetailPage: React.FC = () => {
           </Link>
         )}
       </footer>
+
+      {/* Intro Tour */}
+      <IntroTour enabled={showTour} onExit={handleTourExit} />
 
     </main>
   );

@@ -35,6 +35,8 @@
     "classnames": "^2.5.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
+    "intro.js": "^8.3.2",
+    "intro.js-react": "^1.0.0",
     "jquery": "^3.7.1",
     "lucide-react": "^0.453.0",
     "next": "14.2.15",
@@ -47,6 +49,7 @@
     "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
+    "@playwright/test": "^1.56.1",
     "@types/jquery": "^3.5.32",
     "@types/node": "^20",
     "@types/react": "^18",
