@@ -273,7 +273,7 @@ const Header: React.FC = () => {
                     { value: 'lianchichanyun', label: '莲池禅韵' },
                     { value: 'zhulinyoujing', label: '竹林幽径' },
                     { value: 'yueyingqinghui', label: '月影清辉' },
-                    { value: 'hupochangguang', label: '琥珀禅光' },
+                    { value: 'hupochangguang', label: '琥珀流光' },
                     { value: 'guchayese', label: '古刹夜色' },
                     { value: 'fagufanyin', label: '法鼓梵音' },
                   ].map((theme, index) => (
