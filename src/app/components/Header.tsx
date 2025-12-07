@@ -597,7 +597,12 @@ const Header: React.FC = () => {
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <button
-                      onClick={handleDownload}
+                      onClick={() => {
+                        toast({
+                          title: "功能暂时关闭",
+                          description: "PDF下载功能正在维护中，请稍后再试",
+                        });
+                      }}
                       className="w-10 h-10 bg-card/80 backdrop-blur-sm rounded-full shadow-md hover:shadow-lg focus:outline-none hover:bg-primary-hover hover:text-primary-foreground-hover transition-all duration-200"
                       aria-label="Download"
                       data-tour="download"
