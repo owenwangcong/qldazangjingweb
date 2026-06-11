@@ -1,4 +1,4 @@
-// GENERATED CODE - DO NOT MODIFY BY HAND
+﻿// GENERATED CODE - DO NOT MODIFY BY HAND
 
 part of 'app_settings.dart';
 
@@ -81,7 +81,7 @@ const AppSettingsSchema = CollectionSchema(
   getId: _appSettingsGetId,
   getLinks: _appSettingsGetLinks,
   attach: _appSettingsAttach,
-  version: '3.3.1',
+  version: Isar.version,
 );
 
 int _appSettingsEstimateSize(

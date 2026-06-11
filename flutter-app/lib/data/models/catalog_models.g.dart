@@ -1,4 +1,4 @@
-// GENERATED CODE - DO NOT MODIFY BY HAND
+﻿// GENERATED CODE - DO NOT MODIFY BY HAND
 
 part of 'catalog_models.dart';
 
@@ -52,7 +52,7 @@ const CatalogSectionSchema = CollectionSchema(
   getId: _catalogSectionGetId,
   getLinks: _catalogSectionGetLinks,
   attach: _catalogSectionAttach,
-  version: '3.3.1',
+  version: Isar.version,
 );
 
 int _catalogSectionEstimateSize(
@@ -929,7 +929,7 @@ const CatalogBookSchema = CollectionSchema(
   getId: _catalogBookGetId,
   getLinks: _catalogBookGetLinks,
   attach: _catalogBookAttach,
-  version: '3.3.1',
+  version: Isar.version,
 );
 
 int _catalogBookEstimateSize(
@@ -2661,7 +2661,7 @@ const ClassicEntrySchema = CollectionSchema(
   getId: _classicEntryGetId,
   getLinks: _classicEntryGetLinks,
   attach: _classicEntryAttach,
-  version: '3.3.1',
+  version: Isar.version,
 );
 
 int _classicEntryEstimateSize(

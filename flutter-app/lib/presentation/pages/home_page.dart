@@ -75,48 +75,63 @@ class HomePage extends ConsumerWidget {
           // ---- 部类 Grid --------------------------------------------------
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(12, 4, 12, 24),
-            sliver: SliverGrid(
-              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                maxCrossAxisExtent: 220,
-                mainAxisExtent: 64,
-                crossAxisSpacing: 10,
-                mainAxisSpacing: 10,
-              ),
-              delegate: SliverChildBuilderDelegate(
-                childCount: sections.length,
-                (context, index) {
-                  final section = sections[index];
-                  return Material(
-                    color: colors.card,
-                    borderRadius: BorderRadius.circular(14),
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(14),
-                      onTap: () =>
-                          context.push('/section/${section.sectionId}'),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(
-                            color: colors.border.withValues(alpha: 0.6),
-                          ),
-                        ),
-                        alignment: Alignment.center,
-                        child: TText(
-                          section.name,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: colors.cardForeground,
-                          ),
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
+            sliver: SliverLayoutBuilder(
+              builder: (context, constraints) {
+                // Android 的 warm-up 帧会以 0×0 约束预布局一次，而
+                // MaxCrossAxisExtent 委托在 crossAxisExtent == 0 时直接断言，
+                // 导致 geometry 为 null、后续帧持续空指针。无效约束时短路。
+                if (constraints.crossAxisExtent <= 0) {
+                  return const SliverToBoxAdapter(child: SizedBox.shrink());
+                }
+                return _buildSectionsGrid(context, sections);
+              },
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSectionsGrid(
+      BuildContext context, List<CatalogSection> sections) {
+    final colors = context.colors;
+    return SliverGrid(
+      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+        maxCrossAxisExtent: 220,
+        mainAxisExtent: 64,
+        crossAxisSpacing: 10,
+        mainAxisSpacing: 10,
+      ),
+      delegate: SliverChildBuilderDelegate(
+        childCount: sections.length,
+        (context, index) {
+          final section = sections[index];
+          return Material(
+            color: colors.card,
+            borderRadius: BorderRadius.circular(14),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(14),
+              onTap: () => context.push('/section/${section.sectionId}'),
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: colors.border.withValues(alpha: 0.6),
+                  ),
+                ),
+                alignment: Alignment.center,
+                child: TText(
+                  section.name,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: colors.cardForeground,
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }

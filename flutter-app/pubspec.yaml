@@ -35,7 +35,9 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
   isar_community: ^3.3.1
-  isar_community_flutter_libs: ^3.3.1
+  # 3.3.2 fixes the Android binary version mismatch (3.3.1 shipped a
+  # libisar.so identifying as 3.2.0-dev.2, crashing at startup).
+  isar_community_flutter_libs: ^3.3.2
   flutter_riverpod: ^2.6.1
   go_router: ^17.0.0
   dio: ^5.9.2
@@ -59,6 +61,13 @@ dev_dependencies:
   flutter_lints: ^5.0.0
   isar_community_generator: ^3.3.1
   build_runner: ^2.15.0
+
+# isar_community_generator 3.3.1 pins isar_community to exactly 3.3.1, while
+# isar_community_flutter_libs 3.3.2 (whose Android binary actually matches)
+# pins 3.3.2. Generator 3.3.2 needs Dart >=3.9, unavailable on this SDK, so
+# override the runtime to 3.3.2 — patch-compatible with the generated code.
+dependency_overrides:
+  isar_community: 3.3.2
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

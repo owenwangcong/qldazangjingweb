@@ -1,4 +1,4 @@
-// GENERATED CODE - DO NOT MODIFY BY HAND
+﻿// GENERATED CODE - DO NOT MODIFY BY HAND
 
 part of 'outbox_operation.dart';
 
@@ -91,7 +91,7 @@ const OutboxOperationSchema = CollectionSchema(
   getId: _outboxOperationGetId,
   getLinks: _outboxOperationGetLinks,
   attach: _outboxOperationAttach,
-  version: '3.3.1',
+  version: Isar.version,
 );
 
 int _outboxOperationEstimateSize(

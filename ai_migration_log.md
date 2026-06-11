@@ -38,6 +38,24 @@
 1. `android/settings.gradle.kts`：AGP 8.7.3 → **8.9.1**（androidx.core 1.18 要求 ≥8.9.1）
 2. `android/app/build.gradle.kts`：`compileSdk = 36`（androidx.core 1.18 要求 API 36）、`ndkVersion = "27.0.12077973"`（connectivity_plus/isar/share_plus 等插件要求）、`minSdk = 23`（isar_community_flutter_libs 要求，即 Android 6.0+）
 
+## Android 真机运行调试（2026-06-11，SM P613 / Android 14）
+症状：`flutter run` 后应用启动即白屏，logcat 报
+`IsarError: Incorrect Isar Core version: Required 3.3.1 found 3.2.0-dev.2`。
+
+根因：**isar_community_flutter_libs 3.3.1 的打包缺陷**——其 Android `libisar.so` 二进制实际是 3.2.0-dev.2，与 Dart 侧 3.3.1 的版本校验不符。
+
+修复链（pubspec + 生成代码）：
+1. `isar_community_flutter_libs` 升至 **3.3.2**（二进制已修复），它精确锁定 `isar_community: 3.3.2`。
+2. `isar_community_generator` 3.3.2 需要 Dart ≥3.9（本机 Flutter 3.32.8 = Dart 3.8.1），而 generator 3.3.1 又精确锁定 isar_community 3.3.1 → 用 `dependency_overrides: isar_community: 3.3.2` 解除死锁（生成代码与运行时为补丁级兼容）。
+3. 3.3.2 运行时的 `CollectionSchema` const 构造断言 `Isar.version == version`，生成文件中的 `version: '3.3.1'` 字面量触发 11 个 const 求值错误 → 将 5 个 `.g.dart` 中的版本字面量改为 `version: Isar.version`（运行时常量，今后补丁升级免改）。
+   注意：若日后重跑 build_runner，生成器会重新写回字面量，需重做此替换或升级 Flutter SDK 后统一用 3.3.2 生成器。
+
+修复后第二个崩溃：首帧渲染异常 `'crossAxisExtent > 0.0': is not true`（home_page 部类网格）。
+根因：Android 启动的 warm-up 帧以 0×0 约束预布局，`SliverGridDelegateWithMaxCrossAxisExtent`
+对 crossAxisExtent==0 直接断言（Flutter 已知行为），sliver geometry 留空导致后续每帧
+`Null check operator used on a null value`，UI 卡死。修复：网格外包 `SliverLayoutBuilder`，
+约束无效时短路返回空 sliver。
+
 ## 构建后修复（代码复查发现）
 - 阅读器列表首项为书名头部，初始滚动索引需 blockIndex+1 偏移（书签/进度跳转此前会偏一项）
 - 进度恢复与正文缓存命中存在时序竞争：列表已挂载时改用 `jumpTo` 显式跳转

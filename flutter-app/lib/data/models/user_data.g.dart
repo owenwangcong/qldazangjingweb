@@ -1,4 +1,4 @@
-// GENERATED CODE - DO NOT MODIFY BY HAND
+﻿// GENERATED CODE - DO NOT MODIFY BY HAND
 
 part of 'user_data.dart';
 
@@ -51,7 +51,7 @@ const FavoriteBookSchema = CollectionSchema(
   getId: _favoriteBookGetId,
   getLinks: _favoriteBookGetLinks,
   attach: _favoriteBookAttach,
-  version: '3.3.1',
+  version: Isar.version,
 );
 
 int _favoriteBookEstimateSize(
@@ -741,7 +741,7 @@ const HistoryItemSchema = CollectionSchema(
   getId: _historyItemGetId,
   getLinks: _historyItemGetLinks,
   attach: _historyItemAttach,
-  version: '3.3.1',
+  version: Isar.version,
 );
 
 int _historyItemEstimateSize(
@@ -1557,7 +1557,7 @@ const BookmarkSchema = CollectionSchema(
   getId: _bookmarkGetId,
   getLinks: _bookmarkGetLinks,
   attach: _bookmarkAttach,
-  version: '3.3.1',
+  version: Isar.version,
 );
 
 int _bookmarkEstimateSize(
@@ -2957,7 +2957,7 @@ const NoteSchema = CollectionSchema(
   getId: _noteGetId,
   getLinks: _noteGetLinks,
   attach: _noteAttach,
-  version: '3.3.1',
+  version: Isar.version,
 );
 
 int _noteEstimateSize(
@@ -3945,7 +3945,7 @@ const ReadingProgressSchema = CollectionSchema(
   getId: _readingProgressGetId,
   getLinks: _readingProgressGetLinks,
   attach: _readingProgressAttach,
-  version: '3.3.1',
+  version: Isar.version,
 );
 
 int _readingProgressEstimateSize(
