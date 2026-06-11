@@ -78,6 +78,11 @@ class _ReaderPageState extends ConsumerState<ReaderPage> {
       final progress = await study.getProgress(widget.bookId);
       if (mounted && progress != null && progress.blockIndex > 0) {
         setState(() => _restoredIndex = progress.blockIndex);
+        // The list may already be built (cache hit renders instantly) — in
+        // that case initialScrollIndex is stale, so jump explicitly.
+        if (_itemScrollController.isAttached) {
+          _itemScrollController.jumpTo(index: progress.blockIndex + 1);
+        }
       }
     }
 
@@ -113,19 +118,23 @@ class _ReaderPageState extends ConsumerState<ReaderPage> {
     }
   }
 
-  int _initialIndex(BookData book) {
+  /// Item index in the positioned list (block index + 1 for the header item;
+  /// 0 shows the book header itself).
+  int _initialItemIndex(BookData book) {
+    int? block;
     if (widget.initialBlockIndex != null) {
-      return widget.initialBlockIndex!.clamp(0, book.blocks.length - 1);
-    }
-    if (widget.highlightText != null) {
+      block = widget.initialBlockIndex!.clamp(0, book.blocks.length - 1);
+    } else if (widget.highlightText != null) {
       final converter = ref.read(chineseConverterProvider);
       final needle = converter.normalizeQuery(widget.highlightText!);
       final idx = book.blocks.indexWhere(
         (b) => b.paragraphs.any((p) => p.contains(needle)),
       );
-      if (idx >= 0) return idx;
+      if (idx >= 0) block = idx;
     }
-    return (_restoredIndex ?? 0).clamp(0, book.blocks.length - 1);
+    block ??= _restoredIndex;
+    if (block == null || block <= 0) return 0;
+    return block.clamp(0, book.blocks.length - 1) + 1;
   }
 
   @override
@@ -242,7 +251,7 @@ class _ReaderPageState extends ConsumerState<ReaderPage> {
               child: ScrollablePositionedList.builder(
                 itemScrollController: _itemScrollController,
                 itemPositionsListener: _itemPositionsListener,
-                initialScrollIndex: _initialIndex(book),
+                initialScrollIndex: _initialItemIndex(book),
                 padding: EdgeInsets.only(
                   top: kToolbarHeight + 16,
                   bottom: 48,
@@ -662,18 +671,15 @@ class _BlockView extends StatelessWidget {
           ),
         );
       case JuanBlockType.p:
-        return Padding(
-          padding: EdgeInsets.only(bottom: paragraphSpacing),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              for (final paragraph in block.paragraphs)
-                Padding(
-                  padding: EdgeInsets.only(bottom: paragraphSpacing),
-                  child: _buildParagraph(paragraph),
-                ),
-            ],
-          ),
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            for (final paragraph in block.paragraphs)
+              Padding(
+                padding: EdgeInsets.only(bottom: paragraphSpacing),
+                child: _buildParagraph(paragraph),
+              ),
+          ],
         );
     }
   }

@@ -7,8 +7,9 @@ plugins {
 
 android {
     namespace = "com.qldazangjing.qldazangjing"
-    compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    // androidx.core 1.18 requires API 36; plugin set requires NDK 27.
+    compileSdk = 36
+    ndkVersion = "27.0.12077973"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
@@ -24,7 +25,8 @@ android {
         applicationId = "com.qldazangjing.qldazangjing"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
+        // isar_community_flutter_libs requires at least Android 6.0 (API 23).
+        minSdk = 23
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName

@@ -22,8 +22,11 @@ final _notesProvider = StreamProvider<List<Note>>(
 );
 
 /// Book titles resolved from the local catalog (offline).
-final _titlesProvider = FutureProvider.family<Map<String, String>, List<String>>(
-  (ref, ids) async {
+/// Family key is a comma-joined string — a List key would never compare equal
+/// across rebuilds and would recreate the provider on every frame.
+final _titlesProvider = FutureProvider.family<Map<String, String>, String>(
+  (ref, joinedIds) async {
+    final ids = joinedIds.isEmpty ? const <String>[] : joinedIds.split(',');
     final books = await ref.watch(catalogRepositoryProvider).getBooks(ids);
     return {for (final b in books) b.bookId: b.title};
   },
@@ -138,7 +141,7 @@ class _FavoritesTab extends ConsumerWidget {
     final favorites = ref.watch(_favoritesProvider).value ?? const [];
     if (favorites.isEmpty) return const _EmptyHint('暂无收藏');
     final titles = ref
-            .watch(_titlesProvider(favorites.map((f) => f.bookId).toList()))
+            .watch(_titlesProvider(favorites.map((f) => f.bookId).join(',')))
             .value ??
         const {};
     return ListView.builder(
@@ -175,7 +178,7 @@ class _HistoryTab extends ConsumerWidget {
     final history = ref.watch(_historyProvider).value ?? const [];
     if (history.isEmpty) return const _EmptyHint('暂无历史');
     final titles = ref
-            .watch(_titlesProvider(history.map((h) => h.bookId).toList()))
+            .watch(_titlesProvider(history.map((h) => h.bookId).join(',')))
             .value ??
         const {};
     return ListView.builder(
@@ -210,7 +213,7 @@ class _BookmarksTab extends ConsumerWidget {
     final bookmarks = ref.watch(_bookmarksProvider).value ?? const [];
     if (bookmarks.isEmpty) return const _EmptyHint('暂无书签');
     final titles = ref
-            .watch(_titlesProvider(bookmarks.map((b) => b.bookId).toList()))
+            .watch(_titlesProvider(bookmarks.map((b) => b.bookId).join(',')))
             .value ??
         const {};
     return ListView.builder(
@@ -254,7 +257,7 @@ class _NotesTab extends ConsumerWidget {
     final notes = ref.watch(_notesProvider).value ?? const [];
     if (notes.isEmpty) return const _EmptyHint('暂无笔记');
     final titles = ref
-            .watch(_titlesProvider(notes.map((n) => n.bookId).toList()))
+            .watch(_titlesProvider(notes.map((n) => n.bookId).join(',')))
             .value ??
         const {};
     return ListView.builder(
