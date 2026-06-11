@@ -30,11 +30,10 @@ abstract class BookRepository {
 
   Future<bool> isCached(String bookId);
 
-  /// Local-first: hit cache → done; online → download & cache;
-  /// offline → enqueue to outbox and report [BookFetchOutcome.queuedOffline].
+  /// Local-first: hit cache → done; else import the bundled asset (all
+  /// volumes ship with the app); network is only a fallback for assets
+  /// missing due to a data mismatch.
   Future<BookFetchOutcome> ensureCached(String bookId);
-
-  Future<void> queueSectionDownload(String sectionId);
 
   Future<void> deleteCache(String bookId);
 

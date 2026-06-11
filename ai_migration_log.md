@@ -56,6 +56,23 @@
 `Null check operator used on a null value`，UI 卡死。修复：网格外包 `SliverLayoutBuilder`，
 约束无效时短路返回空 sliver。
 
+## 经文全部内置（2026-06-11，应用户要求）
+用户反馈"可以打开 app 但打不开经文"。原设计正文按需联网下载（qldazangjing.com），
+而该服务器从用户网络探测超时不可达 → 阅读功能瘫痪。
+
+重新评估数据量：~6GB 是含 14472 个网页字体的总量，**纯正文仅 198MB（1809 个 JSON）**，
+gzip -9 后 **56.5MB** —— 完全可打入 App。
+
+改造内容：
+- `scripts/generate-book-assets.js`：全部正文 gzip 入 `flutter-app/assets/books/{id}.json.gz`
+- 新增 `BookAssets` 数据源：rootBundle 读取 → 后台 isolate（compute）解压+解析，避免 UI 卡顿
+- `BookRepositoryImpl.ensureCached` / `SyncManager._downloadBook`：**资产优先**，
+  网络仅作为资产缺失（目录与数据不匹配）时的兜底；Outbox 保留该兜底职责
+- 移除已无意义的"下载整部离线"按钮与 `downloadSection` 队列操作类型
+  （注意：手工同步修改了 outbox_operation.g.dart 的枚举映射；旧安装若有遗留
+  downloadSection 队列项，fromMap 回退为 downloadBook——开发期无影响）
+- APK 体积增加约 56MB；Play 商店上架时如超 200MB 基础包限制可改用 Play Asset Delivery
+
 ## 构建后修复（代码复查发现）
 - 阅读器列表首项为书名头部，初始滚动索引需 blockIndex+1 偏移（书签/进度跳转此前会偏一项）
 - 进度恢复与正文缓存命中存在时序竞争：列表已挂载时改用 `jumpTo` 显式跳转

@@ -5,9 +5,9 @@ import 'package:flutter/foundation.dart';
 import 'package:isar_community/isar.dart';
 
 import '../../core/network/connectivity_service.dart';
+import '../datasources/local/book_assets.dart';
 import '../datasources/remote/api_client.dart';
 import '../models/book_content.dart';
-import '../models/catalog_models.dart';
 import '../models/outbox_operation.dart';
 import 'outbox.dart';
 
@@ -91,8 +91,6 @@ class SyncManager {
     switch (op.type) {
       case OutboxOpType.downloadBook:
         await _downloadBook(payload['bookId'] as String);
-      case OutboxOpType.downloadSection:
-        await _downloadSection(payload['sectionId'] as String);
     }
   }
 
@@ -102,9 +100,16 @@ class SyncManager {
         await _isar.bookContents.filter().bookIdEqualTo(bookId).findFirst();
     if (cached != null) return;
 
-    final json = await _api.fetchBook(bookId);
-    final metaJson = jsonEncode(json['meta'] ?? const <String, dynamic>{});
-    final juansJson = jsonEncode(json['juans'] ?? const <dynamic>[]);
+    // Bundled asset first; the network only covers data mismatches.
+    var content = await BookAssets.tryLoad(bookId);
+    if (content == null) {
+      final json = await _api.fetchBook(bookId);
+      content = (
+        metaJson: jsonEncode(json['meta'] ?? const <String, dynamic>{}),
+        juansJson: jsonEncode(json['juans'] ?? const <dynamic>[]),
+      );
+    }
+    final (:metaJson, :juansJson) = content;
     await _isar.writeTxn(() async {
       await _isar.bookContents.put(
         BookContent()
@@ -115,21 +120,5 @@ class SyncManager {
           ..cachedAt = DateTime.now(),
       );
     });
-  }
-
-  /// Fan out a whole-section download into individual book operations so
-  /// progress is granular and resumable.
-  Future<void> _downloadSection(String sectionId) async {
-    final books = await _isar.catalogBooks
-        .filter()
-        .sectionIdEqualTo(sectionId)
-        .findAll();
-    for (final book in books) {
-      if (book.isMulu) continue;
-      await _outbox.enqueue(
-        OutboxOpType.downloadBook,
-        {'bookId': book.bookId},
-      );
-    }
   }
 }

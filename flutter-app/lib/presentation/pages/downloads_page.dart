@@ -176,7 +176,6 @@ class DownloadsPage extends ConsumerWidget {
     };
     final what = switch (op.type) {
       OutboxOpType.downloadBook => '下载经书 ${op.payloadJson}',
-      OutboxOpType.downloadSection => '下载整部 ${op.payloadJson}',
     };
     return '$what · $status';
   }

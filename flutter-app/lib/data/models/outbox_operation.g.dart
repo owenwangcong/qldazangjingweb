@@ -197,11 +197,9 @@ const _OutboxOperationstatusValueEnumMap = {
 };
 const _OutboxOperationtypeEnumValueMap = {
   r'downloadBook': r'downloadBook',
-  r'downloadSection': r'downloadSection',
 };
 const _OutboxOperationtypeValueEnumMap = {
   r'downloadBook': OutboxOpType.downloadBook,
-  r'downloadSection': OutboxOpType.downloadSection,
 };
 
 Id _outboxOperationGetId(OutboxOperation object) {

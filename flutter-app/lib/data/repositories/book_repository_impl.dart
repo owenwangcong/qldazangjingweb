@@ -6,6 +6,7 @@ import 'package:isar_community/isar.dart';
 import '../../core/network/connectivity_service.dart';
 import '../../domain/entities/book_entities.dart';
 import '../../domain/repositories/repositories.dart';
+import '../datasources/local/book_assets.dart';
 import '../datasources/remote/api_client.dart';
 import '../models/book_content.dart';
 import '../models/outbox_operation.dart';
@@ -58,27 +59,26 @@ class BookRepositoryImpl implements BookRepository {
   Future<BookFetchOutcome> ensureCached(String bookId) async {
     if (await isCached(bookId)) return BookFetchOutcome.cached;
 
+    // Primary source: the bundled asset — every volume ships with the app,
+    // so opening a book works with zero network.
+    final asset = await BookAssets.tryLoad(bookId);
+    if (asset != null) {
+      await _put(bookId, asset.metaJson, asset.juansJson);
+      return BookFetchOutcome.downloaded;
+    }
+
+    // Asset missing (catalog/data mismatch) — fall back to the network path.
     if (!_connectivity.isOnline) {
-      // Offline: park the download in the outbox; the reader stays on the
-      // "not yet cached" state and fills in when connectivity returns.
       await _outbox.enqueue(OutboxOpType.downloadBook, {'bookId': bookId});
       return BookFetchOutcome.queuedOffline;
     }
-
     try {
       final json = await _api.fetchBook(bookId);
-      final metaJson = jsonEncode(json['meta'] ?? const <String, dynamic>{});
-      final juansJson = jsonEncode(json['juans'] ?? const <dynamic>[]);
-      await _isar.writeTxn(() async {
-        await _isar.bookContents.put(
-          BookContent()
-            ..bookId = bookId
-            ..metaJson = metaJson
-            ..juansJson = juansJson
-            ..sizeBytes = metaJson.length + juansJson.length
-            ..cachedAt = DateTime.now(),
-        );
-      });
+      await _put(
+        bookId,
+        jsonEncode(json['meta'] ?? const <String, dynamic>{}),
+        jsonEncode(json['juans'] ?? const <dynamic>[]),
+      );
       return BookFetchOutcome.downloaded;
     } catch (e) {
       debugPrint('ensureCached($bookId) failed: $e');
@@ -89,11 +89,17 @@ class BookRepositoryImpl implements BookRepository {
     }
   }
 
-  @override
-  Future<void> queueSectionDownload(String sectionId) async {
-    await _outbox
-        .enqueue(OutboxOpType.downloadSection, {'sectionId': sectionId});
-    _syncManager.kick();
+  Future<void> _put(String bookId, String metaJson, String juansJson) async {
+    await _isar.writeTxn(() async {
+      await _isar.bookContents.put(
+        BookContent()
+          ..bookId = bookId
+          ..metaJson = metaJson
+          ..juansJson = juansJson
+          ..sizeBytes = metaJson.length + juansJson.length
+          ..cachedAt = DateTime.now(),
+      );
+    });
   }
 
   @override

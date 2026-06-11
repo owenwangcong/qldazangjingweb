@@ -83,6 +83,9 @@ flutter:
   assets:
     - assets/data/
     - assets/opencc/
+    # 全部 1809 部经文正文（gzip），App 完全离线可读。
+    # 重新生成：node scripts/generate-book-assets.js（仓库根目录）
+    - assets/books/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

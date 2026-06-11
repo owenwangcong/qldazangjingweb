@@ -4,11 +4,9 @@ part 'outbox_operation.g.dart';
 
 /// Types of operations the offline outbox can hold.
 enum OutboxOpType {
-  /// Download one volume's content into the local cache.
+  /// Fetch one volume into the local cache — only a fallback for volumes
+  /// missing from the bundled assets (catalog/data mismatch).
   downloadBook,
-
-  /// Download every volume of a section (部类) — fans out to downloadBook.
-  downloadSection,
 }
 
 enum OutboxStatus { pending, inFlight, done, failed }
