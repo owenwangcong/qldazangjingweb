@@ -26,9 +26,9 @@ class AppSettings {
   /// Logical px between paragraphs. Web default 0.75rem = 12.
   double paragraphSpacing = 12;
 
-  /// Reserved for future bundled/downloadable fonts.
-  // TODO: AI_ASSUMPTION v1 使用系统字体；Web 的按书子集 woff 字体机制不适用于移动端
-  String fontFamily = '';
+  /// AppFont.key（见 core/fonts/font_service.dart）；'' = 系统默认。
+  /// 默认与 Web 一致：--font-lxgw 落霞孤鹜。
+  String fontFamily = 'lxgw';
 
   /// Web: hasSeenBookTour.
   bool hasSeenReaderTips = false;

@@ -238,7 +238,7 @@ AppColors _paletteFor(AppThemeId id) {
   }
 }
 
-ThemeData buildAppTheme(AppThemeId id) {
+ThemeData buildAppTheme(AppThemeId id, {String? fontFamily}) {
   final c = _paletteFor(id);
   final scheme = ColorScheme(
     brightness: id.brightness,
@@ -258,6 +258,8 @@ ThemeData buildAppTheme(AppThemeId id) {
   );
   return ThemeData(
     useMaterial3: true,
+    // 全 App 统一阅读字体（对齐 web 的全站换字行为）；缺字自动回退系统字体。
+    fontFamily: fontFamily,
     colorScheme: scheme,
     scaffoldBackgroundColor: c.background,
     cardColor: c.card,

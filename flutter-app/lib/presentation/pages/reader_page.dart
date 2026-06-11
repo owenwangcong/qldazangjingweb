@@ -223,6 +223,8 @@ class _ReaderPageState extends ConsumerState<ReaderPage> {
         ref.watch(_isFavoriteProvider(widget.bookId)).value ?? false;
 
     final baseStyle = TextStyle(
+      // Bare TextStyle doesn't inherit the theme's fontFamily — set it here.
+      fontFamily: ref.watch(fontControllerProvider).activeFamily,
       fontSize: settings.fontSize,
       height: settings.lineHeight,
       letterSpacing: settings.letterSpacingEm * settings.fontSize,

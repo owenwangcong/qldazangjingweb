@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../providers/app_providers.dart';
+import '../widgets/font_picker_sheet.dart';
 import '../widgets/reader_settings_sheet.dart';
 import '../widgets/t_text.dart';
 
@@ -28,6 +29,14 @@ class SettingsPage extends ConsumerWidget {
             title: const TText('主题'),
             subtitle: TText(AppThemeId.fromKey(settings.themeKey).label),
             onTap: () => _showThemePicker(context, ref),
+          ),
+          ListTile(
+            minTileHeight: 56,
+            leading: const Icon(Icons.font_download_outlined),
+            title: const TText('字体'),
+            subtitle:
+                Text(ref.watch(fontControllerProvider).selected.label),
+            onTap: () => showFontPickerSheet(context),
           ),
           SwitchListTile(
             secondary: const Icon(Icons.translate),

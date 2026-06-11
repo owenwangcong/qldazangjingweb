@@ -20,7 +20,10 @@
 
 ## TODO: AI_ASSUMPTION 汇总（请复查）
 - `app_constants.dart`：生产数据源 = `https://qldazangjing.com`（从 sitemap 推断）。如有独立 API 域名/鉴权请修改。
-- `app_settings.dart`：v1 阅读字体使用系统字体；Web 的按书子集 woff 字体（14472 个文件）机制不适用移动端。后续可打包 LXGW 等开源全量字体或实现动态字体下载（需 woff→ttf 转换）。
+- ~~阅读字体使用系统字体~~ → 已实现（2026-06-11）：8 款全量 TTF（~132MB）内置 assets/fonts，
+  与 Web 字体选择器 1:1（Aa楷体/Aa楷宋/汉仪仿宋/落霞孤鹜(默认)/青鸟隶变/锐字云楷体/台湾正楷体/文泉微黑 + 系统默认）。
+  策略：不在 pubspec fonts: 声明，运行时 FontLoader **只加载选中那一款**（内存仅 1 款字体）；
+  启动后台预热持久化选择，首帧系统字体直出不阻塞；TTF 不预压缩（gzip 仅省 ~35%，AAPT2 在 APK 内已 deflate）。
 - 划词注释（recogito-js）简化为「选中文本 + 笔记」模型（quote + body 存 Isar），未实现原文内高亮锚定渲染。
 - PDF 下载（服务端 Puppeteer 渲染）不迁移：移动端以离线缓存替代；如需导出可后续接 share_plus 分享纯文本。
 - Outbox 当前服务于下载队列；用户数据（收藏/书签/笔记）本地即真相、无云端同步后端，冲突解决策略=本地优先/最后写入获胜，云同步是预留扩展点。

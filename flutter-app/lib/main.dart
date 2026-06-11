@@ -48,10 +48,13 @@ class _QldzjAppState extends ConsumerState<QldzjApp> {
   @override
   Widget build(BuildContext context) {
     final themeKey = ref.watch(settingsProvider.select((s) => s.themeKey));
+    // System font until the persisted choice finishes its background load,
+    // then the whole tree swaps — startup never blocks on font IO.
+    final fontFamily = ref.watch(fontControllerProvider).activeFamily;
     return MaterialApp.router(
       title: '乾隆大藏经',
       debugShowCheckedModeBanner: false,
-      theme: buildAppTheme(AppThemeId.fromKey(themeKey)),
+      theme: buildAppTheme(AppThemeId.fromKey(themeKey), fontFamily: fontFamily),
       routerConfig: appRouter,
     );
   }

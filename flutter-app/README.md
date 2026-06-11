@@ -27,6 +27,12 @@ lib/
 - 收藏/历史/书签/笔记/阅读进度全部本地写入，UI 即时响应，永不等待网络。
 - 全文搜索/字典/AI 今译释义为在线功能，离线明确降级提示（标题搜索离线可用）。
 
+### 字体
+8 款全量 TTF（`assets/fonts/`，~132MB）与 Web 字体选择器 1:1。
+刻意**不在 pubspec `fonts:` 声明**：运行时 `FontLoader` 只加载用户选中的
+那一款（`core/fonts/font_service.dart`），其余仅占 APK 不占内存；
+启动时后台预热持久化的选择，首帧用系统字体直出、加载完成整树切换。
+
 ### 简繁转换
 OpenCC 词表（取自 web 项目 opencc-js）打包为 `assets/opencc/*.tsv`，
 纯 Dart 贪婪最长匹配实现（`core/utils/chinese_converter.dart`）。

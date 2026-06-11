@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../providers/app_providers.dart';
+import 'font_picker_sheet.dart';
 import 't_text.dart';
 
 /// 阅读设置（web Header 设置弹窗的移动端 BottomSheet 形态）：
@@ -93,6 +94,30 @@ class _ReaderSettingsSheet extends ConsumerWidget {
             onChanged: controller.setParagraphSpacing,
           ),
           const SizedBox(height: 8),
+          Row(
+            children: [
+              TText('字体',
+                  style: TextStyle(fontSize: 15, color: colors.foreground)),
+              const Spacer(),
+              TextButton.icon(
+                style: TextButton.styleFrom(
+                  minimumSize: const Size(48, 48),
+                  foregroundColor: colors.foreground,
+                ),
+                onPressed: () => showFontPickerSheet(context),
+                icon: Text(
+                  ref.watch(fontControllerProvider).selected.label,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontFamily:
+                        ref.watch(fontControllerProvider).activeFamily,
+                  ),
+                ),
+                label: Icon(Icons.chevron_right,
+                    size: 18, color: colors.mutedForeground),
+              ),
+            ],
+          ),
           Row(
             children: [
               TText('简繁转换',

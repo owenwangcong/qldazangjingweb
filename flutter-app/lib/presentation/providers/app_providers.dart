@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:isar_community/isar.dart';
 
+import '../../core/fonts/font_service.dart';
 import '../../core/network/connectivity_service.dart';
 import '../../core/network/dio_client.dart';
 import '../../core/utils/chinese_converter.dart';
@@ -98,6 +99,8 @@ class SettingsController extends StateNotifier<AppSettings> {
     ..classicsVisible = state.classicsVisible;
 
   Future<void> setTheme(String key) => _persist(_copy()..themeKey = key);
+  Future<void> setFontFamily(String key) =>
+      _persist(_copy()..fontFamily = key);
   Future<void> toggleLanguage() =>
       _persist(_copy()..isSimplified = !state.isSimplified);
   Future<void> setFontSize(double v) => _persist(_copy()..fontSize = v);
@@ -119,6 +122,16 @@ final settingsProvider =
   final isar = ref.watch(isarProvider);
   final initial = isar.appSettings.getSync(0) ?? AppSettings();
   return SettingsController(isar, initial);
+});
+
+// ---- Fonts (on-demand FontLoader, only the chosen font is ever loaded) -----
+
+final fontServiceProvider = Provider<FontService>((ref) => FontService());
+
+final fontControllerProvider =
+    StateNotifierProvider<FontController, FontState>((ref) {
+  final initial = AppFont.fromKey(ref.read(settingsProvider).fontFamily);
+  return FontController(ref.watch(fontServiceProvider), initial);
 });
 
 /// Converts text for display according to the current 简/繁 setting.
