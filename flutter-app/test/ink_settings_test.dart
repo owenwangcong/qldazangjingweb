@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart' show timeDilation;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:isar_community/isar.dart';
@@ -75,6 +76,38 @@ void main() {
 
     expect(find.byType(Divider), findsNothing);
     expect(find.byType(BrushDivider), findsAtLeastNWidgets(1));
+  });
+
+  testWidgets('开发者工具：动画慢放滑杆驱动全局 timeDilation（0.1–10）',
+      (tester) async {
+    // 框架不变量在测试体结束时检查 timeDilation 已复位（先于 tearDown），
+    // 故用 finally 复位。
+    try {
+      await tester.pumpWidget(harness());
+      await tester.pump();
+
+      // debug/profile（测试即非 release）下可见。
+      await tester.dragUntilVisible(
+        find.text('动画慢放'),
+        find.byType(ListView),
+        const Offset(0, -200),
+      );
+      expect(find.text('动画慢放'), findsOneWidget);
+      expect(find.text('1.0×'), findsOneWidget);
+
+      // 拖到最右端 → 10 倍慢放；最左端 → 0.1 倍（夹紧范围）。
+      final slider = find.byType(Slider);
+      await tester.drag(slider, const Offset(400, 0));
+      await tester.pump();
+      expect(timeDilation, 10.0);
+      expect(find.text('10.0×'), findsOneWidget);
+
+      await tester.drag(slider, const Offset(-800, 0));
+      await tester.pump();
+      expect(timeDilation, moreOrLessEquals(0.1, epsilon: 0.001));
+    } finally {
+      timeDilation = 1.0;
+    }
   });
 
   testWidgets('P3.8 六主题构建无异常/overflow', (tester) async {

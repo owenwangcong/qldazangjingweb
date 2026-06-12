@@ -254,6 +254,10 @@ $adb = "D:\Apps\Android\AndroidSDK\platform-tools\adb.exe"
 # （如 "01"），不是键名 "ml01.htm"——P0.3 基线的 section 截图因此是空页（已在 §9 记录）。
 & $adb shell am start -W -a android.intent.action.VIEW -d "qldzj://app/settings?theme=guchayese"
 & $adb shell am start -W -a android.intent.action.VIEW -d "qldzj://app/section/01"
+# 动画慢放/加速（开发者工具，debug/profile）：?dilation=<0.1..10>，>1 慢放。
+# 慢动作转场取证用它即可，不再需要临时改 timeDilation 重编译（坑9 流程已淘汰）；
+# 设置页「开发者·动画慢放」滑杆等效。相机定时器随 dilation 同步缩放。
+& $adb shell am start -W -a android.intent.action.VIEW -d "qldzj://app/?dilation=5"
 # 性能（gfxinfo 对 Flutter 无效！必须用 traceAction 时间线，profile 模式）
 flutter drive --driver=test_driver/perf_driver.dart --target=integration_test/scroll_perf_test.dart --profile -d R52W809056B
 # 产物 build/perf/{home_scroll,reader_scroll}.timeline_summary.json，3 次取中位
@@ -307,6 +311,7 @@ flutter analyze; flutter test
 | 2026-06-12 | **P3 全部完成**（P3.4 滚动门禁过线收尾） | p34full（热控 ×3 中位）：reader **0%**（=基线）、home **7.11%**（描边批量化反哺，P2 12.89→7.11）、transition raster p90 26.17ms/最坏 35.7ms 过修订红线；数据 `perf/p34/`。P4.2 的 grep 判据已顺带达成（lib 内 Material 转圈 0 命中） | P4 微交互：墨雾 overscroll → 触觉 → 动效审计（预查发现：首页折叠 250ms 超微交互带、reader 顶栏 AnimatedSlide 缺曲线、画布/墨滴 reduce-motion 待核） |
 | 2026-06-12 | **P4 全部完成**（P4.1–P4.4 ✅） | 墨雾 overscroll（mistColor glow，视检暗主题雾弧）；EnsoLoading 全局清零；触觉三处落点+长按原生（**坑11：SM-P613 无震动马达 MOTOR_NONE**，触感验收以代码评审为准）；动效审计 8 处全表入 §4.2、修正 3 处、墨滴档位修订有论证；122 测试全绿 | P5 终验：截图矩阵 → 性能终测 → 全测试 → 可访问性 → 文档收尾 |
 | 2026-06-12 | **转场四症同治**（验收后用户反馈：卡顿/圆圈感/露底闪黑/回主页黑底） | 三个根因：①**坑12（P1 级现存缺陷）**：相机驱动挂在 redirect，而 go_router 17 的系统返回走 `routerDelegate.popRoute()→notifyListeners` **不经 redirect**——系统返回后相机永远停在 depth=1、画卷永久停绘、透明主页浮在黑底（用户的「回主页变黑」）；`context.pop()` 路径也有 320+350ms 黑窗。修复：相机驱动迁至 `routerDelegate.addListener`（全导航路径覆盖）+ `InkCanvasCamera.jumpTo`，规则「depth 必跳变（pop 回 tab 立即落位→旧快照第一帧即 blit；push 400ms 后落位，×timeDilation 保慢录正确）、pan 保持延迟 drift」；先写红的 `handlePopRoute` 回归测试再修。②被盖页 Interval(0,0.4) 淡出：pop 前 60% 隐身、push 早退露底，且 0<α<1 整页 saveLayer——改 InkBloomConceal 反向裁剪（evenOdd 互补，p≥1 空裁剪保活子树而非 SizedBox.shrink——后者会 unmount 丢状态）。**考古发现**：shell（MaterialPage）的 canTransitionTo 不接受 CustomTransitionRoute，secondaryAnimation 恒 0——旧 fade 对 tab 页从未生效（天然全程绘制），真正受害的是 push↔push（深 push/pop 在停绘的黑底上隐身）。③硬边圆圈感：墨缘环 ×4 描边（见 §4.2 增补）。慢录取证 4 链路逐帧无黑无露底（`recordings/fix_transitions/`），实速系统返回复测主页满幅纸面；125 测试全绿（+坑12回归/互补性采样/push↔push 裁剪 3 项）。**perf 重测过线**（`perf/transfix/`）：转场 raster p90 29.12ms ≤33.3 ✓、最坏帧 46.3ms ≤100 ✓、jank 率 64.7%→**51.8%**（saveLayer 移除生效）；home 5.34%/reader 0% 噪声带内不回归。期间又记一坑：测试设备低电量（≤15%）时三星弹窗抢焦点会杀掉 flutter drive 会话——perf 采样前确认电量 ≥25% | predictive back 未启用，启用时需在转场内提前 jump（存照） |
+| 2026-06-12 | **开发者工具：动画慢放/加速（0.1×–10×）** | 应用户要求把慢动作取证流程产品化：全局 timeDilation 双入口（设置页「开发者」对数刻度滑杆 + 深链 `?dilation=`），仅 debug/profile；相机定时器（push 400ms/tab 320ms）随 dilation 同步缩放保证慢放下转场观感真实；不持久化重启复位。真机验证：滑杆渲染正常、`?dilation=5` 下转场跨数十帧且墨缘环/conceal 全程正确（`recordings/devtool_*`）；127 测试全绿（含框架「timeDilation 未复位」不变量的 finally 兜底——不变量先于 tearDown 检查） | 坑9 的临时改码流程正式淘汰 |
 | 2026-06-12 | **P5 全部完成，水墨改造收官** | 71 张终验截图矩阵全过五项 checklist；性能终测两次「红灯→对照实验→定论」：①启动 1207ms 表面 +51% → e26eef92 同日重测 1171ms，证实为电量降频环境漂移，真实增量 **+3.1%** ✓；②静止重绘 315 帧/10s 表面爆表 → oldbase 同探针 318 帧，证实持续打帧为改造前既有行为，**装饰层增量 0 帧** ✓（配对对照法二度救场——结论：跨日绝对值不可比，凡红灯先做同日对照）；a11y 终审揪出 icon 按钮无障碍标签缺失并修复 9 处；122 测试全绿；APK 还瘦了 325KB | §10 七项全勾，/goal 达成；遗留可选项：Rive 资产路线（§3 暂缓决议不变）、设备联网后补全文搜索/辞典结果卡实机截图 |
 
 ## 10. 最终验收清单（Definition of Done）

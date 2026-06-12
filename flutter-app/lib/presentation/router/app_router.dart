@@ -50,6 +50,14 @@ String? inkAppRedirect(BuildContext context, GoRouterState state) {
             .select(AppFont.fromKey(fontKey));
       });
     }
+    // 动画慢放/加速（开发者工具）：?dilation=<0.1..10>，驱动全局
+    // timeDilation——慢动作转场取证不再需要临时改代码重编译（坑9）。
+    // 与设置页「开发者·动画慢放」滑杆同一开关；不持久化。
+    final dilationParam = state.uri.queryParameters['dilation'];
+    if (dilationParam != null) {
+      final v = double.tryParse(dilationParam);
+      if (v != null) timeDilation = v.clamp(0.1, 10.0);
+    }
   }
   return null;
 }
@@ -98,7 +106,9 @@ void attachInkCameraDriver(GoRouter router) {
     } else if (inkCanvasCamera.depth >= 1) {
       inkCanvasCamera.jumpTo(pan: pan, depth: 0);
     } else {
-      Future<void>.delayed(const Duration(milliseconds: 320), () {
+      // ×timeDilation：慢放调试时画卷横移与（瞬时的）tab 切换保持节奏。
+      Future<void>.delayed(
+          Duration(milliseconds: (320 * timeDilation).round()), () {
         if (seq != _cameraNavSeq) return;
         inkCanvasCamera.moveTo(pan: pan, depth: 0);
       });

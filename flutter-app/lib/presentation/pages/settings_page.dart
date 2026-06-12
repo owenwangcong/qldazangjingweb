@@ -1,4 +1,8 @@
+import 'dart:math' as math;
+
+import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart' show timeDilation;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -70,6 +74,14 @@ class SettingsPage extends ConsumerWidget {
             title: const TText('关于乾隆大藏经'),
             onTap: () => context.push('/about'),
           ),
+          // 开发者工具（仅 debug/profile）：动画慢放/加速，用于转场调试与
+          // 慢动作取证（曾经要临时改代码重编译，见 §9 坑9）。
+          if (!kReleaseMode) ...[
+            const BrushDivider(
+                height: 18, indent: 16, endIndent: 16, seed: 37),
+            _SectionHeader('开发者'),
+            const _DevDilationTile(),
+          ],
         ],
       ),
     );
@@ -117,6 +129,82 @@ class SettingsPage extends ConsumerWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// 动画时间膨胀滑杆（开发者工具）：直接驱动 Flutter 全局 [timeDilation]，
+/// 0.1×（10 倍加速）～ 10×（10 倍慢放），1× 居中。转场由墨晕/相机/墨缘环
+/// 多个动画协同，必须整体缩放观感才真实——相机定时器已随 timeDilation
+/// 同步（app_router）。对数刻度：两端十倍、中点正好 1×。
+/// 不持久化（重启复位）；深链巡检通道 `?dilation=<v>` 可脚本化设置。
+class _DevDilationTile extends StatefulWidget {
+  const _DevDilationTile();
+
+  @override
+  State<_DevDilationTile> createState() => _DevDilationTileState();
+}
+
+class _DevDilationTileState extends State<_DevDilationTile> {
+  static double _toLog(double v) => math.log(v) / math.ln10; // [-1, 1]
+  static double _fromLog(double l) => math.pow(10, l).toDouble();
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final ink = context.ink;
+    final dilation = timeDilation.clamp(0.1, 10.0);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          child: Row(
+            children: [
+              Icon(Icons.slow_motion_video,
+                  size: 22, color: colors.mutedForeground),
+              const SizedBox(width: 12),
+              Expanded(
+                child: TText(
+                  '动画慢放',
+                  style: TextStyle(fontSize: 15, color: colors.foreground),
+                ),
+              ),
+              Text(
+                '${dilation.toStringAsFixed(dilation < 1 ? 2 : 1)}×',
+                style: TextStyle(fontSize: 13, color: colors.mutedForeground),
+              ),
+            ],
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          child: SliderTheme(
+            data: SliderTheme.of(context).copyWith(
+              activeTrackColor: ink.inkMedium,
+              inactiveTrackColor: ink.inkLight.withValues(alpha: 0.35),
+              thumbColor: ink.inkStrong,
+              overlayColor: ink.inkMedium.withValues(alpha: 0.12),
+            ),
+            child: Slider(
+              value: _toLog(dilation),
+              min: -1,
+              max: 1,
+              divisions: 40,
+              label: '${dilation.toStringAsFixed(dilation < 1 ? 2 : 1)}×',
+              onChanged: (l) =>
+                  setState(() => timeDilation = _fromLog(l).clamp(0.1, 10.0)),
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+          child: TText(
+            '>1 慢放、<1 加速，作用于全部动画；重启复位。仅 debug/profile 可见',
+            style: TextStyle(fontSize: 12, color: colors.mutedForeground),
+          ),
+        ),
+      ],
     );
   }
 }

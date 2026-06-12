@@ -1,4 +1,5 @@
 ﻿import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart' show timeDilation;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
@@ -264,6 +265,30 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('book=0001-01 index=5'), findsOneWidget);
     await tester.pump(const Duration(milliseconds: 400)); // 冲掉相机延迟定时器
+  });
+
+  testWidgets('开发者工具：深链 ?dilation= 设置全局 timeDilation 并夹紧范围',
+      (tester) async {
+    // 框架不变量要求测试体结束前复位 timeDilation → finally 兜底。
+    try {
+      await warmInkShaders(tester);
+      final router = buildStubRouter();
+      await tester.pumpWidget(app(router));
+      await tester.pumpAndSettle();
+
+      router.go('/search?dilation=4');
+      await tester.pump();
+      expect(timeDilation, 4.0);
+
+      router.go('/?dilation=99'); // 超界 → 夹到 10
+      await tester.pump();
+      expect(timeDilation, 10.0);
+    } finally {
+      timeDilation = 1.0;
+    }
+    // 复位后再冲掉（按慢放 ×10 调度的）相机定时器。
+    await tester.pump(const Duration(milliseconds: 4000));
+    await tester.pumpAndSettle();
   });
 }
 
