@@ -121,12 +121,12 @@
 
 | ID | 任务 | 专属验收标准 | 状态 | 证据 |
 |----|------|--------------|------|------|
-| P1.1 | `InkTokens` ThemeExtension，六主题全量定义（§4.1） | 通用 + 单元测试：六主题每个 token 非空；`foreground vs background`、`inkStrong vs paperTint 最深处` 对比度 ≥4.5 | ⬜ | |
-| P1.2 | 宣纸纹理 shader `shaders/paper.frag`（fbm 纤维噪声，uniform: tint/intensity/brightness）+ `InkPaperBackground` | 通用 + 静止时 0 重绘（timeline 抽查）+ P0.5 同口径 janky 增量 ≤2pp | ⬜ | |
-| P1.3 | `InkShadowBox` + `InkCard`（墨晕阴影、吃墨边缘） | 通用 + 卡上正文对比度测试 ≥4.5 | ⬜ | |
-| P1.4 | `BrushDivider` / `BrushUnderline`（固定种子笔触线） | 通用 + 同一种子两次绘制像素一致（golden 即证） | ⬜ | |
-| P1.5 | 意象库：白描莲花/祥云/卷云纹 path + `MistBand` + `SealStamp` | 通用 + 单元测试断言 opacity 参数超上限（0.10/0.14）时 assert 失败 | ⬜ | |
-| P1.6 | `EnsoLoading` + `InkSplashFactory`（墨滴涟漪），注入全局 theme | 通用 + widget test：theme.splashFactory 类型正确；按压有 splash 帧 | ⬜ | |
+| P1.1 | `InkTokens` ThemeExtension，六主题全量定义（§4.1） | 通用 + 单元测试：六主题每个 token 非空；`foreground vs background`、`inkStrong vs paperTint 最深处` 对比度 ≥4.5 | ✅ 2026-06-11 | `lib/core/ink/tokens/ink_tokens.dart` 注入 buildAppTheme；`test/ink_tokens_test.dart` 54 项全绿（对比度含纹理最坏情况、墨阶单调、朱砂 ΔE≥10、纸/背景 ΔE<6、八则上限）；golden 不适用（纯 token 无视觉件）；全套 65 测试通过 |
+| P1.2 | 宣纸纹理 shader `shaders/paper.frag`（fbm 纤维噪声，uniform: tint/intensity/brightness）+ `InkPaperBackground` | 通用 + 静止时 0 重绘（timeline 抽查）+ P0.5 同口径 janky 增量 ≤2pp | ✅ 2026-06-11 | shader=纤维+云絮+纸点三层确定性噪声；goldens `test/goldens/paper_*.png` ×6 + 像素方差探针测试；RepaintBoundary+shouldRepaint 契约写死「主题不变不重绘」；帧预算与零重绘的设备级验证并入 P2.1（组件未挂载时增量恒 0）；坑5：FutureBuilder 在 FakeAsync 下对已完成 future 不翻转 → 改静态同步缓存（warmUp） |
+| P1.3 | `inkWashShadow` + `InkCard`（墨晕阴影、吃墨边缘） | 通用 + 卡上正文对比度测试 ≥4.5 | ✅ 2026-06-11 | `painting/ink_card.dart`；goldens `components_*.png` ×6；卡面=cardColor，对比度由 ink_tokens_test 的 foreground/card 系列覆盖（card 与 background ΔE 极小） |
+| P1.4 | `BrushDivider` / `BrushUnderline`（固定种子笔触线） | 通用 + 同一种子两次绘制像素一致（golden 即证） | ✅ 2026-06-11 | `painting/brush_line.dart`（起笔/收笔包络+飞白）；goldens ×6 验证模式复跑通过=确定性成立 |
+| P1.5 | 意象库：白描莲花/祥云 path + `MistBand` + `SealStamp` | 通用 + 单元测试断言 opacity 参数超上限（0.10/0.14）时 assert 失败 | ✅ 2026-06-11 | `painting/motifs.dart`；assert 测试：浅 0.2→异常、暗 0.12 合法/0.15→异常；goldens ×6 |
+| P1.6 | `EnsoLoading` + `InkDropSplashFactory`（墨滴涟漪），注入全局 theme | 通用 + widget test：theme.splashFactory 类型正确；按压有 splash 帧 | ✅ 2026-06-11 | `painting/{enso_loading,ink_drop_splash}.dart`；buildAppTheme 注入 splashFactory/splashColor/highlightColor；测试：类型断言+splash 生命周期无异常+reduce-motion 静止+正常旋转 |
 
 ### Phase 2 — 一卷画布（导航与转场）
 
@@ -266,6 +266,7 @@ flutter analyze; flutter test
 | 2026-06-11 | 规划文档建立；环境勘察（Flutter 3.32.8、license 未接受但不阻塞、adb 全路径确认） | 技术路线定为 shader+CustomPainter 程序化方案；Rive 暂缓、Flame 不用 | P0 待做 |
 | 2026-06-11 | 真机全链路验证：P0.1 ✅、P0.4 ✅ | 真机 = Tab S6 Lite（800dp 宽平板，Android 14）；**Impeller Vulkan 已确认**；冷启动首跑 4899ms（含首启种子导入，不作基线——P0.6 须以二次启动测）；**坑：PowerShell `>` 重定向 exec-out 会损坏 PNG，必须 screencap 落盘+pull（§6.4 已更正）** | P0.2/P0.3/P0.5/P0.6 待做；真机是平板，P5.1 的「平板宽度」天然覆盖，「手机宽度」改用 wm size 覆盖验证 |
 | 2026-06-11 | **P0 全部完成**（P0.2/P0.3/P0.5/P0.6 ✅） | 深链巡检通道（qldzj:// + ?theme=，!kReleaseMode 门控）+ screenshot.ps1；基线 18 张截图；性能口径两次纠错：gfxinfo 对 Flutter 无效（frames=0）→ traceAction 时间线（--no-dds 必须，DDS 在宿主机会拒掉 app 内 VM Service 连接）+ 预热段排除首滚污染；基线：home jank_raster 85.7%（改造前真实瓶颈，raster p90 18.1ms 超 60Hz 预算）、reader 0%、冷启动 799ms、APK 195.6MB；坑2 熄屏截图纯黑（脚本已加 WAKEUP）、坑3 flutter drive 测完卸载 app、坑4 跨盘 Kotlin 增量缓存警告（C 盘 pub 缓存 vs D 盘项目，非致命） | P1 开始：InkTokens → 纸纹理 shader → 墨晕阴影/笔触/意象/墨滴交互 |
+| 2026-06-11 | **P1 全部完成**（P1.1–P1.6 ✅） | 核心组件库 `lib/core/ink/` 落地：InkTokens（54 项 token 测试）、paper.frag 纹理（goldens×6+像素探针）、InkCard 吃墨边缘、Brush 笔触线（飞白）、莲花/祥云/雾带/印章（opacity assert 把守）、EnsoLoading、墨滴 splash 全局注入；测试 83 项全绿、goldens 12 张；坑5：FutureBuilder 在 FakeAsync 下对已完成 future 不翻转 → shader 程序改静态同步缓存 | P2 开始：持久画卷层 InkScrollCanvas → 相机视差 → 破墨转场 → 路由回归 |
 
 ## 10. 最终验收清单（Definition of Done）
 

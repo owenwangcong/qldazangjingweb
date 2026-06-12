@@ -8,3 +8,11 @@
 ///
 /// 各模块随 P1/P2 落地后在此 export。
 library;
+
+export 'painting/brush_line.dart';
+export 'painting/enso_loading.dart';
+export 'painting/ink_card.dart';
+export 'painting/ink_drop_splash.dart';
+export 'painting/motifs.dart';
+export 'shading/ink_paper_background.dart';
+export 'tokens/ink_tokens.dart';

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../ink/painting/ink_drop_splash.dart';
+import '../ink/tokens/ink_tokens.dart';
+
 /// The six visual themes ported 1:1 from the web app's globals.css.
 /// HSL triplets are transcribed verbatim so the palettes stay identical.
 enum AppThemeId {
@@ -240,6 +243,7 @@ AppColors _paletteFor(AppThemeId id) {
 
 ThemeData buildAppTheme(AppThemeId id, {String? fontFamily}) {
   final c = _paletteFor(id);
+  final ink = InkTokens.forTheme(id);
   final scheme = ColorScheme(
     brightness: id.brightness,
     primary: c.primary,
@@ -261,6 +265,10 @@ ThemeData buildAppTheme(AppThemeId id, {String? fontFamily}) {
     // 全 App 统一阅读字体（对齐 web 的全站换字行为）；缺字自动回退系统字体。
     fontFamily: fontFamily,
     colorScheme: scheme,
+    // 墨滴涟漪（P1.6）：触点如墨入纸，全局替换 Material ripple。
+    splashFactory: const InkDropSplashFactory(),
+    splashColor: ink.inkMedium.withValues(alpha: 0.16),
+    highlightColor: ink.inkLight.withValues(alpha: 0.08),
     scaffoldBackgroundColor: c.background,
     cardColor: c.card,
     dividerColor: c.border,
@@ -292,7 +300,7 @@ ThemeData buildAppTheme(AppThemeId id, {String? fontFamily}) {
       contentTextStyle: TextStyle(color: c.popoverForeground),
       behavior: SnackBarBehavior.floating,
     ),
-    extensions: [c],
+    extensions: [c, InkTokens.forTheme(id)],
   );
 }
 
