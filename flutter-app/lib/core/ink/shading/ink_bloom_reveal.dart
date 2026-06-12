@@ -2,13 +2,22 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import '../canvas/ink_scroll_canvas.dart' show inkLastPointerDown;
 import '../tokens/ink_tokens.dart';
 
-/// 墨晕轮廓（32 段极坐标噪声多边形）：[InkBloomReveal]（新页正向裁剪）与
-/// [InkBloomConceal]（被盖页反向裁剪）共用同一份顶点生成逻辑——
-/// 同 progress 同 origin 下两页墨缘逐帧像素级互补（hardEdge 无 AA，
-/// 同一扫描规则，无接缝）。
+/// 破墨转场时长与曲线（§4.2，平滑化修订 2026-06-12）：
+/// - 时长 380/300ms（原 300/240）：60Hz 下多 ~5 帧，帧间位移按比例缩小。
+/// - easeOutSine（原 easeOutCubic）：归一化前沿峰速 2.1→1.36，且峰值从
+///   「起点/触点附近」挪到中段（前沿已在屏幕外围）——慢放实测帧间
+///   不连续感的主因正是 easeOutCubic 起点导数 3.0 的首帧巨跳。
+const Curve inkBloomCurve = Curves.easeOutSine;
+const Duration inkBloomPushDuration = Duration(milliseconds: 380);
+const Duration inkBloomPopDuration = Duration(milliseconds: 300);
+
+/// reduce-motion 退化的淡变区间：≤120ms（120/380 ≈ 0.31）。
+const double inkReduceMotionFraction = 0.31;
+
+/// 墨晕轮廓（32 段极坐标噪声多边形）：reveal 裁剪与墨缘环共用同一份
+/// 顶点生成逻辑，逐帧贴合。
 ///
 /// 起伏由固定相位的正弦叠加生成——确定性、跨帧连贯（同一角度的凸起
 /// 随半径同步生长，像墨沿纸纤维的指状渗透）。
@@ -20,12 +29,17 @@ Path inkBloomPath(Size size, double progress, Offset? origin) {
           origin.dy.clamp(0.0, size.height),
         );
   // 触点到最远角，保证 progress=1 前全屏覆盖（轮廓最小乘数 0.82，
-  // 故基准半径放大到 1/0.82 ≈ 1.22 倍）。
+  // 故基准半径放大到 1/0.82 ≈ 1.22 倍——乘**整个包络**。修正：旧式只把
+  // 1.22 乘在线性项上，p=1 时有效覆盖仅 0.946·maxDist，最远角楔形残片
+  // 会在 p≥1 分支瞬间硬切，慢放下清晰可见）。
   final dx = math.max(o.dx, size.width - o.dx);
   final dy = math.max(o.dy, size.height - o.dy);
   final maxDist = math.sqrt(dx * dx + dy * dy);
-  final r = progress * progress * 0.3 * maxDist +
-      progress * 1.22 * maxDist * (1 - 0.3);
+  // 种子半径 r0：首帧不再「凭空出现」，且与墨滴 splash（420ms 自触点
+  // 扩散）半径衔接——墨滴落纸→晕开成页连成一笔。
+  const r0 = 28.0;
+  final growth = 0.7 * progress + 0.3 * progress * progress;
+  final r = r0 + (1.22 * maxDist - r0) * growth;
 
   const segments = 32;
   final path = Path();
@@ -111,46 +125,15 @@ class InkBloomReveal extends StatelessWidget {
   }
 }
 
-/// 被盖页的反向墨缘裁剪（转场修复 F1）：裁到「全屏 − 墨晕」，与上层
-/// [InkBloomReveal] 像素级互补——旧页在墨晕外保持原样可见，每像素恰好
-/// 只画一页；不再用 opacity 淡出（0<α<1 的整页 FadeTransition 在 Impeller
-/// 上回退 saveLayer，且早退会露出画卷/黑底，见 §9）。
-class InkBloomConceal extends StatelessWidget {
-  const InkBloomConceal({
-    super.key,
-    required this.progress,
-    required this.child,
-    this.origin,
-  });
-
-  final Animation<double> progress;
-  final Widget child;
-  final Offset? origin;
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: progress,
-      builder: (context, _) {
-        final p = progress.value;
-        // 未被覆盖：裸 child——不留常驻 ClipPath，落定页滚动零裁剪税。
-        if (p <= 0.0) return child;
-        if (p >= 1.0) {
-          // 完全被盖：空可见区裁剪——子树保活（State/滚动位置不丢，
-          // 不可用 SizedBox.shrink，那会 unmount 整棵子树），paint 全
-          // 剔除；随后 Overlay 因上层 opaque 路由自动转 offstage 接管。
-          return ClipRect(clipper: _ZeroRectClipper(), child: child);
-        }
-        return ClipPath(
-          clipBehavior: Clip.hardEdge,
-          clipper: _ConcealClipper(progress: p, origin: origin),
-          child: child,
-        );
-      },
-      child: child,
-    );
-  }
-}
+// 历史注：曾有 InkBloomConceal（被盖页「全屏−墨晕」evenOdd 反向裁剪，与
+// reveal 互补）与 SnapshotWidget 冻结两套机制，实测均撤（2026-06-12）：
+// - 互补裁剪的内容填充本就被 early-stencil 剔除，conceal 多付的是一整条
+//   全屏 stencil 通道（转场 raster p90 26.3→29.1ms）；
+// - 快照捕获每个转场方向打进 1-2 帧 ~38ms 的 UI 线程尖峰，而中位帧 raster
+//   分毫未降（25.9ms）——瓶颈是裁剪机制与基础开销，不是内容栅格化。
+// 现行方案 = 「下层页不做任何处理」：上层页（InkPaperBacking 不透明）的
+// reveal 裁剪自然逐像素覆盖下层，视觉与互补裁剪逐像素相同，代价仅 blob
+// 内过度绘制（纯填充带宽，便宜于 stencil 通道）。数据见 §9。
 
 /// 被盖页的标准包装：正常动效 = [InkBloomConceal]（与上层 reveal 同曲线
 /// 同原点，逐帧互补）；reduce-motion = 短淡出（push 末 40% 淡出 /
@@ -170,27 +153,21 @@ class InkCoveredPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (MediaQuery.of(context).disableAnimations) {
+      // push 末段淡出 / pop 头段淡入（≤120ms），时序上始终有一页全不透明。
       return FadeTransition(
         opacity: ReverseAnimation(
           CurvedAnimation(
             parent: secondaryAnimation,
-            curve: const Interval(0.6, 1.0),
+            curve: const Interval(1.0 - inkReduceMotionFraction, 1.0),
           ),
         ),
         child: child,
       );
     }
-    // secondaryAnimation 与上层路由的 animation 同 controller 同帧同值；
-    // 套同一 easeOutCubic（双向都不设 reverseCurve）+ 同帧读同一全局触点
-    // → conceal 与 reveal 的墨晕路径严格一致。
-    return InkBloomConceal(
-      progress: CurvedAnimation(
-        parent: secondaryAnimation,
-        curve: Curves.easeOutCubic,
-      ),
-      origin: inkLastPointerDown.value,
-      child: child,
-    );
+    // 正常动效下不做任何处理（Plan B，见文件头历史注）：上层页不透明，
+    // reveal 裁剪自然覆盖本页；被盖稳态由 Overlay 的 opaque-offstage
+    // 机制免费跳绘。
+    return child;
   }
 }
 
@@ -206,33 +183,6 @@ class _BloomClipper extends CustomClipper<Path> {
   @override
   bool shouldReclip(_BloomClipper oldClipper) =>
       oldClipper.progress != progress || oldClipper.origin != origin;
-}
-
-/// 反向裁剪：evenOdd 双子路径（全屏矩形 + 同一份墨晕顶点）——零布尔
-/// 运算，且与 [_BloomClipper] 用同一扫描规则，互补像素级精确。
-class _ConcealClipper extends CustomClipper<Path> {
-  _ConcealClipper({required this.progress, required this.origin});
-
-  final double progress;
-  final Offset? origin;
-
-  @override
-  Path getClip(Size size) => Path()
-    ..fillType = PathFillType.evenOdd
-    ..addRect(Offset.zero & size)
-    ..addPath(inkBloomPath(size, progress, origin), Offset.zero);
-
-  @override
-  bool shouldReclip(_ConcealClipper oldClipper) =>
-      oldClipper.progress != progress || oldClipper.origin != origin;
-}
-
-class _ZeroRectClipper extends CustomClipper<Rect> {
-  @override
-  Rect getClip(Size size) => Rect.zero;
-
-  @override
-  bool shouldReclip(_ZeroRectClipper oldClipper) => false;
 }
 
 /// 墨缘环：沿墨晕前沿描 4 道渐宽渐淡的环（round join 防 32 段折线

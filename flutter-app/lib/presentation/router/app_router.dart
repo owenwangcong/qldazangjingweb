@@ -95,11 +95,11 @@ void attachInkCameraDriver(GoRouter router) {
       _ => null, // push 路由
     };
     if (pan == null) {
-      // 400ms：push 转场 300ms + 100ms 安全边际（jump 即停绘，过早会让
-      // tab 页留白区在墨晕未覆盖处闪黑——重帧卡顿时转场可能超 300ms）。
+      // 480ms：push 转场 380ms + 100ms 安全边际（jump 即停绘，过早会让
+      // tab 页留白区在墨晕未覆盖处闪黑——重帧卡顿时转场可能超时）。
       // 乘 timeDilation：慢动作取证时定时器与转场保持同步（生产恒 1.0）。
       Future<void>.delayed(
-          Duration(milliseconds: (400 * timeDilation).round()), () {
+          Duration(milliseconds: (480 * timeDilation).round()), () {
         if (seq != _cameraNavSeq) return; // 已被更新的导航取代
         inkCanvasCamera.jumpTo(depth: 1);
       });
@@ -129,8 +129,9 @@ void attachInkCameraDriver(GoRouter router) {
 CustomTransitionPage<void> inkBloomPage(GoRouterState state, Widget child) {
   return CustomTransitionPage<void>(
     key: state.pageKey,
-    transitionDuration: const Duration(milliseconds: 300),
-    reverseTransitionDuration: const Duration(milliseconds: 240),
+    // 时长/曲线见 inkBloom* 常量（平滑化修订：380/300ms + easeOutSine）。
+    transitionDuration: inkBloomPushDuration,
+    reverseTransitionDuration: inkBloomPopDuration,
     child: InkPaperBacking(child: child),
     transitionsBuilder: (context, animation, secondaryAnimation, child) {
       // 被更深一层 push 压住时：反向墨缘裁剪（与上层 reveal 逐帧互补，
@@ -144,13 +145,13 @@ CustomTransitionPage<void> inkBloomPage(GoRouterState state, Widget child) {
         return FadeTransition(
           opacity: CurvedAnimation(
             parent: animation,
-            curve: const Interval(0, 0.4), // 等效 ≤120ms
+            curve: const Interval(0, inkReduceMotionFraction), // ≤120ms
           ),
           child: covered,
         );
       }
       return InkBloomReveal(
-        progress: CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
+        progress: CurvedAnimation(parent: animation, curve: inkBloomCurve),
         origin: inkLastPointerDown.value,
         child: covered,
       );
@@ -168,7 +169,23 @@ GoRouter _buildAppRouter() {
   redirect: inkAppRedirect,
   routes: [
     StatefulShellRoute.indexedStack(
-      builder: (context, state, shell) => ShellPage(shell: shell),
+      // pageBuilder 而非 builder（平滑化步骤 3）：MaterialPage 的
+      // canTransitionTo 只认 Material/Cupertino 路由，导致 shell 的
+      // secondaryAnimation 恒为 0（被 push 覆盖时全程 live 全屏绘制）。
+      // 换成 CustomTransitionPage 后 secondary 接线复活——shell 与所有
+      // push 页走同一 conceal+快照路径，转场填充量砍半。
+      pageBuilder: (context, state, shell) => CustomTransitionPage<void>(
+        key: state.pageKey,
+        // shell 自身的出入场（仅冷启动）无动画。
+        transitionDuration: Duration.zero,
+        reverseTransitionDuration: Duration.zero,
+        child: ShellPage(shell: shell),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+            InkCoveredPage(
+          secondaryAnimation: secondaryAnimation,
+          child: child,
+        ),
+      ),
       branches: [
         StatefulShellBranch(routes: [
           GoRoute(path: '/', builder: (_, __) => const HomePage()),

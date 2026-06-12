@@ -90,7 +90,7 @@
 ### 4.2 动效规范
 | 场景 | 时长 | 曲线 | reduce-motion 退化 |
 |------|------|------|--------------------|
-| 路由 push/pop（破墨显现） | 300ms（pop 240ms） | easeOutCubic | ≤120ms 纯 fade |
+| 路由 push/pop（破墨显现） | 380ms（pop 300ms）<br>**修订（2026-06-12 平滑化）**：原 300/240ms easeOutCubic 起点导数 3.0，~34fps 下首帧前沿位移 ~390px，慢放实测帧间不连续；改 easeOutSine（峰速 2.1→1.36 且峰值挪到中段）+加时长，峰值帧间位移 ≈0.51 倍 | easeOutSine | ≤120ms 纯 fade |
 | Tab 切换（画卷横移） | 350ms | easeInOutCubic | 直接切换 |
 | 微交互（状态切换、按压反馈） | 180–240ms | easeOut | 保留（幅度减半） |
 | 墨滴 splash（涟漪扩散） | 扩散 420ms + 消散 550ms | easeOutQuart | 保留（半径减半）<br>**修订（2026-06-12 P4.4）**：墨入纸的晕开是持续物理过程，180–240ms 档对应的是状态切换类微交互；墨滴单列并按 P1.6 实现校正 |
@@ -106,7 +106,7 @@
 **P4.4 审计结果（2026-06-12，逐处核对）**：
 | 动画处 | 实际 | 规范档 | 结论 |
 |--------|------|--------|------|
-| inkBloomPage push/pop | 300/240ms easeOutCubic；reduce-motion=Interval(0,0.4)≈120ms fade | 路由 | ✓ |
+| inkBloomPage push/pop | 380/300ms easeOutSine（平滑化修订）；reduce-motion=Interval(0,0.31)≈118ms fade | 路由 | ✓ |
 | InkScrollCanvas 相机漂移 | 350ms easeInOutCubic；reduce-motion 直接落位 | Tab 切换 | ✓ |
 | InkNavBar 印章切换 | 200ms easeOut；reduce-motion Duration.zero | 微交互 | ✓ |
 | 首页经典卡折叠（Rotation/CrossFade） | 250→**220ms** easeOut（本次修正） | 微交互 | ✓（修正后） |
@@ -311,6 +311,7 @@ flutter analyze; flutter test
 | 2026-06-12 | **P3 全部完成**（P3.4 滚动门禁过线收尾） | p34full（热控 ×3 中位）：reader **0%**（=基线）、home **7.11%**（描边批量化反哺，P2 12.89→7.11）、transition raster p90 26.17ms/最坏 35.7ms 过修订红线；数据 `perf/p34/`。P4.2 的 grep 判据已顺带达成（lib 内 Material 转圈 0 命中） | P4 微交互：墨雾 overscroll → 触觉 → 动效审计（预查发现：首页折叠 250ms 超微交互带、reader 顶栏 AnimatedSlide 缺曲线、画布/墨滴 reduce-motion 待核） |
 | 2026-06-12 | **P4 全部完成**（P4.1–P4.4 ✅） | 墨雾 overscroll（mistColor glow，视检暗主题雾弧）；EnsoLoading 全局清零；触觉三处落点+长按原生（**坑11：SM-P613 无震动马达 MOTOR_NONE**，触感验收以代码评审为准）；动效审计 8 处全表入 §4.2、修正 3 处、墨滴档位修订有论证；122 测试全绿 | P5 终验：截图矩阵 → 性能终测 → 全测试 → 可访问性 → 文档收尾 |
 | 2026-06-12 | **转场四症同治**（验收后用户反馈：卡顿/圆圈感/露底闪黑/回主页黑底） | 三个根因：①**坑12（P1 级现存缺陷）**：相机驱动挂在 redirect，而 go_router 17 的系统返回走 `routerDelegate.popRoute()→notifyListeners` **不经 redirect**——系统返回后相机永远停在 depth=1、画卷永久停绘、透明主页浮在黑底（用户的「回主页变黑」）；`context.pop()` 路径也有 320+350ms 黑窗。修复：相机驱动迁至 `routerDelegate.addListener`（全导航路径覆盖）+ `InkCanvasCamera.jumpTo`，规则「depth 必跳变（pop 回 tab 立即落位→旧快照第一帧即 blit；push 400ms 后落位，×timeDilation 保慢录正确）、pan 保持延迟 drift」；先写红的 `handlePopRoute` 回归测试再修。②被盖页 Interval(0,0.4) 淡出：pop 前 60% 隐身、push 早退露底，且 0<α<1 整页 saveLayer——改 InkBloomConceal 反向裁剪（evenOdd 互补，p≥1 空裁剪保活子树而非 SizedBox.shrink——后者会 unmount 丢状态）。**考古发现**：shell（MaterialPage）的 canTransitionTo 不接受 CustomTransitionRoute，secondaryAnimation 恒 0——旧 fade 对 tab 页从未生效（天然全程绘制），真正受害的是 push↔push（深 push/pop 在停绘的黑底上隐身）。③硬边圆圈感：墨缘环 ×4 描边（见 §4.2 增补）。慢录取证 4 链路逐帧无黑无露底（`recordings/fix_transitions/`），实速系统返回复测主页满幅纸面；125 测试全绿（+坑12回归/互补性采样/push↔push 裁剪 3 项）。**perf 重测过线**（`perf/transfix/`）：转场 raster p90 29.12ms ≤33.3 ✓、最坏帧 46.3ms ≤100 ✓、jank 率 64.7%→**51.8%**（saveLayer 移除生效）；home 5.34%/reader 0% 噪声带内不回归。期间又记一坑：测试设备低电量（≤15%）时三星弹窗抢焦点会杀掉 flutter drive 会话——perf 采样前确认电量 ≥25% | predictive back 未启用，启用时需在转场内提前 jump（存照） |
+| 2026-06-12 | **转场平滑化**（用户慢放观察：帧间变化太大不连续） | 三因合击：①easeOutCubic 起点导数 3.0 × ~34fps → 首帧前沿位移 ~390px；②**半径公式 bug**：1.22 wobble 补偿只乘线性项，p=1 覆盖仅 0.946·maxDist，最远角残片终帧硬切（墨缘环此时已衰减归零）；③起步零半径凭空出现。对策：公式改 `r0+(1.22D−r0)(0.7p+0.3p²)`（整体补偿+28px 种子斑衔接墨滴 splash）+ 时长 300/240→**380/300ms** + 曲线改 **easeOutSine**（峰速 2.1→1.36 且挪到中段）→ 峰值帧间位移 ≈0.51 倍；shell 路由改 CustomTransitionPage（pageBuilder）使 secondaryAnimation 接线。**S2（SnapshotWidget 冻结）实测净负收益、已撤**：帧时间分布显示捕获在每转场方向打进 1-2 帧 ~38ms 的 UI 线程尖峰（build p90 9.6→31.8ms、raster p90 29.1→35.3 ❌），而中位帧 raster 分毫未降（25.9ms）——**瓶颈是裁剪 stencil 通道与基础开销，不是内容栅格化**（互补裁剪下内容填充早被 early-stencil 剔除）。顺势上 Plan B：**被盖页完全不处理**（上层 InkPaperBacking 不透明，reveal 自然覆盖，视觉逐像素相同），省掉整条 conceal stencil 通道与 evenOdd 复杂度；InkBloomConceal 移除。慢放视检（`?dilation=6`）：四链路帧间增量显著变小、种子斑起步、终帧平滑收口、全程无黑（`recordings/smooth/`）；128 测试全绿（公式覆盖/种子单测替换互补性单测）。**Plan B 终测过线**（`perf/smooth/`）：转场 raster p90 **28.83ms** ≤33.3 ✓、最坏帧 47ms ≤100 ✓、build p90 回落 10.5ms（捕获尖峰清零）；reader 0% ✓；home 红线 ✓（注：home raster p90 稳定在 15.0-16.8ms、距 60Hz 预算仅 ±1.5ms，jank% 呈双峰噪声 4.6%↔33%——同构建同批并存、旧构建亦现，属预算线骑行现象，与 §6.1 转场 jank% 弃用同理；以 p90 为准） | §4.2/P4.4 已同步 380/300 easeOutSine |
 | 2026-06-12 | **开发者工具：动画慢放/加速（0.1×–10×）** | 应用户要求把慢动作取证流程产品化：全局 timeDilation 双入口（设置页「开发者」对数刻度滑杆 + 深链 `?dilation=`），仅 debug/profile；相机定时器（push 400ms/tab 320ms）随 dilation 同步缩放保证慢放下转场观感真实；不持久化重启复位。真机验证：滑杆渲染正常、`?dilation=5` 下转场跨数十帧且墨缘环/conceal 全程正确（`recordings/devtool_*`）；127 测试全绿（含框架「timeDilation 未复位」不变量的 finally 兜底——不变量先于 tearDown 检查） | 坑9 的临时改码流程正式淘汰 |
 | 2026-06-12 | **P5 全部完成，水墨改造收官** | 71 张终验截图矩阵全过五项 checklist；性能终测两次「红灯→对照实验→定论」：①启动 1207ms 表面 +51% → e26eef92 同日重测 1171ms，证实为电量降频环境漂移，真实增量 **+3.1%** ✓；②静止重绘 315 帧/10s 表面爆表 → oldbase 同探针 318 帧，证实持续打帧为改造前既有行为，**装饰层增量 0 帧** ✓（配对对照法二度救场——结论：跨日绝对值不可比，凡红灯先做同日对照）；a11y 终审揪出 icon 按钮无障碍标签缺失并修复 9 处；122 测试全绿；APK 还瘦了 325KB | §10 七项全勾，/goal 达成；遗留可选项：Rive 资产路线（§3 暂缓决议不变）、设备联网后补全文搜索/辞典结果卡实机截图 |
 

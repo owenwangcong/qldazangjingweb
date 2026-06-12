@@ -21,16 +21,29 @@ void main() {
         redirect: inkAppRedirect,
         routes: [
           StatefulShellRoute.indexedStack(
-            builder: (context, state, shell) => Scaffold(
-              body: shell,
-              bottomNavigationBar: NavigationBar(
-                selectedIndex: shell.currentIndex,
-                onDestinationSelected: (i) => shell.goBranch(i),
-                destinations: const [
-                  NavigationDestination(icon: Icon(Icons.home), label: 'A'),
-                  NavigationDestination(icon: Icon(Icons.search), label: 'B'),
-                  NavigationDestination(icon: Icon(Icons.person), label: 'C'),
-                ],
+            // 与 appRouter 同构：shell 走 CustomTransitionPage，
+            // secondaryAnimation 接线（conceal 生效，平滑化步骤 3）。
+            pageBuilder: (context, state, shell) => CustomTransitionPage<void>(
+              key: state.pageKey,
+              transitionDuration: Duration.zero,
+              reverseTransitionDuration: Duration.zero,
+              transitionsBuilder:
+                  (context, animation, secondaryAnimation, child) =>
+                      InkCoveredPage(
+                secondaryAnimation: secondaryAnimation,
+                child: child,
+              ),
+              child: Scaffold(
+                body: shell,
+                bottomNavigationBar: NavigationBar(
+                  selectedIndex: shell.currentIndex,
+                  onDestinationSelected: (i) => shell.goBranch(i),
+                  destinations: const [
+                    NavigationDestination(icon: Icon(Icons.home), label: 'A'),
+                    NavigationDestination(icon: Icon(Icons.search), label: 'B'),
+                    NavigationDestination(icon: Icon(Icons.person), label: 'C'),
+                  ],
+                ),
               ),
             ),
             branches: [
@@ -92,7 +105,7 @@ void main() {
     await tester.pumpWidget(app(router));
     // 相机延迟：tab 横移 320ms / push 跳变 400ms——假时钟推过再断言。
     Future<void> settleCamera() async {
-      await tester.pump(const Duration(milliseconds: 450));
+      await tester.pump(const Duration(milliseconds: 550));
       await tester.pumpAndSettle();
     }
 
@@ -126,11 +139,11 @@ void main() {
     await warmInkShaders(tester);
     final router = buildStubRouter();
     await tester.pumpWidget(app(router));
-    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pump(const Duration(milliseconds: 600));
     await tester.pumpAndSettle();
 
     router.push('/settings');
-    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pump(const Duration(milliseconds: 600));
     await tester.pumpAndSettle();
     expect(inkCanvasCamera.depth, 1.0);
 
@@ -140,28 +153,55 @@ void main() {
     await tester.pump();
     expect(inkCanvasCamera.depth, 0.0,
         reason: '系统返回必须同样驱动相机，否则画卷永久停绘（黑底）');
-    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pump(const Duration(milliseconds: 600));
     await tester.pumpAndSettle();
     expect(find.text('设置页'), findsNothing);
   });
 
-  test('F1 conceal 与 reveal 墨缘互补：任意采样点恰好属于一页', () {
+  test('步骤0 半径包络：p=1 全屏覆盖（最小 wobble 方向亦然）、p→0 收敛到种子斑',
+      () {
     const size = Size(800, 600);
-    const origin = Offset(200, 150);
-    for (final p in [0.15, 0.4, 0.7, 0.9]) {
-      final blob = inkBloomPath(size, p, origin);
-      final conceal = Path()
-        ..fillType = PathFillType.evenOdd
-        ..addRect(Offset.zero & size)
-        ..addPath(inkBloomPath(size, p, origin), Offset.zero);
-      for (var x = 5.0; x < size.width; x += 45) {
-        for (var y = 5.0; y < size.height; y += 45) {
-          final pt = Offset(x, y);
-          expect(conceal.contains(pt), !blob.contains(pt),
-              reason: 'p=$p 处 $pt 应恰好属于 reveal 或 conceal 之一');
-        }
+    for (final origin in [const Offset(200, 150), const Offset(780, 580)]) {
+      // p=1：四角全部在墨晕内（修复 1.22 只乘线性项导致的远角残片）。
+      final full = inkBloomPath(size, 1.0, origin);
+      for (final corner in [
+        Offset.zero,
+        Offset(size.width, 0),
+        Offset(0, size.height),
+        Offset(size.width, size.height),
+      ]) {
+        expect(full.contains(corner), isTrue,
+            reason: 'p=1 时角 $corner 应已被墨晕覆盖（origin=$origin）');
       }
+      // p→0⁺：种子斑存在（origin 邻域内）而非凭空出现的零半径。
+      final seed = inkBloomPath(size, 0.001, origin);
+      expect(seed.contains(origin), isTrue, reason: '种子斑应包含触点');
+      expect(seed.getBounds().width, greaterThan(20),
+          reason: '种子斑半径应有可见尺度（r0≈28）');
     }
+  });
+
+  testWidgets('S 平滑化：tab→push 转场 shell 也被反向裁剪（secondary 已接线）',
+      (tester) async {
+    await warmInkShaders(tester);
+    final router = buildStubRouter();
+    await tester.pumpWidget(app(router));
+    await tester.pump(const Duration(milliseconds: 600));
+    await tester.pumpAndSettle();
+
+    router.push('/settings');
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 120)); // 转场中段
+    // shell 改 CustomTransitionPage 后 secondaryAnimation 不再恒 0
+    // （InkCoveredPage 接线；Plan B 下正常动效为裸 child，shell 全程绘制）。
+    expect(find.byType(InkCoveredPage), findsWidgets,
+        reason: 'shell 的 secondaryAnimation 应已接线');
+    expect(find.byType(ClipPath), findsAtLeastNWidgets(1),
+        reason: '上层 reveal 裁剪在场');
+    expect(find.text('+1'), findsOneWidget, reason: 'shell 内容仍在绘制');
+
+    await tester.pump(const Duration(milliseconds: 600));
+    await tester.pumpAndSettle();
   });
 
   testWidgets('F1 push↔push 转场：下层页反向裁剪参与绘制（非 opacity 隐身）',
@@ -169,36 +209,35 @@ void main() {
     await warmInkShaders(tester);
     final router = buildStubRouter();
     await tester.pumpWidget(app(router));
-    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pump(const Duration(milliseconds: 600));
     await tester.pumpAndSettle();
 
-    // 注：shell（MaterialPage）的 canTransitionTo 不接受 CustomTransitionRoute，
-    // 其 secondaryAnimation 恒为 0 → tab 页被 push 覆盖时全程保持原样绘制
-    // （天然无露底）。conceal 生效区是 push↔push 之间——旧 fade 方案正是
-    // 在这里把下层页隐身、露出停绘的黑底。
+    // Plan B：被盖页不做任何处理（无 conceal 裁剪、无 opacity 隐身），
+    // 上层 opaque 页的 reveal 裁剪自然覆盖——旧 fade 方案曾把下层页
+    // 隐身、露出停绘的黑底。
     router.push('/settings');
-    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pump(const Duration(milliseconds: 600));
     await tester.pumpAndSettle();
 
     router.push('/book/0001-01');
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100)); // 深 push 中段
-    // 上层 reveal + 下层 conceal 各一个 ClipPath；下层内容仍在绘制。
-    expect(find.byType(ClipPath), findsAtLeastNWidgets(2));
+    // 上层 reveal 一个 ClipPath；下层内容原样在绘（无 FadeTransition 隐身）。
+    expect(find.byType(ClipPath), findsAtLeastNWidgets(1));
     expect(find.text('设置页'), findsOneWidget,
-        reason: '下层 push 页以反向裁剪参与绘制，非隐身');
+        reason: '下层 push 页原样参与绘制，非隐身');
 
-    // pop 早期：下层页立即以裁剪态显示（旧方案前 60% 隐身）。
-    await tester.pump(const Duration(milliseconds: 400));
+    // pop 早期：下层页即刻可见（旧方案前 60% 隐身）。
+    await tester.pump(const Duration(milliseconds: 600));
     await tester.pumpAndSettle();
     router.pop();
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 60)); // pop 前段（240ms 的 1/4）
-    expect(find.byType(ClipPath), findsAtLeastNWidgets(2));
+    await tester.pump(const Duration(milliseconds: 60)); // pop 前段
+    expect(find.byType(ClipPath), findsAtLeastNWidgets(1));
     expect(find.text('设置页'), findsOneWidget,
-        reason: 'pop 早期下层页即被反向裁剪显示');
+        reason: 'pop 早期下层页即刻可见');
 
-    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pump(const Duration(milliseconds: 600));
     await tester.pumpAndSettle();
     expect(find.text('book=0001-01 index=null'), findsNothing);
   });
@@ -216,7 +255,7 @@ void main() {
 
     router.pop(); // 中断转场
     await tester.pump(const Duration(milliseconds: 50));
-    await tester.pump(const Duration(milliseconds: 400)); // 冲掉相机延迟定时器
+    await tester.pump(const Duration(milliseconds: 600)); // 冲掉相机延迟定时器
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
     expect(find.text('设置页'), findsNothing);
@@ -232,7 +271,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
     expect(find.byType(InkBloomReveal), findsNothing);
-    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pump(const Duration(milliseconds: 600));
     await tester.pumpAndSettle();
     expect(find.text('设置页'), findsOneWidget);
   });
@@ -252,7 +291,7 @@ void main() {
     router.go('/');
     await tester.pumpAndSettle();
     expect(find.text('home:1'), findsOneWidget, reason: 'IndexedStack 保活');
-    await tester.pump(const Duration(milliseconds: 400)); // 冲掉相机延迟定时器
+    await tester.pump(const Duration(milliseconds: 600)); // 冲掉相机延迟定时器
   });
 
   testWidgets('P2.4 深链直达带参数', (tester) async {
@@ -264,7 +303,7 @@ void main() {
     router.go('/book/0001-01?index=5');
     await tester.pumpAndSettle();
     expect(find.text('book=0001-01 index=5'), findsOneWidget);
-    await tester.pump(const Duration(milliseconds: 400)); // 冲掉相机延迟定时器
+    await tester.pump(const Duration(milliseconds: 600)); // 冲掉相机延迟定时器
   });
 
   testWidgets('开发者工具：深链 ?dilation= 设置全局 timeDilation 并夹紧范围',
@@ -287,7 +326,7 @@ void main() {
       timeDilation = 1.0;
     }
     // 复位后再冲掉（按慢放 ×10 调度的）相机定时器。
-    await tester.pump(const Duration(milliseconds: 4000));
+    await tester.pump(const Duration(milliseconds: 6000));
     await tester.pumpAndSettle();
   });
 }
