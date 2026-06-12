@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/ink/ink.dart';
 import '../../core/theme/app_theme.dart';
 import '../../data/models/catalog_models.dart';
 import '../providers/app_providers.dart';
@@ -15,7 +16,8 @@ final _classicsProvider = StreamProvider<Map<String, List<ClassicEntry>>>(
   (ref) => ref.watch(catalogRepositoryProvider).watchClassics(),
 );
 
-/// 首页：常用经典 + 部类目录（web `/` 的移动端形态）。
+/// 首页（P3.2 水墨化）：常用经典 = 册页题签，部类目录 = 笺纸卡。
+/// 留白遵守设计八则 #1：水平边距 ≥16dp、区块垂直间距 ≥12dp。
 class HomePage extends ConsumerWidget {
   const HomePage({super.key});
 
@@ -48,7 +50,7 @@ class HomePage extends ConsumerWidget {
       ),
       body: CustomScrollView(
         slivers: [
-          // ---- 常用经典 --------------------------------------------------
+          // ---- 常用经典（册页题签） --------------------------------------
           if (classics.isNotEmpty)
             SliverToBoxAdapter(
               child: _ClassicsCard(
@@ -60,7 +62,8 @@ class HomePage extends ConsumerWidget {
               ),
             ),
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+            // 区块间距：上接经典卡 bottom 12 → 合计 ≥12dp。
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
             sliver: SliverToBoxAdapter(
               child: TText(
                 '部类目录',
@@ -72,21 +75,40 @@ class HomePage extends ConsumerWidget {
               ),
             ),
           ),
-          // ---- 部类 Grid --------------------------------------------------
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(12, 4, 12, 24),
-            sliver: SliverLayoutBuilder(
-              builder: (context, constraints) {
-                // Android 的 warm-up 帧会以 0×0 约束预布局一次，而
-                // MaxCrossAxisExtent 委托在 crossAxisExtent == 0 时直接断言，
-                // 导致 geometry 为 null、后续帧持续空指针。无效约束时短路。
-                if (constraints.crossAxisExtent <= 0) {
-                  return const SliverToBoxAdapter(child: SizedBox.shrink());
-                }
-                return _buildSectionsGrid(context, sections);
-              },
+          // ---- 部类 Grid（笺纸卡） ----------------------------------------
+          if (sections.isEmpty)
+            // 空态：唯一一处淡莲花（设计八则 #6，每屏主意象 ≤1）。
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const LotusOutline(size: 140, opacity: 0.08),
+                    const SizedBox(height: 12),
+                    TText(
+                      '暂无目录',
+                      style: TextStyle(color: colors.mutedForeground),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+              sliver: SliverLayoutBuilder(
+                builder: (context, constraints) {
+                  // Android 的 warm-up 帧会以 0×0 约束预布局一次，而
+                  // MaxCrossAxisExtent 委托在 crossAxisExtent == 0 时直接断言，
+                  // 导致 geometry 为 null、后续帧持续空指针。无效约束时短路。
+                  if (constraints.crossAxisExtent <= 0) {
+                    return const SliverToBoxAdapter(child: SizedBox.shrink());
+                  }
+                  return _buildSectionsGrid(context, sections);
+                },
+              ),
             ),
-          ),
         ],
       ),
     );
@@ -106,27 +128,21 @@ class HomePage extends ConsumerWidget {
         childCount: sections.length,
         (context, index) {
           final section = sections[index];
-          return Material(
-            color: colors.card,
-            borderRadius: BorderRadius.circular(14),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(14),
-              onTap: () => context.push('/section/${section.sectionId}'),
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: colors.border.withValues(alpha: 0.6),
-                  ),
-                ),
-                alignment: Alignment.center,
-                child: TText(
-                  section.name,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: colors.cardForeground,
-                  ),
+          // 笺纸卡：吃墨边缘，种子随索引错开避免边缘纹路雷同；
+          // 滚动网格内关阴影（§9 性能教训：模糊阴影逐帧重画）。
+          return InkCard(
+            seed: 7 + index,
+            padding: EdgeInsets.zero,
+            borderRadius: 10,
+            shadow: false,
+            onTap: () => context.push('/section/${section.sectionId}'),
+            child: Center(
+              child: TText(
+                section.name,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: colors.cardForeground,
                 ),
               ),
             ),
@@ -153,104 +169,194 @@ class _ClassicsCard extends ConsumerWidget {
     final colors = context.colors;
     final entries = classics[activeTab] ?? const [];
 
-    return Card(
-      margin: const EdgeInsets.fromLTRB(12, 12, 12, 8),
-      color: colors.card,
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: colors.border.withValues(alpha: 0.6)),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Header: title + collapse toggle (48dp target).
-          InkWell(
-            onTap: () => ref
-                .read(settingsProvider.notifier)
-                .setClassicsVisible(!visible),
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 8, 12),
-              child: Row(
-                children: [
-                  TText(
-                    '常用经典',
-                    style: TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w600,
-                      color: colors.cardForeground,
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      child: InkCard(
+        seed: 3,
+        borderRadius: 12,
+        padding: EdgeInsets.zero,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Header: title + collapse toggle (48dp target).
+            InkWell(
+              onTap: () => ref
+                  .read(settingsProvider.notifier)
+                  .setClassicsVisible(!visible),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 8, 12),
+                child: Row(
+                  children: [
+                    TText(
+                      '常用经典',
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w600,
+                        color: colors.cardForeground,
+                      ),
                     ),
-                  ),
-                  const Spacer(),
-                  AnimatedRotation(
-                    turns: visible ? 0.5 : 0,
-                    duration: const Duration(milliseconds: 250),
-                    child: Icon(Icons.keyboard_arrow_down,
-                        color: colors.mutedForeground),
-                  ),
-                  const SizedBox(width: 8),
-                ],
+                    const Spacer(),
+                    AnimatedRotation(
+                      turns: visible ? 0.5 : 0,
+                      duration: const Duration(milliseconds: 250),
+                      child: Icon(Icons.keyboard_arrow_down,
+                          color: colors.mutedForeground),
+                    ),
+                    const SizedBox(width: 8),
+                  ],
+                ),
               ),
             ),
-          ),
-          AnimatedCrossFade(
-            duration: const Duration(milliseconds: 250),
-            crossFadeState: visible
-                ? CrossFadeState.showFirst
-                : CrossFadeState.showSecond,
-            secondChild: const SizedBox(width: double.infinity),
-            firstChild: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Category chips (horizontal scroll, mobile pattern).
-                SizedBox(
-                  height: 44,
-                  child: ListView(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    children: [
-                      for (final category in classics.keys)
-                        Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: ChoiceChip(
-                            label: TText(category),
+            AnimatedCrossFade(
+              duration: const Duration(milliseconds: 250),
+              crossFadeState: visible
+                  ? CrossFadeState.showFirst
+                  : CrossFadeState.showSecond,
+              secondChild: const SizedBox(width: double.infinity),
+              firstChild: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // 分类页签：选中 = 重墨 + 笔触下划线（替换 Material chip）。
+                  SizedBox(
+                    height: 48,
+                    child: ListView(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      children: [
+                        for (final category in classics.keys)
+                          _CategoryTab(
+                            label: category,
                             selected: category == activeTab,
-                            selectedColor:
-                                colors.primary.withValues(alpha: 0.3),
-                            onSelected: (_) => ref
+                            onTap: () => ref
                                 .read(settingsProvider.notifier)
                                 .setClassicsTab(category),
                           ),
-                        ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(height: 4),
-                // Entries of the active category.
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-                  child: Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      for (final entry in entries)
-                        ActionChip(
-                          label: TText(entry.title),
-                          backgroundColor: colors.muted,
-                          side: BorderSide(
-                            color: colors.border.withValues(alpha: 0.5),
+                  const SizedBox(height: 4),
+                  // 册页题签：左缘墨线 + 浅笺底，仿书衣题签。
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                    child: Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      children: [
+                        for (var i = 0; i < entries.length; i++)
+                          _ClassicSlip(
+                            title: entries[i].title,
+                            seed: 41 + i,
+                            onTap: () =>
+                                context.push('/book/${entries[i].bookId}'),
                           ),
-                          onPressed: () =>
-                              context.push('/book/${entry.bookId}'),
-                        ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// 分类页签：墨色文字，选中态加笔触下划线（形状差异，不只换色）。
+class _CategoryTab extends StatelessWidget {
+  const _CategoryTab({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final ink = context.ink;
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TText(
+              label,
+              style: TextStyle(
+                fontSize: 15,
+                height: 1.2,
+                color: selected ? ink.inkStrong : ink.inkMedium,
+                fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+              ),
+            ),
+            SizedBox(
+              height: 7,
+              child: selected
+                  ? Center(
+                      child: BrushUnderline(
+                        width: (label.length * 15.0).clamp(24.0, 72.0),
+                        thickness: 2.2,
+                        seed: 9,
+                      ),
+                    )
+                  : null,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// 册页题签（P3.2）：浅笺底色 + 吃墨边缘 + 左缘一道墨线（仿书衣题签），
+/// 命中区 ≥48dp。
+class _ClassicSlip extends StatelessWidget {
+  const _ClassicSlip({
+    required this.title,
+    required this.seed,
+    required this.onTap,
+  });
+
+  final String title;
+  final int seed;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final ink = context.ink;
+    final colors = context.colors;
+    return InkCard(
+      seed: seed,
+      borderRadius: 6,
+      shadow: false,
+      color: colors.muted,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      onTap: onTap,
+      child: Container(
+        constraints: const BoxConstraints(minHeight: 48),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 3,
+              height: 20,
+              decoration: BoxDecoration(
+                color: ink.inkMedium.withValues(alpha: 0.65),
+                borderRadius: BorderRadius.circular(1.5),
+              ),
+            ),
+            const SizedBox(width: 10),
+            TText(
+              title,
+              style: TextStyle(fontSize: 15, color: colors.cardForeground),
+            ),
+          ],
+        ),
       ),
     );
   }

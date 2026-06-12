@@ -27,6 +27,8 @@ class InkCard extends StatelessWidget {
     this.padding = const EdgeInsets.all(16),
     this.borderRadius = 10,
     this.onTap,
+    this.shadow = true,
+    this.color,
   });
 
   final Widget child;
@@ -35,32 +37,39 @@ class InkCard extends StatelessWidget {
   final double borderRadius;
   final VoidCallback? onTap;
 
+  /// 墨晕阴影开关：滚动列表里的大量小卡可关掉（模糊阴影在 Impeller
+  /// 无 raster cache 下逐帧重画，§9 性能教训）。
+  final bool shadow;
+
+  /// 卡面颜色，默认 cardColor；题签等变体可传 muted。
+  final Color? color;
+
   @override
   Widget build(BuildContext context) {
     final ink = context.ink;
     final theme = Theme.of(context);
-    final card = DecoratedBox(
+    // 结构：阴影在最外（DecoratedBox）→ Material 画卡面（ripple 才能浮在
+    // 卡面之上，不被不透明底色盖住）→ 吃墨边缘前景描边。
+    return DecoratedBox(
       decoration: BoxDecoration(
-        color: theme.cardColor,
         borderRadius: BorderRadius.circular(borderRadius),
-        boxShadow: inkWashShadow(ink),
+        boxShadow: shadow ? inkWashShadow(ink) : null,
       ),
-      child: CustomPaint(
-        foregroundPainter: _BrushBorderPainter(
-          color: ink.inkLight,
-          radius: borderRadius,
-          seed: seed,
+      child: Material(
+        color: color ?? theme.cardColor,
+        borderRadius: BorderRadius.circular(borderRadius),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(borderRadius),
+          onTap: onTap,
+          child: CustomPaint(
+            foregroundPainter: _BrushBorderPainter(
+              color: ink.inkLight,
+              radius: borderRadius,
+              seed: seed,
+            ),
+            child: Padding(padding: padding, child: child),
+          ),
         ),
-        child: Padding(padding: padding, child: child),
-      ),
-    );
-    if (onTap == null) return card;
-    return Material(
-      type: MaterialType.transparency,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(borderRadius),
-        onTap: onTap,
-        child: card,
       ),
     );
   }
