@@ -30,6 +30,15 @@ class AppSettings {
   /// 默认与 Web 一致：--font-lxgw 落霞孤鹜。
   String fontFamily = 'lxgw';
 
+  /// 阅读方式：'scroll' 上下滚动（默认）| 'paged' 左右翻页。
+  /// 注意：isar_community 3.x 给旧行新增的非空 String 回填**空串**而非
+  /// Dart 初始值——判断只能用 == 'paged'（见 [isPaged]），不能比对 'scroll'。
+  String readingMode = 'scroll';
+
+  /// 唯一合法的翻页判断入口（getter 不入库）。
+  @ignore
+  bool get isPaged => readingMode == 'paged';
+
   /// Web: hasSeenBookTour.
   bool hasSeenReaderTips = false;
 

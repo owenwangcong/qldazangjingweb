@@ -1,4 +1,4 @@
-﻿// GENERATED CODE - DO NOT MODIFY BY HAND
+// GENERATED CODE - DO NOT MODIFY BY HAND
 
 part of 'book_content.dart';
 
@@ -66,7 +66,7 @@ const BookContentSchema = CollectionSchema(
   getId: _bookContentGetId,
   getLinks: _bookContentGetLinks,
   attach: _bookContentAttach,
-  version: Isar.version,
+  version: '3.3.2',
 );
 
 int _bookContentEstimateSize(

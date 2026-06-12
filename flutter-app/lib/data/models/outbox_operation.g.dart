@@ -1,4 +1,4 @@
-﻿// GENERATED CODE - DO NOT MODIFY BY HAND
+// GENERATED CODE - DO NOT MODIFY BY HAND
 
 part of 'outbox_operation.dart';
 
@@ -91,7 +91,7 @@ const OutboxOperationSchema = CollectionSchema(
   getId: _outboxOperationGetId,
   getLinks: _outboxOperationGetLinks,
   attach: _outboxOperationAttach,
-  version: Isar.version,
+  version: '3.3.2',
 );
 
 int _outboxOperationEstimateSize(
@@ -195,9 +195,7 @@ const _OutboxOperationstatusValueEnumMap = {
   r'done': OutboxStatus.done,
   r'failed': OutboxStatus.failed,
 };
-const _OutboxOperationtypeEnumValueMap = {
-  r'downloadBook': r'downloadBook',
-};
+const _OutboxOperationtypeEnumValueMap = {r'downloadBook': r'downloadBook'};
 const _OutboxOperationtypeValueEnumMap = {
   r'downloadBook': OutboxOpType.downloadBook,
 };

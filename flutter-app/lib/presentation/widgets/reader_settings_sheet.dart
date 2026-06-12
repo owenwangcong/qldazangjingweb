@@ -117,6 +117,19 @@ class _ReaderSettingsSheet extends ConsumerWidget {
             const SizedBox(height: 8),
             Row(
               children: [
+                TText('翻页方式',
+                    style: TextStyle(fontSize: 15, color: colors.foreground)),
+                const Spacer(),
+                InkToggle(
+                  options: const ['上下滚动', '左右翻页'],
+                  selectedIndex: settings.isPaged ? 1 : 0,
+                  onSelect: (i) =>
+                      controller.setReadingMode(i == 1 ? 'paged' : 'scroll'),
+                ),
+              ],
+            ),
+            Row(
+              children: [
                 TText('字体',
                     style: TextStyle(fontSize: 15, color: colors.foreground)),
                 const Spacer(),

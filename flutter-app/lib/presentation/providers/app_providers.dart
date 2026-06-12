@@ -94,6 +94,7 @@ class SettingsController extends StateNotifier<AppSettings> {
     ..letterSpacingEm = state.letterSpacingEm
     ..paragraphSpacing = state.paragraphSpacing
     ..fontFamily = state.fontFamily
+    ..readingMode = state.readingMode
     ..hasSeenReaderTips = state.hasSeenReaderTips
     ..classicsActiveTab = state.classicsActiveTab
     ..classicsVisible = state.classicsVisible;
@@ -109,6 +110,8 @@ class SettingsController extends StateNotifier<AppSettings> {
       _persist(_copy()..letterSpacingEm = v);
   Future<void> setParagraphSpacing(double v) =>
       _persist(_copy()..paragraphSpacing = v);
+  Future<void> setReadingMode(String v) =>
+      _persist(_copy()..readingMode = v);
   Future<void> markReaderTipsSeen() =>
       _persist(_copy()..hasSeenReaderTips = true);
   Future<void> setClassicsTab(String tab) =>

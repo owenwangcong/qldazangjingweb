@@ -8,14 +8,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
-import '../../core/constants/app_constants.dart';
 import '../../core/ink/ink.dart';
+import '../../core/pagination/paragraph_text.dart';
 import '../../core/theme/app_theme.dart';
 import '../../domain/entities/book_entities.dart';
 import '../../domain/repositories/repositories.dart';
 import '../providers/app_providers.dart';
 import '../widgets/lexicon_result_sheet.dart';
+import '../widgets/paged_reader.dart';
 import '../widgets/reader_settings_sheet.dart';
+import '../widgets/reader_text_utils.dart';
 import '../widgets/t_text.dart';
 
 final _bookProvider = StreamProvider.family<BookData?, String>(
@@ -60,8 +62,15 @@ class _ReaderPageState extends ConsumerState<ReaderPage> {
   bool _chromeVisible = true;
   String _selectedText = '';
   int _firstVisibleBlock = 0;
-  int? _restoredIndex;
+
+  /// 当前阅读块（两种模式共用的位置锚点）：滚动模式 = 首个可见块，
+  /// 翻页模式 = 当前页首块；进度恢复/书签/模式互切都从这里取。
+  int? _currentBlock;
   Timer? _progressDebounce;
+
+  /// 翻页模式：块级跳转句柄（TOC/书签/进度恢复）+ 页码角标数据。
+  final _pagedController = PagedReaderController();
+  final _pageInfo = ValueNotifier<(int, int, bool)?>(null);
 
   /// 卷轴式进度（P3.4）：0–1，由可见块推进；ValueNotifier 避免整页 setState。
   final _readProgress = ValueNotifier<double>(0);
@@ -82,11 +91,16 @@ class _ReaderPageState extends ConsumerState<ReaderPage> {
     if (widget.initialBlockIndex == null && widget.highlightText == null) {
       final progress = await study.getProgress(widget.bookId);
       if (mounted && progress != null && progress.blockIndex > 0) {
-        setState(() => _restoredIndex = progress.blockIndex);
+        setState(() => _currentBlock ??= progress.blockIndex);
         // The list may already be built (cache hit renders instantly) — in
         // that case initialScrollIndex is stale, so jump explicitly.
         if (_itemScrollController.isAttached) {
           _itemScrollController.jumpTo(index: progress.blockIndex + 1);
+        }
+        // 翻页模式：视图可能先于进度读取建成（同滚动模式的竞态）；
+        // jumpToBlock 在排版未到达时自动挂起。
+        if (ref.read(settingsProvider).isPaged) {
+          _pagedController.jumpToBlock(progress.blockIndex);
         }
       }
     }
@@ -103,6 +117,7 @@ class _ReaderPageState extends ConsumerState<ReaderPage> {
     _progressDebounce?.cancel();
     _itemPositionsListener.itemPositions.removeListener(_onPositionsChanged);
     _readProgress.dispose();
+    _pageInfo.dispose();
     super.dispose();
   }
 
@@ -120,6 +135,7 @@ class _ReaderPageState extends ConsumerState<ReaderPage> {
         .index;
     if (first != _firstVisibleBlock) {
       _firstVisibleBlock = first;
+      _currentBlock = first <= 0 ? 0 : first - 1;
       _progressDebounce?.cancel();
       _progressDebounce = Timer(const Duration(seconds: 1), () {
         ref
@@ -129,9 +145,20 @@ class _ReaderPageState extends ConsumerState<ReaderPage> {
     }
   }
 
-  /// Item index in the positioned list (block index + 1 for the header item;
-  /// 0 shows the book header itself).
-  int _initialItemIndex(BookData book) {
+  /// 翻页模式上报当前页首块：更新共用锚点 + 防抖落盘进度。
+  void _onPagedBlockChanged(int blockIndex) {
+    _currentBlock = blockIndex;
+    _progressDebounce?.cancel();
+    _progressDebounce = Timer(const Duration(seconds: 1), () {
+      ref.read(studyRepositoryProvider).saveProgress(widget.bookId, blockIndex);
+    });
+  }
+
+  /// 打开/切换模式时的目标块。已有真实阅读位置（用户滚动/翻页过，或进度
+  /// 已恢复）时优先——否则从搜索进入、读了半卷再切模式会跳回命中处；
+  /// 首次打开 _currentBlock 为 null，自然落到路由 ?index → 搜索命中。
+  int? _anchorBlockFor(BookData book) {
+    if (_currentBlock != null) return _currentBlock;
     int? block;
     if (widget.initialBlockIndex != null) {
       block = widget.initialBlockIndex!.clamp(0, book.blocks.length - 1);
@@ -143,7 +170,13 @@ class _ReaderPageState extends ConsumerState<ReaderPage> {
       );
       if (idx >= 0) block = idx;
     }
-    block ??= _restoredIndex;
+    return block;
+  }
+
+  /// Item index in the positioned list (block index + 1 for the header item;
+  /// 0 shows the book header itself).
+  int _initialItemIndex(BookData book) {
+    final block = _anchorBlockFor(book);
     if (block == null || block <= 0) return 0;
     return block.clamp(0, book.blocks.length - 1) + 1;
   }
@@ -155,6 +188,9 @@ class _ReaderPageState extends ConsumerState<ReaderPage> {
     final book = bookAsync.value;
 
     return Scaffold(
+      // 笔记弹窗的键盘不压缩 body（翻页模式重排无谓触发；笔记 sheet 自身
+      // 已 pad viewInsets，对滚动模式亦无害）。
+      resizeToAvoidBottomInset: false,
       // 背景由 InkPaperBacking（路由统一垫纸）提供，保持透明让纸纹透出。
       body: book == null
           ? SafeArea(child: _buildLoadingOrOffline(colors))
@@ -248,54 +284,79 @@ class _ReaderPageState extends ConsumerState<ReaderPage> {
     final screenWidth = MediaQuery.sizeOf(context).width;
     final hMargin = screenWidth >= 600 ? screenWidth * 0.10 : 20.0;
 
+    final isPaged = settings.isPaged;
+
     return Stack(
       children: [
         SafeArea(
-          child: NotificationListener<UserScrollNotification>(
-            onNotification: (notification) {
-              if (notification.direction == ScrollDirection.reverse &&
-                  _chromeVisible) {
-                setState(() => _chromeVisible = false);
-              } else if (notification.direction == ScrollDirection.forward &&
-                  !_chromeVisible) {
-                setState(() => _chromeVisible = true);
-              }
-              return false;
-            },
-            child: SelectionArea(
-              onSelectionChanged: (content) =>
-                  _selectedText = content?.plainText ?? '',
-              contextMenuBuilder: (context, selectableRegionState) =>
-                  _buildSelectionToolbar(context, selectableRegionState),
-              child: ScrollablePositionedList.builder(
-                itemScrollController: _itemScrollController,
-                itemPositionsListener: _itemPositionsListener,
-                initialScrollIndex: _initialItemIndex(book),
-                padding: EdgeInsets.only(
-                  top: kToolbarHeight + 16,
-                  bottom: 48,
-                  left: hMargin,
-                  right: hMargin,
+          child: isPaged
+              ? PagedReader(
+                  bookId: widget.bookId,
+                  book: book,
+                  anchorBlockIndex: _anchorBlockFor(book),
+                  highlightText: widget.highlightText,
+                  controller: _pagedController,
+                  onBlockChanged: _onPagedBlockChanged,
+                  onProgress: (p) => _readProgress.value = p,
+                  onPageInfo: (current, total, done) =>
+                      _pageInfo.value = (current, total, done),
+                  onSelectionChanged: (text) => _selectedText = text,
+                  contextMenuBuilder: _buildSelectionToolbar,
+                  // 翻页无滚动方向信号：中区点按显隐 chrome。
+                  onToggleChrome: () =>
+                      setState(() => _chromeVisible = !_chromeVisible),
+                )
+              // 滚动方向驱动 chrome 显隐——仅滚动分支挂监听，避免
+              // PageView 的横向滚动误触发。
+              : NotificationListener<UserScrollNotification>(
+                  onNotification: (notification) {
+                    if (notification.direction == ScrollDirection.reverse &&
+                        _chromeVisible) {
+                      setState(() => _chromeVisible = false);
+                    } else if (notification.direction ==
+                            ScrollDirection.forward &&
+                        !_chromeVisible) {
+                      setState(() => _chromeVisible = true);
+                    }
+                    return false;
+                  },
+                  child: SelectionArea(
+                    onSelectionChanged: (content) =>
+                        _selectedText = content?.plainText ?? '',
+                    contextMenuBuilder: (context, selectableRegionState) =>
+                        _buildSelectionToolbar(
+                            context, selectableRegionState),
+                    child: ScrollablePositionedList.builder(
+                      itemScrollController: _itemScrollController,
+                      itemPositionsListener: _itemPositionsListener,
+                      initialScrollIndex: _initialItemIndex(book),
+                      padding: EdgeInsets.only(
+                        top: kToolbarHeight + 16,
+                        bottom: 48,
+                        left: hMargin,
+                        right: hMargin,
+                      ),
+                      itemCount: book.blocks.length + 2,
+                      itemBuilder: (context, index) {
+                        if (index == 0) {
+                          return _buildBookHeader(book, colors);
+                        }
+                        if (index == book.blocks.length + 1) {
+                          return PrevNextNav(meta: book.meta);
+                        }
+                        return _BlockView(
+                          block: book.blocks[index - 1],
+                          baseStyle: baseStyle,
+                          paragraphSpacing: settings.paragraphSpacing,
+                          display: display,
+                          highlight: widget.highlightText,
+                          colors: colors,
+                          ink: ink,
+                        );
+                      },
+                    ),
+                  ),
                 ),
-                itemCount: book.blocks.length + 2,
-                itemBuilder: (context, index) {
-                  if (index == 0) return _buildBookHeader(book, colors);
-                  if (index == book.blocks.length + 1) {
-                    return _buildPrevNext(book, colors);
-                  }
-                  return _BlockView(
-                    block: book.blocks[index - 1],
-                    baseStyle: baseStyle,
-                    paragraphSpacing: settings.paragraphSpacing,
-                    display: display,
-                    highlight: widget.highlightText,
-                    colors: colors,
-                    ink: ink,
-                  );
-                },
-              ),
-            ),
-          ),
         ),
         // Auto-hiding app bar (mobile replacement for web's 隐/显 toggle).
         AnimatedSlide(
@@ -304,7 +365,7 @@ class _ReaderPageState extends ConsumerState<ReaderPage> {
           curve: Curves.easeOut,
           child: _buildAppBar(book, colors, display, isFavorite),
         ),
-        // 卷轴式进度（P3.4）：底缘一线墨痕 + 朱砂卷轴杆。
+        // 卷轴式进度（P3.4）：底缘一线墨痕 + 朱砂卷轴杆；翻页模式附页码。
         Positioned(
           left: 0,
           right: 0,
@@ -312,12 +373,36 @@ class _ReaderPageState extends ConsumerState<ReaderPage> {
           child: IgnorePointer(
             child: SafeArea(
               top: false,
-              child: ValueListenableBuilder<double>(
-                valueListenable: _readProgress,
-                builder: (context, progress, _) => CustomPaint(
-                  size: const Size(double.infinity, 10),
-                  painter: _ScrollRollPainter(progress: progress, ink: ink),
-                ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (isPaged)
+                    ValueListenableBuilder<(int, int, bool)?>(
+                      valueListenable: _pageInfo,
+                      builder: (context, info, _) => info == null
+                          ? const SizedBox.shrink()
+                          : Padding(
+                              padding: const EdgeInsets.only(bottom: 2),
+                              child: Text(
+                                display(
+                                    '第 ${info.$1} / ${info.$2}${info.$3 ? '' : '+'} 页'),
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: colors.mutedForeground,
+                                ),
+                              ),
+                            ),
+                    ),
+                  ValueListenableBuilder<double>(
+                    valueListenable: _readProgress,
+                    builder: (context, progress, _) => CustomPaint(
+                      size: const Size(double.infinity, 10),
+                      painter:
+                          _ScrollRollPainter(progress: progress, ink: ink),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -420,43 +505,6 @@ class _ReaderPageState extends ConsumerState<ReaderPage> {
     );
   }
 
-  Widget _buildPrevNext(BookData book, AppColors colors) {
-    Widget navButton(String? id, String label, IconData icon, bool leading) {
-      if (id == null || id.isEmpty) return const SizedBox.shrink();
-      return Expanded(
-        child: OutlinedButton.icon(
-          style: OutlinedButton.styleFrom(
-            minimumSize: const Size(48, 48),
-            foregroundColor: colors.foreground,
-            side: BorderSide(color: colors.border),
-          ),
-          onPressed: () => context.pushReplacement('/book/$id'),
-          icon: leading ? Icon(icon, size: 18) : const SizedBox.shrink(),
-          label: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TText(label),
-              if (!leading) Icon(icon, size: 18),
-            ],
-          ),
-        ),
-      );
-    }
-
-    return Padding(
-      padding: const EdgeInsets.only(top: 24, bottom: 24),
-      child: Row(
-        children: [
-          navButton(
-              book.meta.lastBuId, '上一部', Icons.chevron_left, true),
-          const SizedBox(width: 12),
-          navButton(
-              book.meta.nextBuId, '下一部', Icons.chevron_right, false),
-        ],
-      ),
-    );
-  }
-
   // ---- Selection toolbar (web右键菜单 → mobile 选择工具条) -------------------
 
   Widget _buildSelectionToolbar(
@@ -540,9 +588,10 @@ class _ReaderPageState extends ConsumerState<ReaderPage> {
   ) async {
     HapticFeedback.lightImpact(); // P4.3：落签轻震
     // Anchor on the first visible block — same semantics as the web's
-    // IntersectionObserver-driven currentPartId.
-    final blockIndex =
-        (_firstVisibleBlock - 1).clamp(0, book.blocks.length - 1);
+    // IntersectionObserver-driven currentPartId. 翻页模式取当前页首块。
+    final blockIndex = ref.read(settingsProvider).isPaged
+        ? (_currentBlock ?? 0).clamp(0, book.blocks.length - 1)
+        : (_firstVisibleBlock - 1).clamp(0, book.blocks.length - 1);
     final block = book.blocks[blockIndex];
     final text = block.paragraphs.join();
     final label = text.substring(0, text.length < 16 ? text.length : 16);
@@ -578,6 +627,10 @@ class _ReaderPageState extends ConsumerState<ReaderPage> {
           ),
           onTap: () {
             Navigator.pop(sheetContext);
+            if (ref.read(settingsProvider).isPaged) {
+              _pagedController.jumpToBlock(entries[i].index);
+              return;
+            }
             // +1 for the header item in the list.
             _itemScrollController.scrollTo(
               index: entries[i].index + 1,
@@ -756,9 +809,6 @@ class _BlockView extends StatelessWidget {
   final InkTokens ink;
   final String? highlight;
 
-  static final _imgRegex = RegExp('<img[^>]*>');
-  static final _srcRegex = RegExp('src=["\']([^"\']+)["\']');
-
   @override
   Widget build(BuildContext context) {
     switch (block.type) {
@@ -807,77 +857,48 @@ class _BlockView extends StatelessWidget {
   Widget _buildParagraph(String raw) {
     // Mirror the web renderer: paragraphs may embed <img> tags (rare
     // illustrations); split them out and render via cached_network_image.
-    final cleaned = raw.replaceAll('“', '').replaceAll('”', '');
-    if (!cleaned.contains('<img')) return _buildText(cleaned);
-
-    final children = <Widget>[];
-    var cursor = 0;
-    for (final match in _imgRegex.allMatches(cleaned)) {
-      if (match.start > cursor) {
-        children.add(_buildText(cleaned.substring(cursor, match.start)));
-      }
-      final src = _srcRegex.firstMatch(match.group(0)!)?.group(1);
-      if (src != null && src.isNotEmpty) {
-        final url = src.startsWith('http')
-            ? src
-            : '${AppConstants.baseUrl}${src.startsWith('/') ? '' : '/'}$src';
-        children.add(
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            child: CachedNetworkImage(
-              imageUrl: url,
-              placeholder: (_, __) => const SizedBox(
-                height: 120,
-                child: Center(child: EnsoLoading()),
-              ),
-              errorWidget: (_, __, ___) => Icon(
-                Icons.broken_image_outlined,
-                color: colors.mutedForeground,
-              ),
-            ),
-          ),
-        );
-      }
-      cursor = match.end;
-    }
-    if (cursor < cleaned.length) {
-      children.add(_buildText(cleaned.substring(cursor)));
+    // 切分/剥引号逻辑与翻页模式共享（core/pagination/paragraph_text.dart）。
+    final segments = splitParagraphSegments(cleanParagraph(raw));
+    if (segments.length == 1 && segments.single.text != null) {
+      return _buildText(segments.single.text!);
     }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: children,
+      children: [
+        for (final segment in segments)
+          if (segment.imageUrl != null)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: CachedNetworkImage(
+                imageUrl: segment.imageUrl!,
+                placeholder: (_, __) => const SizedBox(
+                  height: 120,
+                  child: Center(child: EnsoLoading()),
+                ),
+                errorWidget: (_, __, ___) => Icon(
+                  Icons.broken_image_outlined,
+                  color: colors.mutedForeground,
+                ),
+              ),
+            )
+          else
+            _buildText(segment.text!),
+      ],
     );
   }
 
   Widget _buildText(String text) {
     if (text.trim().isEmpty) return const SizedBox.shrink();
     final shown = display(text);
-    final needle = highlight == null ? null : display(highlight!);
-    if (needle == null || needle.isEmpty || !shown.contains(needle)) {
-      return Text(shown, style: baseStyle);
-    }
     // 搜索跳转高亮：朱砂淡染（P3.4，替换 web 的黄色 <mark>）。
-    final spans = <TextSpan>[];
-    var cursor = 0;
-    var idx = shown.indexOf(needle);
-    while (idx >= 0) {
-      if (idx > cursor) {
-        spans.add(TextSpan(text: shown.substring(cursor, idx)));
-      }
-      spans.add(TextSpan(
-        text: needle,
-        style: TextStyle(
-          backgroundColor: ink.sealRed.withValues(alpha: 0.22),
-          color: colors.foreground,
-          fontWeight: FontWeight.w700,
-        ),
-      ));
-      cursor = idx + needle.length;
-      idx = shown.indexOf(needle, cursor);
-    }
-    if (cursor < shown.length) {
-      spans.add(TextSpan(text: shown.substring(cursor)));
-    }
-    return Text.rich(TextSpan(style: baseStyle, children: spans));
+    final span = buildHighlightedTextSpan(
+      shown: shown,
+      needle: highlight == null ? null : display(highlight!),
+      baseStyle: baseStyle,
+      highlightBackground: ink.sealRed.withValues(alpha: 0.22),
+      foreground: colors.foreground,
+    );
+    if (span == null) return Text(shown, style: baseStyle);
+    return Text.rich(span);
   }
 }

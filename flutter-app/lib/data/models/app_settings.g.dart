@@ -1,4 +1,4 @@
-﻿// GENERATED CODE - DO NOT MODIFY BY HAND
+// GENERATED CODE - DO NOT MODIFY BY HAND
 
 part of 'app_settings.dart';
 
@@ -62,8 +62,13 @@ const AppSettingsSchema = CollectionSchema(
       name: r'paragraphSpacing',
       type: IsarType.double,
     ),
-    r'themeKey': PropertySchema(
+    r'readingMode': PropertySchema(
       id: 9,
+      name: r'readingMode',
+      type: IsarType.string,
+    ),
+    r'themeKey': PropertySchema(
+      id: 10,
       name: r'themeKey',
       type: IsarType.string,
     ),
@@ -81,7 +86,7 @@ const AppSettingsSchema = CollectionSchema(
   getId: _appSettingsGetId,
   getLinks: _appSettingsGetLinks,
   attach: _appSettingsAttach,
-  version: Isar.version,
+  version: '3.3.2',
 );
 
 int _appSettingsEstimateSize(
@@ -92,6 +97,7 @@ int _appSettingsEstimateSize(
   var bytesCount = offsets.last;
   bytesCount += 3 + object.classicsActiveTab.length * 3;
   bytesCount += 3 + object.fontFamily.length * 3;
+  bytesCount += 3 + object.readingMode.length * 3;
   bytesCount += 3 + object.themeKey.length * 3;
   return bytesCount;
 }
@@ -111,7 +117,8 @@ void _appSettingsSerialize(
   writer.writeDouble(offsets[6], object.letterSpacingEm);
   writer.writeDouble(offsets[7], object.lineHeight);
   writer.writeDouble(offsets[8], object.paragraphSpacing);
-  writer.writeString(offsets[9], object.themeKey);
+  writer.writeString(offsets[9], object.readingMode);
+  writer.writeString(offsets[10], object.themeKey);
 }
 
 AppSettings _appSettingsDeserialize(
@@ -131,7 +138,8 @@ AppSettings _appSettingsDeserialize(
   object.letterSpacingEm = reader.readDouble(offsets[6]);
   object.lineHeight = reader.readDouble(offsets[7]);
   object.paragraphSpacing = reader.readDouble(offsets[8]);
-  object.themeKey = reader.readString(offsets[9]);
+  object.readingMode = reader.readString(offsets[9]);
+  object.themeKey = reader.readString(offsets[10]);
   return object;
 }
 
@@ -161,6 +169,8 @@ P _appSettingsDeserializeProp<P>(
     case 8:
       return (reader.readDouble(offset)) as P;
     case 9:
+      return (reader.readString(offset)) as P;
+    case 10:
       return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -936,6 +946,147 @@ extension AppSettingsQueryFilter
     });
   }
 
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+  readingModeEqualTo(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'readingMode',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+  readingModeGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'readingMode',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+  readingModeLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'readingMode',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+  readingModeBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'readingMode',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+  readingModeStartsWith(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'readingMode',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+  readingModeEndsWith(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'readingMode',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+  readingModeContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'readingMode',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+  readingModeMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'readingMode',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+  readingModeIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'readingMode', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+  readingModeIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'readingMode', value: ''),
+      );
+    });
+  }
+
   QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition> themeKeyEqualTo(
     String value, {
     bool caseSensitive = true,
@@ -1206,6 +1357,18 @@ extension AppSettingsQuerySortBy
     });
   }
 
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy> sortByReadingMode() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'readingMode', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy> sortByReadingModeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'readingMode', Sort.desc);
+    });
+  }
+
   QueryBuilder<AppSettings, AppSettings, QAfterSortBy> sortByThemeKey() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'themeKey', Sort.asc);
@@ -1350,6 +1513,18 @@ extension AppSettingsQuerySortThenBy
     });
   }
 
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy> thenByReadingMode() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'readingMode', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy> thenByReadingModeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'readingMode', Sort.desc);
+    });
+  }
+
   QueryBuilder<AppSettings, AppSettings, QAfterSortBy> thenByThemeKey() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'themeKey', Sort.asc);
@@ -1429,6 +1604,14 @@ extension AppSettingsQueryWhereDistinct
     });
   }
 
+  QueryBuilder<AppSettings, AppSettings, QDistinct> distinctByReadingMode({
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'readingMode', caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<AppSettings, AppSettings, QDistinct> distinctByThemeKey({
     bool caseSensitive = true,
   }) {
@@ -1501,6 +1684,12 @@ extension AppSettingsQueryProperty
   paragraphSpacingProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'paragraphSpacing');
+    });
+  }
+
+  QueryBuilder<AppSettings, String, QQueryOperations> readingModeProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'readingMode');
     });
   }
 
