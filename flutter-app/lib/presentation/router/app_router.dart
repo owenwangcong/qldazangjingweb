@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/fonts/font_service.dart';
 import '../../core/ink/canvas/ink_scroll_canvas.dart';
 import '../../core/ink/shading/ink_bloom_reveal.dart';
 
@@ -31,6 +32,17 @@ String? inkAppRedirect(BuildContext context, GoRouterState state) {
           container.read(settingsProvider.notifier).setTheme(themeKey);
         });
       }
+    }
+    // 巡检字体切换（P3.4 八字体截图通道）：?font=<AppFont.key>，仅切换
+    // 不持久化。
+    final fontKey = state.uri.queryParameters['font'];
+    if (fontKey != null) {
+      final container = ProviderScope.containerOf(context, listen: false);
+      Future(() {
+        container
+            .read(fontControllerProvider.notifier)
+            .select(AppFont.fromKey(fontKey));
+      });
     }
   }
   // 画卷相机（P2.2）：三 tab = 长卷三段横移；push 详情 = 深入画中。

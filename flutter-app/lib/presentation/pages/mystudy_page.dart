@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/ink/ink.dart';
 import '../../core/theme/app_theme.dart';
 import '../../data/models/user_data.dart';
 import '../providers/app_providers.dart';
@@ -62,7 +63,9 @@ class MyStudyPage extends ConsumerWidget {
           bottom: TabBar(
             labelColor: colors.foreground,
             unselectedLabelColor: colors.mutedForeground,
-            indicatorColor: colors.primary,
+            // 笔触指示器（P3.6）：替代 Material 直线 indicator。
+            indicator: BrushTabIndicator(color: context.ink.inkStrong),
+            dividerColor: Colors.transparent,
             tabs: const [
               Tab(child: TText('收藏')),
               Tab(child: TText('历史')),
@@ -221,25 +224,39 @@ class _BookmarksTab extends ConsumerWidget {
       itemCount: bookmarks.length,
       itemBuilder: (context, index) {
         final bookmark = bookmarks[index];
+        // 书签笺纸卡（P3.6）：InkCard 吃墨边缘，长列表关阴影。
         return _deletableTile(
           context: context,
           key: ValueKey('bm-${bookmark.compositeKey}'),
           onDelete: () => ref
               .read(studyRepositoryProvider)
               .removeBookmark(bookmark.compositeKey),
-          child: ListTile(
-            minTileHeight: 56,
-            title: TText(
-              titles[bookmark.bookId] ?? bookmark.bookId,
-              style: TextStyle(color: colors.foreground),
-            ),
-            subtitle: TText(
-              '${bookmark.content}…',
-              style: TextStyle(fontSize: 13, color: colors.mutedForeground),
-            ),
-            trailing: Icon(Icons.chevron_right, color: colors.mutedForeground),
-            onTap: () => context.push(
-              '/book/${bookmark.bookId}?index=${bookmark.blockIndex}',
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            child: InkCard(
+              seed: 61 + index,
+              borderRadius: 12,
+              shadow: false,
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              onTap: () => context.push(
+                '/book/${bookmark.bookId}?index=${bookmark.blockIndex}',
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TText(
+                    titles[bookmark.bookId] ?? bookmark.bookId,
+                    style: TextStyle(color: colors.foreground),
+                  ),
+                  const SizedBox(height: 4),
+                  TText(
+                    '${bookmark.content}…',
+                    style: TextStyle(
+                        fontSize: 13, color: colors.mutedForeground),
+                  ),
+                ],
+              ),
             ),
           ),
         );
@@ -265,36 +282,48 @@ class _NotesTab extends ConsumerWidget {
       itemCount: notes.length,
       itemBuilder: (context, index) {
         final note = notes[index];
+        // 笔记笺纸卡（P3.6）：引文衬左缘墨线，注语为主体。
         return _deletableTile(
           context: context,
           key: ValueKey('note-${note.id}'),
           onDelete: () =>
               ref.read(studyRepositoryProvider).removeNote(note.id),
-          child: ListTile(
-            minTileHeight: 64,
-            isThreeLine: true,
-            title: TText(
-              titles[note.bookId] ?? note.bookId,
-              style: TextStyle(fontSize: 14, color: colors.mutedForeground),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            child: InkCard(
+              seed: 67 + index,
+              borderRadius: 12,
+              shadow: false,
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              onTap: () => context.push('/book/${note.bookId}'),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TText(
+                    titles[note.bookId] ?? note.bookId,
+                    style: TextStyle(
+                        fontSize: 14, color: colors.mutedForeground),
+                  ),
+                  const SizedBox(height: 4),
+                  TText(
+                    '「${note.quote}」',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                        fontSize: 13, color: colors.mutedForeground),
+                  ),
+                  const SizedBox(height: 2),
+                  TText(
+                    note.body,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style:
+                        TextStyle(fontSize: 15, color: colors.foreground),
+                  ),
+                ],
+              ),
             ),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                TText(
-                  '「${note.quote}」',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 13, color: colors.mutedForeground),
-                ),
-                TText(
-                  note.body,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 15, color: colors.foreground),
-                ),
-              ],
-            ),
-            onTap: () => context.push('/book/${note.bookId}'),
           ),
         );
       },

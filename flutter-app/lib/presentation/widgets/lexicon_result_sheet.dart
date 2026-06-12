@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/ink/ink.dart';
 import '../../core/theme/app_theme.dart';
 import '../providers/app_providers.dart';
 import 't_text.dart';
@@ -121,13 +122,14 @@ class _LexiconResultSheetState extends ConsumerState<_LexiconResultSheet> {
               ],
             ),
           ),
-          Divider(height: 1, color: colors.border),
+          // BottomSheet 顶部干笔分隔（P3.9，设计八则 #3）。
+          const BrushDivider(height: 10, seed: 39),
           Expanded(
             child: FutureBuilder<String>(
               future: _future,
               builder: (context, snapshot) {
                 if (snapshot.connectionState != ConnectionState.done) {
-                  return const Center(child: CircularProgressIndicator());
+                  return const Center(child: EnsoLoading());
                 }
                 if (snapshot.hasError) {
                   return Center(

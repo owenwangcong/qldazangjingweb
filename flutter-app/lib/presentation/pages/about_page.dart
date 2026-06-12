@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/ink/ink.dart';
 import '../../core/theme/app_theme.dart';
 import '../widgets/t_text.dart';
 
@@ -59,6 +60,12 @@ class AboutPage extends StatelessWidget {
             '若发现经文错漏，欢迎通过网站反馈。',
             style: bodyStyle,
           ),
+          // 卷尾留白收笔：淡祥云（每屏唯一意象）+ 落款印。
+          const SizedBox(height: 40),
+          const Center(child: CloudPattern(width: 110, opacity: 0.07)),
+          const SizedBox(height: 16),
+          const Center(child: SealStamp(text: '藏', size: 30)),
+          const SizedBox(height: 24),
         ],
       ),
     );

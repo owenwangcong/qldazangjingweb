@@ -308,6 +308,31 @@ ThemeData buildAppTheme(AppThemeId id, {String? fontFamily}) {
       iconColor: c.mutedForeground,
       textColor: c.foreground,
     ),
+    // 勾选/开关墨色化（P3.5/P3.8）：浓墨实底、纸色对勾，无 Material 原色。
+    checkboxTheme: CheckboxThemeData(
+      fillColor: WidgetStateProperty.resolveWith(
+        (states) => states.contains(WidgetState.selected)
+            ? ink.inkStrong
+            : Colors.transparent,
+      ),
+      checkColor: WidgetStatePropertyAll(c.background),
+      side: BorderSide(color: ink.inkMedium, width: 1.4),
+    ),
+    switchTheme: SwitchThemeData(
+      thumbColor: WidgetStateProperty.resolveWith(
+        (states) => states.contains(WidgetState.selected)
+            ? ink.inkStrong
+            : ink.inkLight,
+      ),
+      trackColor: WidgetStateProperty.resolveWith(
+        (states) => states.contains(WidgetState.selected)
+            ? ink.inkMedium.withValues(alpha: 0.45)
+            : ink.inkLight.withValues(alpha: 0.25),
+      ),
+      trackOutlineColor: WidgetStatePropertyAll(
+        ink.inkLight.withValues(alpha: 0.6),
+      ),
+    ),
     snackBarTheme: SnackBarThemeData(
       backgroundColor: c.popover,
       contentTextStyle: TextStyle(color: c.popoverForeground),

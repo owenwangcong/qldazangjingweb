@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/fonts/font_service.dart';
+import '../../core/ink/ink.dart';
 import '../../core/theme/app_theme.dart';
 import '../providers/app_providers.dart';
 import 't_text.dart';
@@ -41,7 +42,9 @@ class _FontPickerSheet extends ConsumerWidget {
               style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
             ),
           ),
-          const SizedBox(height: 8),
+          // BottomSheet 顶部干笔分隔（P3.9）。
+          const BrushDivider(height: 14, seed: 45, indent: 12, endIndent: 12),
+          const SizedBox(height: 2),
           for (final font in AppFont.values)
             ListTile(
               minTileHeight: 56,
@@ -56,11 +59,7 @@ class _FontPickerSheet extends ConsumerWidget {
                 ),
               ),
               trailing: fontState.loadingKey == font.key
-                  ? const SizedBox(
-                      width: 22,
-                      height: 22,
-                      child: CircularProgressIndicator(strokeWidth: 2.5),
-                    )
+                  ? const EnsoLoading(size: 22)
                   : fontState.selected == font
                       ? Icon(Icons.check, color: colors.primary)
                       : null,

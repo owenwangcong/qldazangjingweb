@@ -6,10 +6,13 @@
 #
 # 用法：.\tool\perf.ps1            # 3 轮
 #       .\tool\perf.ps1 -Runs 1   # 冒烟
+#       .\tool\perf.ps1 -Target integration_test/section_perf_test.dart -Keys section_scroll
 param(
   [int]$Runs = 3,
   [string]$DeviceId = "R52W809056B",
-  [string]$Label = "perf"
+  [string]$Label = "perf",
+  [string]$Target = "integration_test/scroll_perf_test.dart",
+  [string[]]$Keys = @("home_scroll", "reader_scroll", "transition")
 )
 
 $ErrorActionPreference = "Stop"
@@ -20,7 +23,7 @@ $adb = "D:\Apps\Android\AndroidSDK\platform-tools\adb.exe"
 & $adb shell input keyevent KEYCODE_WAKEUP | Out-Null
 & $adb shell wm dismiss-keyguard | Out-Null
 
-$keys = @("home_scroll", "reader_scroll", "transition")
+$keys = $Keys
 $collected = @{}
 foreach ($k in $keys) { $collected[$k] = @() }
 
@@ -32,7 +35,7 @@ for ($i = 1; $i -le $Runs; $i++) {
     # --no-dds 必须：app 内 traceAction 要直连自身 VM Service，DDS 在宿主机上会让
     # 设备侧 localhost 连接被拒（Connection refused，已实测）。
     flutter drive --no-dds --driver=test_driver/perf_driver.dart `
-      --target=integration_test/scroll_perf_test.dart --profile -d $DeviceId
+      --target=$Target --profile -d $DeviceId
     if ($LASTEXITCODE -ne 0) { throw "flutter drive run $i failed (exit $LASTEXITCODE)" }
   } finally { Pop-Location }
 

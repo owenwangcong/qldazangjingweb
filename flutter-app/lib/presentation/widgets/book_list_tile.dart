@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/ink/ink.dart';
 import '../../core/theme/app_theme.dart';
 import '../../data/models/catalog_models.dart';
 import '../providers/app_providers.dart';
@@ -44,58 +45,55 @@ class BookListTile extends ConsumerWidget {
           ),
         ],
       ),
-      child: Card(
-        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-        color: colors.card,
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-          side: BorderSide(color: colors.border.withValues(alpha: 0.6)),
-        ),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(12),
+      // 笺纸卡行（P3.3）：吃墨边缘替代 Material Card 直线描边；
+      // 长列表关阴影（§9：模糊阴影在 Impeller 下逐帧重画）。
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        child: InkCard(
+          seed: 17 + book.bookId.hashCode % 23,
+          borderRadius: 12,
+          shadow: false,
+          padding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           onTap: () => context.push('/book/${book.bookId}'),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                TText(
-                  book.title,
-                  style: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w600,
-                    color: colors.cardForeground,
-                  ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TText(
+                book.title,
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w600,
+                  color: colors.cardForeground,
                 ),
-                if (showAuthor && book.author.isNotEmpty) ...[
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TText(
-                          book.author,
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: colors.mutedForeground,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+              ),
+              if (showAuthor && book.author.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TText(
+                        book.author,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: colors.mutedForeground,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (book.volume.isNotEmpty)
+                      TText(
+                        book.volume,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: colors.mutedForeground,
                         ),
                       ),
-                      if (book.volume.isNotEmpty)
-                        TText(
-                          book.volume,
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: colors.mutedForeground,
-                          ),
-                        ),
-                    ],
-                  ),
-                ],
+                  ],
+                ),
               ],
-            ),
+            ],
           ),
         ),
       ),

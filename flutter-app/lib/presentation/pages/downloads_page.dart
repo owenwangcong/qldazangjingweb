@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/ink/ink.dart';
 import '../../core/theme/app_theme.dart';
 import '../../data/models/outbox_operation.dart';
 import '../providers/app_providers.dart';
@@ -102,7 +103,7 @@ class DownloadsPage extends ConsumerWidget {
                             fontSize: 12, color: colors.mutedForeground),
                       ),
               ),
-            const Divider(),
+            const BrushDivider(height: 16, indent: 16, endIndent: 16, seed: 51),
           ],
           if (cached.isEmpty)
             Padding(

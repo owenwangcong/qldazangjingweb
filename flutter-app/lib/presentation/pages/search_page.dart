@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/ink/ink.dart';
 import '../../core/theme/app_theme.dart';
 import '../../data/models/catalog_models.dart';
 import '../../domain/entities/book_entities.dart';
@@ -140,17 +141,15 @@ class _SearchPageState extends ConsumerState<SearchPage> {
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
             child: Column(
               children: [
-                SegmentedButton<bool>(
-                  segments: [
-                    ButtonSegment(
-                      value: true,
-                      label: TText(online ? '全文搜索' : '全文搜索（需联网）'),
-                    ),
-                    const ButtonSegment(value: false, label: TText('标题搜索')),
+                // 墨字模式页签（P3.5）：替换 Material SegmentedButton。
+                InkToggle(
+                  options: [
+                    display(online ? '全文搜索' : '全文搜索（需联网）'),
+                    display('标题搜索'),
                   ],
-                  selected: {_fulltextMode},
-                  onSelectionChanged: (selection) => setState(() {
-                    _fulltextMode = selection.first;
+                  selectedIndex: _fulltextMode ? 0 : 1,
+                  onSelect: (i) => setState(() {
+                    _fulltextMode = i == 0;
                     _searched = false;
                     _error = null;
                     _hits.clear();
@@ -190,18 +189,29 @@ class _SearchPageState extends ConsumerState<SearchPage> {
                 const SizedBox(height: 4),
                 Row(
                   children: [
+                    // 砚台搜索框（P3.5）：浅墨池底 + 吃墨边缘，无 Material 直线框。
                     Expanded(
-                      child: TextField(
-                        controller: _inputController,
-                        textInputAction: TextInputAction.search,
-                        onSubmitted: (_) => _search(),
-                        decoration: InputDecoration(
-                          hintText: display(
-                              _fulltextMode ? '输入关键词或短语进行全文搜索' : '输入经书名或作者'),
-                          border: const OutlineInputBorder(),
-                          isDense: true,
-                          contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 14),
+                      child: InkCard(
+                        seed: 37,
+                        borderRadius: 10,
+                        shadow: false,
+                        color: colors.muted.withValues(alpha: 0.6),
+                        padding: EdgeInsets.zero,
+                        child: TextField(
+                          controller: _inputController,
+                          textInputAction: TextInputAction.search,
+                          onSubmitted: (_) => _search(),
+                          decoration: InputDecoration(
+                            hintText: display(_fulltextMode
+                                ? '输入关键词或短语进行全文搜索'
+                                : '输入经书名或作者'),
+                            border: InputBorder.none,
+                            isDense: true,
+                            prefixIcon: Icon(Icons.search,
+                                size: 20, color: colors.mutedForeground),
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 14),
+                          ),
                         ),
                       ),
                     ),
@@ -227,7 +237,7 @@ class _SearchPageState extends ConsumerState<SearchPage> {
 
   Widget _buildResults(AppColors colors, String Function(String) display) {
     if (_loading) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: EnsoLoading());
     }
     if (_error != null) {
       return Center(
@@ -242,10 +252,18 @@ class _SearchPageState extends ConsumerState<SearchPage> {
       );
     }
     if (!_searched) {
+      // 空闲态：唯一一处淡莲花（设计八则 #6）。
       return Center(
-        child: TText(
-          '搜索 1669 部佛经原文',
-          style: TextStyle(color: colors.mutedForeground),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const LotusOutline(size: 140, opacity: 0.08),
+            const SizedBox(height: 12),
+            TText(
+              '搜索 1669 部佛经原文',
+              style: TextStyle(color: colors.mutedForeground),
+            ),
+          ],
         ),
       );
     }
@@ -280,7 +298,7 @@ class _SearchPageState extends ConsumerState<SearchPage> {
                       style: TextStyle(
                           fontSize: 13, color: colors.mutedForeground),
                     )
-                  : const CircularProgressIndicator(),
+                  : const EnsoLoading(size: 32),
             ),
           );
         }
@@ -310,20 +328,17 @@ class _SearchHitCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      color: colors.card,
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: colors.border.withValues(alpha: 0.6)),
-      ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
+    final ink = context.ink;
+    // 笺纸结果卡（P3.5）：吃墨边缘；长列表关阴影（§9 性能教训）。
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      child: InkCard(
+        seed: 53 + hit.id.hashCode % 19,
+        borderRadius: 12,
+        shadow: false,
+        padding: const EdgeInsets.all(14),
         onTap: () => context.push('/book/${hit.id}'),
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Column(
+        child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
@@ -387,19 +402,19 @@ class _SearchHitCard extends StatelessWidget {
                           height: 1.6,
                           color: colors.foreground,
                         ),
+                        // 朱砂淡染高亮（P3.5）。
                         emStyle: TextStyle(
                           fontWeight: FontWeight.w700,
                           color: colors.foreground,
                           backgroundColor:
-                              colors.primary.withValues(alpha: 0.35),
+                              ink.sealRed.withValues(alpha: 0.22),
                         ),
                         display: display,
                       ),
                     ),
                   ),
                 ),
-            ],
-          ),
+          ],
         ),
       ),
     );

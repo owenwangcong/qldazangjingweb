@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/ink/ink.dart';
 import '../../core/theme/app_theme.dart';
 import '../providers/app_providers.dart';
 import '../widgets/font_picker_sheet.dart';
@@ -52,7 +53,7 @@ class SettingsPage extends ConsumerWidget {
             subtitle: const TText('字号、行距、字距、段距'),
             onTap: () => showReaderSettingsSheet(context),
           ),
-          const Divider(),
+          const BrushDivider(height: 18, indent: 16, endIndent: 16, seed: 33),
           _SectionHeader('数据'),
           ListTile(
             minTileHeight: 56,
@@ -61,7 +62,7 @@ class SettingsPage extends ConsumerWidget {
             subtitle: const TText('查看与删除已下载的经书'),
             onTap: () => context.push('/downloads'),
           ),
-          const Divider(),
+          const BrushDivider(height: 18, indent: 16, endIndent: 16, seed: 35),
           _SectionHeader('其他'),
           ListTile(
             minTileHeight: 56,
@@ -84,30 +85,35 @@ class SettingsPage extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             const Padding(
-              padding: EdgeInsets.all(16),
+              padding: EdgeInsets.fromLTRB(16, 16, 16, 6),
               child: TText(
                 '选择主题',
                 style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
               ),
             ),
-            for (final theme in AppThemeId.values)
-              RadioListTile<String>(
-                value: theme.key,
-                groupValue: settings.themeKey,
-                title: TText(theme.label),
-                secondary: CircleAvatar(
-                  radius: 12,
-                  backgroundColor:
-                      buildAppTheme(theme).colorScheme.primary,
-                ),
-                onChanged: (key) {
-                  if (key != null) {
-                    ref.read(settingsProvider.notifier).setTheme(key);
-                  }
-                  Navigator.pop(sheetContext);
-                },
+            const BrushUnderline(width: 56, thickness: 2.2, seed: 23),
+            // 六幅小画卷缩略（P3.8）：预览色取各主题真实 token。
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
+              child: Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                alignment: WrapAlignment.center,
+                children: [
+                  for (final theme in AppThemeId.values)
+                    InkThemeThumb(
+                      theme: theme,
+                      selected: settings.themeKey == theme.key,
+                      onTap: () {
+                        ref
+                            .read(settingsProvider.notifier)
+                            .setTheme(theme.key);
+                        Navigator.pop(sheetContext);
+                      },
+                    ),
+                ],
               ),
-            const SizedBox(height: 8),
+            ),
           ],
         ),
       ),

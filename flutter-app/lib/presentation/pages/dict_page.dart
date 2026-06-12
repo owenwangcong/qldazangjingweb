@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/ink/ink.dart';
 import '../../core/theme/app_theme.dart';
 import '../providers/app_providers.dart';
 import '../widgets/t_text.dart';
@@ -64,17 +65,27 @@ class _DictPageState extends ConsumerState<DictPage> {
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
             child: Row(
               children: [
+                // 砚台输入框（P3.7）：浅墨池底 + 吃墨边缘。
                 Expanded(
-                  child: TextField(
-                    controller: _controller,
-                    textInputAction: TextInputAction.search,
-                    onSubmitted: (_) => _search(),
-                    decoration: InputDecoration(
-                      hintText: display('输入要查询的词'),
-                      border: const OutlineInputBorder(),
-                      isDense: true,
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 14),
+                  child: InkCard(
+                    seed: 43,
+                    borderRadius: 10,
+                    shadow: false,
+                    color: colors.muted.withValues(alpha: 0.6),
+                    padding: EdgeInsets.zero,
+                    child: TextField(
+                      controller: _controller,
+                      textInputAction: TextInputAction.search,
+                      onSubmitted: (_) => _search(),
+                      decoration: InputDecoration(
+                        hintText: display('输入要查询的词'),
+                        border: InputBorder.none,
+                        isDense: true,
+                        prefixIcon: Icon(Icons.search,
+                            size: 20, color: colors.mutedForeground),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 14),
+                      ),
                     ),
                   ),
                 ),
@@ -91,7 +102,7 @@ class _DictPageState extends ConsumerState<DictPage> {
           ),
           Expanded(
             child: _loading
-                ? const Center(child: CircularProgressIndicator())
+                ? const Center(child: EnsoLoading())
                 : _error != null
                     ? Center(
                         child: Padding(
@@ -119,43 +130,43 @@ class _DictPageState extends ConsumerState<DictPage> {
                                 itemCount: _results.length,
                                 itemBuilder: (context, index) {
                                   final result = _results[index];
-                                  return Card(
-                                    margin: const EdgeInsets.symmetric(
+                                  // 释义笺纸卡（P3.7）：辞书名题字 +
+                                  // 笔触下划线，正文留白行距 1.7。
+                                  return Padding(
+                                    padding: const EdgeInsets.symmetric(
                                         vertical: 6),
-                                    color: colors.card,
-                                    elevation: 0,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                      side: BorderSide(
-                                        color: colors.border
-                                            .withValues(alpha: 0.6),
-                                      ),
-                                    ),
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(14),
+                                    child: InkCard(
+                                      seed: 71 + index,
+                                      borderRadius: 12,
+                                      shadow: false,
+                                      padding: const EdgeInsets.all(16),
                                       child: Column(
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
                                         children: [
-                                          Container(
-                                            width: double.infinity,
-                                            padding:
-                                                const EdgeInsets.symmetric(
-                                                    vertical: 4),
-                                            decoration: BoxDecoration(
-                                              color: colors.primary
-                                                  .withValues(alpha: 0.18),
-                                              borderRadius:
-                                                  BorderRadius.circular(8),
-                                            ),
-                                            child: TText(
-                                              result.dict,
-                                              textAlign: TextAlign.center,
-                                              style: TextStyle(
-                                                fontSize: 15,
-                                                fontWeight: FontWeight.w600,
-                                                color: colors.cardForeground,
-                                              ),
+                                          Center(
+                                            child: Column(
+                                              children: [
+                                                TText(
+                                                  result.dict,
+                                                  textAlign: TextAlign.center,
+                                                  style: TextStyle(
+                                                    fontSize: 15,
+                                                    fontWeight:
+                                                        FontWeight.w600,
+                                                    color: colors
+                                                        .cardForeground,
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 6),
+                                                BrushUnderline(
+                                                  width: (result.dict.length *
+                                                          15.0)
+                                                      .clamp(32.0, 120.0),
+                                                  thickness: 2.2,
+                                                  seed: 25,
+                                                ),
+                                              ],
                                             ),
                                           ),
                                           const SizedBox(height: 10),

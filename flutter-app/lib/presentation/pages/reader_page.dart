@@ -9,6 +9,7 @@ import 'package:go_router/go_router.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
 import '../../core/constants/app_constants.dart';
+import '../../core/ink/ink.dart';
 import '../../core/theme/app_theme.dart';
 import '../../domain/entities/book_entities.dart';
 import '../../domain/repositories/repositories.dart';
@@ -62,6 +63,10 @@ class _ReaderPageState extends ConsumerState<ReaderPage> {
   int? _restoredIndex;
   Timer? _progressDebounce;
 
+  /// 卷轴式进度（P3.4）：0–1，由可见块推进；ValueNotifier 避免整页 setState。
+  final _readProgress = ValueNotifier<double>(0);
+  int _totalItems = 1;
+
   @override
   void initState() {
     super.initState();
@@ -97,12 +102,18 @@ class _ReaderPageState extends ConsumerState<ReaderPage> {
   void dispose() {
     _progressDebounce?.cancel();
     _itemPositionsListener.itemPositions.removeListener(_onPositionsChanged);
+    _readProgress.dispose();
     super.dispose();
   }
 
   void _onPositionsChanged() {
     final positions = _itemPositionsListener.itemPositions.value;
     if (positions.isEmpty) return;
+    final last = positions
+        .reduce((a, b) => a.index > b.index ? a : b)
+        .index;
+    _readProgress.value =
+        _totalItems <= 1 ? 0 : (last / (_totalItems - 1)).clamp(0.0, 1.0);
     final first = positions
         .where((p) => p.itemTrailingEdge > 0)
         .reduce((a, b) => a.index < b.index ? a : b)
@@ -168,7 +179,7 @@ class _ReaderPageState extends ConsumerState<ReaderPage> {
         Expanded(
           child: Center(
             child: (!queued)
-                ? const CircularProgressIndicator()
+                ? const EnsoLoading()
                 : Padding(
                     padding: const EdgeInsets.all(32),
                     child: Column(
@@ -219,8 +230,10 @@ class _ReaderPageState extends ConsumerState<ReaderPage> {
   Widget _buildReader(BuildContext context, BookData book, AppColors colors) {
     final settings = ref.watch(settingsProvider);
     final display = ref.watch(displayTextProvider);
+    final ink = context.ink;
     final isFavorite =
         ref.watch(_isFavoriteProvider(widget.bookId)).value ?? false;
+    _totalItems = book.blocks.length + 2;
 
     final baseStyle = TextStyle(
       // Bare TextStyle doesn't inherit the theme's fontFamily — set it here.
@@ -230,6 +243,10 @@ class _ReaderPageState extends ConsumerState<ReaderPage> {
       letterSpacing: settings.letterSpacingEm * settings.fontSize,
       color: colors.foreground,
     );
+
+    // 留白（设计八则 #1）：正文边距 ≥20dp；宽屏（≥600dp）≥10% 屏宽。
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final hMargin = screenWidth >= 600 ? screenWidth * 0.10 : 20.0;
 
     return Stack(
       children: [
@@ -257,8 +274,8 @@ class _ReaderPageState extends ConsumerState<ReaderPage> {
                 padding: EdgeInsets.only(
                   top: kToolbarHeight + 16,
                   bottom: 48,
-                  left: 20,
-                  right: 20,
+                  left: hMargin,
+                  right: hMargin,
                 ),
                 itemCount: book.blocks.length + 2,
                 itemBuilder: (context, index) {
@@ -273,6 +290,7 @@ class _ReaderPageState extends ConsumerState<ReaderPage> {
                     display: display,
                     highlight: widget.highlightText,
                     colors: colors,
+                    ink: ink,
                   );
                 },
               ),
@@ -285,6 +303,24 @@ class _ReaderPageState extends ConsumerState<ReaderPage> {
           duration: const Duration(milliseconds: 200),
           child: _buildAppBar(book, colors, display, isFavorite),
         ),
+        // 卷轴式进度（P3.4）：底缘一线墨痕 + 朱砂卷轴杆。
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: 0,
+          child: IgnorePointer(
+            child: SafeArea(
+              top: false,
+              child: ValueListenableBuilder<double>(
+                valueListenable: _readProgress,
+                builder: (context, progress, _) => CustomPaint(
+                  size: const Size(double.infinity, 10),
+                  painter: _ScrollRollPainter(progress: progress, ink: ink),
+                ),
+              ),
+            ),
+          ),
+        ),
       ],
     );
   }
@@ -295,13 +331,12 @@ class _ReaderPageState extends ConsumerState<ReaderPage> {
     String Function(String) display,
     bool isFavorite,
   ) {
+    // 墨晕代替 Material elevation（设计八则 #2）；底缘干笔一道收口。
     return Material(
       color: colors.background.withValues(alpha: 0.96),
-      elevation: 1,
       child: SafeArea(
         bottom: false,
-        child: SizedBox(
-          height: kToolbarHeight,
+        child: _InkToolbar(
           child: Row(
             children: [
               BackButton(onPressed: () => context.pop()),
@@ -370,7 +405,9 @@ class _ReaderPageState extends ConsumerState<ReaderPage> {
               color: colors.foreground,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
+          const BrushUnderline(width: 96, thickness: 3, seed: 29),
+          const SizedBox(height: 10),
           TText(
             book.meta.author,
             textAlign: TextAlign.center,
@@ -626,6 +663,74 @@ class _ReaderPageState extends ConsumerState<ReaderPage> {
   }
 }
 
+// ---- Ink chrome ----------------------------------------------------------------
+
+/// 阅读器顶栏：工具行 + 底缘干笔分隔（取代 Material elevation 阴影）。
+class _InkToolbar extends StatelessWidget {
+  const _InkToolbar({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SizedBox(height: kToolbarHeight, child: child),
+        const BrushDivider(height: 8, seed: 19),
+      ],
+    );
+  }
+}
+
+/// 卷轴式进度（P3.4）：底缘一线淡墨轨 + 已读段重墨 + 朱砂「卷轴杆」。
+class _ScrollRollPainter extends CustomPainter {
+  _ScrollRollPainter({required this.progress, required this.ink});
+
+  final double progress;
+  final InkTokens ink;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (size.width <= 0) return;
+    final y = size.height / 2;
+    // 全程淡墨轨。
+    canvas.drawLine(
+      Offset(0, y),
+      Offset(size.width, y),
+      Paint()
+        ..color = ink.inkLight.withValues(alpha: 0.30)
+        ..strokeWidth = 1.6
+        ..strokeCap = StrokeCap.round,
+    );
+    final x = size.width * progress;
+    // 已读段：重一档的墨。
+    if (x > 0) {
+      canvas.drawLine(
+        Offset(0, y),
+        Offset(x, y),
+        Paint()
+          ..color = ink.inkMedium.withValues(alpha: 0.65)
+          ..strokeWidth = 2.4
+          ..strokeCap = StrokeCap.round,
+      );
+    }
+    // 卷轴杆：竖向小杆，朱砂点睛（本屏 sealRed 第 2 处上限内）。
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromCenter(center: Offset(x.clamp(2, size.width - 2), y),
+            width: 3.4, height: size.height),
+        const Radius.circular(1.7),
+      ),
+      Paint()..color = ink.sealRed.withValues(alpha: 0.9),
+    );
+  }
+
+  @override
+  bool shouldRepaint(_ScrollRollPainter oldDelegate) =>
+      oldDelegate.progress != progress || oldDelegate.ink != ink;
+}
+
 // ---- Block rendering ---------------------------------------------------------
 
 class _BlockView extends StatelessWidget {
@@ -635,6 +740,7 @@ class _BlockView extends StatelessWidget {
     required this.paragraphSpacing,
     required this.display,
     required this.colors,
+    required this.ink,
     this.highlight,
   });
 
@@ -643,6 +749,7 @@ class _BlockView extends StatelessWidget {
   final double paragraphSpacing;
   final String Function(String) display;
   final AppColors colors;
+  final InkTokens ink;
   final String? highlight;
 
   static final _imgRegex = RegExp('<img[^>]*>');
@@ -652,15 +759,22 @@ class _BlockView extends StatelessWidget {
   Widget build(BuildContext context) {
     switch (block.type) {
       case JuanBlockType.bt:
+        // 章节笔触标题（P3.4）：居中题字 + 笔触下划线收笔。
         return Padding(
           padding: const EdgeInsets.symmetric(vertical: 20),
-          child: Text(
-            display(block.paragraphs.join().trim()),
-            textAlign: TextAlign.center,
-            style: baseStyle.copyWith(
-              fontSize: baseStyle.fontSize! * 1.2,
-              fontWeight: FontWeight.w700,
-            ),
+          child: Column(
+            children: [
+              Text(
+                display(block.paragraphs.join().trim()),
+                textAlign: TextAlign.center,
+                style: baseStyle.copyWith(
+                  fontSize: baseStyle.fontSize! * 1.2,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 10),
+              BrushUnderline(width: 72, thickness: 2.8, seed: 13),
+            ],
           ),
         );
       case JuanBlockType.bm:
@@ -710,7 +824,7 @@ class _BlockView extends StatelessWidget {
               imageUrl: url,
               placeholder: (_, __) => const SizedBox(
                 height: 120,
-                child: Center(child: CircularProgressIndicator()),
+                child: Center(child: EnsoLoading()),
               ),
               errorWidget: (_, __, ___) => Icon(
                 Icons.broken_image_outlined,
@@ -738,7 +852,7 @@ class _BlockView extends StatelessWidget {
     if (needle == null || needle.isEmpty || !shown.contains(needle)) {
       return Text(shown, style: baseStyle);
     }
-    // Search-jump highlight (web's yellow <mark>).
+    // 搜索跳转高亮：朱砂淡染（P3.4，替换 web 的黄色 <mark>）。
     final spans = <TextSpan>[];
     var cursor = 0;
     var idx = shown.indexOf(needle);
@@ -749,8 +863,8 @@ class _BlockView extends StatelessWidget {
       spans.add(TextSpan(
         text: needle,
         style: TextStyle(
-          backgroundColor: const Color(0xFFFEF08A),
-          color: Colors.black87,
+          backgroundColor: ink.sealRed.withValues(alpha: 0.22),
+          color: colors.foreground,
           fontWeight: FontWeight.w700,
         ),
       ));

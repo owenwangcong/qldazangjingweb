@@ -77,6 +77,11 @@ class InkCard extends StatelessWidget {
 
 /// 吃墨边缘：沿圆角矩形路径取样，做垂直于路径的微小抖动，
 /// 分段宽度/透明度起伏 → 手写描边感。全程由 seed 决定，无真随机。
+///
+/// 性能（P3.3 教训）：逐段 drawLine 在全宽列表行上是每帧 ~400 次
+/// draw call，Impeller 无 raster cache 时滚动 jank 1.49%→32%。改为
+/// 按墨量分 3 桶聚合成折线 Path，每桶一次 drawPath（≤3 次/卡），
+/// 抖动轮廓与飞白观感保留（墨量量化为三档）。
 class _BrushBorderPainter extends CustomPainter {
   _BrushBorderPainter({
     required this.color,
@@ -88,6 +93,13 @@ class _BrushBorderPainter extends CustomPainter {
   final double radius;
   final int seed;
 
+  /// 墨量三档：(alpha, strokeWidth)。
+  static const _buckets = [
+    (0.32, 0.8),
+    (0.55, 1.3),
+    (0.78, 1.8),
+  ];
+
   @override
   void paint(Canvas canvas, Size size) {
     final rrect = RRect.fromRectAndRadius(
@@ -97,12 +109,15 @@ class _BrushBorderPainter extends CustomPainter {
     final path = Path()..addRRect(rrect.deflate(0.8));
     final rnd = math.Random(seed);
 
+    final bucketPaths = [Path(), Path(), Path()];
+
     for (final metric in path.computeMetrics()) {
       const step = 6.0;
       var distance = 0.0;
-      Offset? prev;
       var thickness = 1.0 + rnd.nextDouble() * 0.6;
       var alpha = 0.55 + rnd.nextDouble() * 0.25;
+      var currentBucket = -1;
+      Offset? prev;
       while (distance < metric.length) {
         final tangent = metric.getTangentForOffset(distance);
         if (tangent == null) break;
@@ -110,23 +125,38 @@ class _BrushBorderPainter extends CustomPainter {
         final normal = Offset(-tangent.vector.dy, tangent.vector.dx);
         final jitter = (rnd.nextDouble() - 0.5) * 1.4;
         final point = tangent.position + normal * jitter;
-        if (prev != null) {
-          // 厚度与墨量缓慢游走，出现轻微「飞白」。
-          thickness =
-              (thickness + (rnd.nextDouble() - 0.5) * 0.5).clamp(0.6, 2.2);
-          alpha = (alpha + (rnd.nextDouble() - 0.5) * 0.18).clamp(0.25, 0.85);
-          canvas.drawLine(
-            prev,
-            point,
-            Paint()
-              ..color = color.withValues(alpha: alpha)
-              ..strokeWidth = thickness
-              ..strokeCap = StrokeCap.round,
-          );
+        // 厚度与墨量缓慢游走，出现轻微「飞白」（量化进三档桶）。
+        thickness =
+            (thickness + (rnd.nextDouble() - 0.5) * 0.5).clamp(0.6, 2.2);
+        alpha = (alpha + (rnd.nextDouble() - 0.5) * 0.18).clamp(0.25, 0.85);
+        final bucket = alpha < 0.45 ? 0 : (alpha < 0.65 ? 1 : 2);
+        if (prev == null) {
+          bucketPaths[bucket].moveTo(point.dx, point.dy);
+        } else if (bucket != currentBucket) {
+          // 换桶：新桶从上一点接笔，轮廓不断线。
+          bucketPaths[bucket]
+            ..moveTo(prev.dx, prev.dy)
+            ..lineTo(point.dx, point.dy);
+        } else {
+          bucketPaths[bucket].lineTo(point.dx, point.dy);
         }
+        currentBucket = bucket;
         prev = point;
         distance += step;
       }
+    }
+
+    for (var i = 0; i < 3; i++) {
+      if (bucketPaths[i].getBounds().isEmpty) continue;
+      canvas.drawPath(
+        bucketPaths[i],
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..color = color.withValues(alpha: _buckets[i].$1)
+          ..strokeWidth = _buckets[i].$2
+          ..strokeCap = StrokeCap.round
+          ..strokeJoin = StrokeJoin.round,
+      );
     }
   }
 
