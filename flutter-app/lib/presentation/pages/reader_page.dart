@@ -301,6 +301,7 @@ class _ReaderPageState extends ConsumerState<ReaderPage> {
         AnimatedSlide(
           offset: _chromeVisible ? Offset.zero : const Offset(0, -1.2),
           duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOut,
           child: _buildAppBar(book, colors, display, isFavorite),
         ),
         // 卷轴式进度（P3.4）：底缘一线墨痕 + 朱砂卷轴杆。
@@ -521,6 +522,7 @@ class _ReaderPageState extends ConsumerState<ReaderPage> {
     bool isFavorite,
     String Function(String) display,
   ) async {
+    HapticFeedback.lightImpact(); // P4.3：收藏轻震
     final study = ref.read(studyRepositoryProvider);
     if (isFavorite) {
       await study.removeFavorite(widget.bookId);
@@ -535,6 +537,7 @@ class _ReaderPageState extends ConsumerState<ReaderPage> {
     BookData book,
     String Function(String) display,
   ) async {
+    HapticFeedback.lightImpact(); // P4.3：落签轻震
     // Anchor on the first visible block — same semantics as the web's
     // IntersectionObserver-driven currentPartId.
     final blockIndex =

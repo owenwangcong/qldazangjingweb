@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/ink/canvas/ink_scroll_canvas.dart';
+import 'core/ink/motion/ink_mist_scroll_behavior.dart';
 import 'core/ink/shading/ink_paper_background.dart';
 import 'core/network/connectivity_service.dart';
 import 'core/theme/app_theme.dart';
@@ -60,6 +61,8 @@ class _QldzjAppState extends ConsumerState<QldzjApp> {
       debugShowCheckedModeBanner: false,
       theme: buildAppTheme(AppThemeId.fromKey(themeKey), fontFamily: fontFamily),
       routerConfig: appRouter,
+      // overscroll 墨雾（P4.1）：替换 Material 默认 stretch/glow。
+      scrollBehavior: const InkMistScrollBehavior(),
       // 一卷画布（P2.1）：持久画卷层跨路由不重建，所有页面浮于其上。
       builder: (context, child) => InkScrollCanvas(child: child!),
     );

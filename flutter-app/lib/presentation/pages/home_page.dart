@@ -198,7 +198,9 @@ class _ClassicsCard extends ConsumerWidget {
                     const Spacer(),
                     AnimatedRotation(
                       turns: visible ? 0.5 : 0,
-                      duration: const Duration(milliseconds: 250),
+                      // 微交互档 180–240ms（§4.2）。
+                      duration: const Duration(milliseconds: 220),
+                      curve: Curves.easeOut,
                       child: Icon(Icons.keyboard_arrow_down,
                           color: colors.mutedForeground),
                     ),
@@ -208,7 +210,8 @@ class _ClassicsCard extends ConsumerWidget {
               ),
             ),
             AnimatedCrossFade(
-              duration: const Duration(milliseconds: 250),
+              // 微交互档 180–240ms（§4.2）。
+              duration: const Duration(milliseconds: 220),
               crossFadeState: visible
                   ? CrossFadeState.showFirst
                   : CrossFadeState.showSecond,

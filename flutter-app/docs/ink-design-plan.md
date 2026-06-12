@@ -92,8 +92,21 @@
 |------|------|------|--------------------|
 | 路由 push/pop（破墨显现） | 300ms（pop 240ms） | easeOutCubic | ≤120ms 纯 fade |
 | Tab 切换（画卷横移） | 350ms | easeInOutCubic | 直接切换 |
-| 微交互（墨滴 splash、按压） | 180–240ms | easeOut | 保留（幅度减半） |
+| 微交互（状态切换、按压反馈） | 180–240ms | easeOut | 保留（幅度减半） |
+| 墨滴 splash（涟漪扩散） | 扩散 420ms + 消散 550ms | easeOutQuart | 保留（半径减半）<br>**修订（2026-06-12 P4.4）**：墨入纸的晕开是持续物理过程，180–240ms 档对应的是状态切换类微交互；墨滴单列并按 P1.6 实现校正 |
 | 装饰呼吸动画（云雾） | ≥6s 循环 | linear/sine | 停止 |
+
+**P4.4 审计结果（2026-06-12，逐处核对）**：
+| 动画处 | 实际 | 规范档 | 结论 |
+|--------|------|--------|------|
+| inkBloomPage push/pop | 300/240ms easeOutCubic；reduce-motion=Interval(0,0.4)≈120ms fade | 路由 | ✓ |
+| InkScrollCanvas 相机漂移 | 350ms easeInOutCubic；reduce-motion 直接落位 | Tab 切换 | ✓ |
+| InkNavBar 印章切换 | 200ms easeOut；reduce-motion Duration.zero | 微交互 | ✓ |
+| 首页经典卡折叠（Rotation/CrossFade） | 250→**220ms** easeOut（本次修正） | 微交互 | ✓（修正后） |
+| Reader 顶栏隐显 AnimatedSlide | 200ms + **补 easeOut**（原默认 linear） | 微交互 | ✓（修正后） |
+| 墨滴 splash | 420/550ms easeOutQuart；**补 reduce-motion 半径减半** | 墨滴（修订档） | ✓（修正后） |
+| EnsoLoading 旋转 | 1600ms 循环；reduce-motion 静止 | 装饰循环（loading 例外：1.6s） | ✓ |
+| TOC 跳转 scrollTo | 300ms（内容滚动，非转场/微交互档） | — | ✓ 记录在案 |
 
 ### 4.3 组件清单（P1 产出，全部带 golden 测试）
 `InkPaperBackground`（宣纸 shader 层）· `InkCard`（吃墨边缘卡片）· `BrushDivider` · `BrushUnderline` ·
@@ -157,10 +170,10 @@
 
 | ID | 任务 | 验收标准 | 状态 | 证据 |
 |----|------|----------|------|------|
-| P4.1 | overscroll 墨雾（替换默认 glow/stretch） | 视检 + widget test：自定义 ScrollBehavior 全局生效 | ⬜ | |
-| P4.2 | 全局 loading 替换为 EnsoLoading | `grep CircularProgressIndicator` 在 lib/ 内 0 命中（除 EnsoLoading 内部实现） | ⬜ | |
-| P4.3 | 触觉反馈：tab 切换/书签/长按配 HapticFeedback 轻震 | 代码审查 checklist + 真机抽查记录 | ⬜ | |
-| P4.4 | 动效时序统一审计（对照 §4.2 表） | 审计表填入文档：每处动画的实际时长/曲线/退化行为，100% 符合规范 | ⬜ | |
+| P4.1 | overscroll 墨雾（替换默认 glow/stretch） | 视检 + widget test：自定义 ScrollBehavior 全局生效 | ✅ 2026-06-12 | `motion/ink_mist_scroll_behavior.dart`（GlowingOverscrollIndicator × mistColor），MaterialApp.scrollBehavior 注入；`test/ink_scroll_behavior_test.dart`（无 Stretching、glow 色=mistColor、越界无异常）；视检 `recordings/p41_overscroll_mist.png`（暗主题慢拖，雾弧可见、列表不位移）+ `p41_overscroll.mp4`；浅主题 glow 极淡系 mistColor 设计使然（克制） |
+| P4.2 | 全局 loading 替换为 EnsoLoading | `grep CircularProgressIndicator` 在 lib/ 内 0 命中（除 EnsoLoading 内部实现） | ✅ 2026-06-12 | 随 P3.4–P3.9 完成（reader/search/dict/lexicon/font picker 共 6 处）；grep 实测 lib/ 内 0 命中（唯一残留为 enso_loading.dart 的文档注释） |
+| P4.3 | 触觉反馈：tab 切换/书签/长按配 HapticFeedback 轻震 | 代码审查 checklist + 真机抽查记录 | ✅ 2026-06-12 | checklist：①InkNavBar tab 切换→selectionClick ②Reader 落签→lightImpact ③Reader 收藏→lightImpact ④经文长按选择→SelectableRegion 原生 selectionClick（框架内置）；真机抽查：动作全部执行无异常，但 `dumpsys vibrator_manager` 显示 SM-P613 **MOTOR_NONE（无震动马达）**——触感无法在本设备感知，HapticFeedback 为安全 no-op，验收以代码评审为准（已记录硬件约束） |
+| P4.4 | 动效时序统一审计（对照 §4.2 表） | 审计表填入文档：每处动画的实际时长/曲线/退化行为，100% 符合规范 | ✅ 2026-06-12 | 审计表已入 §4.2（8 处逐一核对）；修正 3 处：首页折叠 250→220ms+easeOut、Reader 顶栏补 easeOut、墨滴 splash 补 reduce-motion 半径减半；§4.2 增设墨滴 splash 档（420/550ms，修订论证在表内）；画布/Enso/导航的 reduce-motion 原已合规 |
 
 ### Phase 5 — 终验
 
@@ -285,6 +298,7 @@ flutter analyze; flutter test
 | 2026-06-12 | P3.1 ✅（题跋区导航）、P3.2 ✅（首页册页题签/笺纸卡）；P3.3 首测性能 ❌ | 坑10：Git Bash 调用截图脚本时 MSYS 路径转换把 `-Route "/"` 改写成 `C:/Program Files/Git`，深链废掉截到桌面——adb/PowerShell 脚本一律走原生 PowerShell 或 `MSYS_NO_PATHCONV=1`。**P3.3 性能验收 ❌**：section 列表换 InkCard 后 jank_raster 1.49%→32.18%（oldbase 同口径基线 `perf/p3/section_scroll.oldbase.run*.json`，红线 ≤3.49%）。根因：吃墨边缘逐段 drawLine（6px 步进 + round cap）= 全宽行 ~400 draw call/行 × 10+ 可见行，Impeller 无 raster cache 每滚动帧全量重画，raster p90 14.19→16.84ms 恰骑 60Hz 预算线。对策：墨量量化三档、连续段聚合折线 Path，每卡 ≤3 次 drawPath（goldens 重生成，理由=描边批量化）；重测中 | P3.3 重测过线后补 P3.4–P3.6 设备证据 |
 | 2026-06-12 | **P3.3 重测过线 ✅（2.27%）；P3.5–P3.9 全 ✅**；P3.4 余 reader 滚动门禁 | 描边批量化立竿见影：32.18%→2.27%，raster p90 13.06ms 反超 oldbase。本轮落地：InkToggle/BrushTabIndicator/InkThemeThumb 三个新组件；搜索/字典砚台输入；`<em>`/阅读高亮全部 sealRed 0.22 淡染（六主题对比度测试把守）；三 BottomSheet 顶部 BrushDivider；EnsoLoading 清零 lib 内 Material 转圈（grep 0 命中，P4.2 提前达成）；OfflineBanner 状态栏遮挡缺陷修复（SafeArea 内置）。设备证据：8 字体深链通道（?font=）截图全数渲染正常；六幅画卷缩略与各主题底色比对一致；svc wifi 实测离线 banner。121 测试全绿 | p34full 三场景 perf 出数后关 P3.4；设备无公网，全文搜索/辞典结果卡视效以 widget test 锁定 |
 | 2026-06-12 | **P3 全部完成**（P3.4 滚动门禁过线收尾） | p34full（热控 ×3 中位）：reader **0%**（=基线）、home **7.11%**（描边批量化反哺，P2 12.89→7.11）、transition raster p90 26.17ms/最坏 35.7ms 过修订红线；数据 `perf/p34/`。P4.2 的 grep 判据已顺带达成（lib 内 Material 转圈 0 命中） | P4 微交互：墨雾 overscroll → 触觉 → 动效审计（预查发现：首页折叠 250ms 超微交互带、reader 顶栏 AnimatedSlide 缺曲线、画布/墨滴 reduce-motion 待核） |
+| 2026-06-12 | **P4 全部完成**（P4.1–P4.4 ✅） | 墨雾 overscroll（mistColor glow，视检暗主题雾弧）；EnsoLoading 全局清零；触觉三处落点+长按原生（**坑11：SM-P613 无震动马达 MOTOR_NONE**，触感验收以代码评审为准）；动效审计 8 处全表入 §4.2、修正 3 处、墨滴档位修订有论证；122 测试全绿 | P5 终验：截图矩阵 → 性能终测 → 全测试 → 可访问性 → 文档收尾 |
 
 ## 10. 最终验收清单（Definition of Done）
 

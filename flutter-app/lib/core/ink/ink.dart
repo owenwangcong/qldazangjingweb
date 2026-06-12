@@ -10,6 +10,7 @@
 library;
 
 export 'canvas/ink_scroll_canvas.dart';
+export 'motion/ink_mist_scroll_behavior.dart';
 export 'painting/brush_line.dart';
 export 'painting/enso_loading.dart';
 export 'painting/ink_card.dart';

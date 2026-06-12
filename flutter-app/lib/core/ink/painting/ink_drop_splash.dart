@@ -52,8 +52,14 @@ class _InkDropSplash extends InteractiveInkFeature {
   })  : _position = position,
         _borderRadius = borderRadius ?? BorderRadius.zero,
         _customBorder = customBorder,
-        _targetRadius = radius ??
-            _getTargetRadius(referenceBox, containedInkWell, rectCallback, position),
+        // reduce-motion：保留涟漪但幅度减半（§4.2 微交互退化）。
+        _targetRadius = (radius ??
+                _getTargetRadius(
+                    referenceBox, containedInkWell, rectCallback, position)) *
+            (WidgetsBinding.instance.platformDispatcher.accessibilityFeatures
+                    .disableAnimations
+                ? 0.5
+                : 1.0),
         _clipCallback = _getClipCallback(referenceBox, containedInkWell, rectCallback),
         super(controller: controller) {
     _radiusController = AnimationController(

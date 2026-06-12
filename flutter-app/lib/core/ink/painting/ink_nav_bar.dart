@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../tokens/ink_tokens.dart';
 import 'brush_line.dart';
@@ -98,7 +99,11 @@ class _InkNavDestination extends StatelessWidget {
       selected: selected,
       label: item.label,
       child: InkWell(
-        onTap: onTap,
+        onTap: () {
+          // 轻触觉（P4.3）：tab 切换如笔尖落纸。
+          HapticFeedback.selectionClick();
+          onTap();
+        },
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
