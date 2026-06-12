@@ -35,6 +35,10 @@ void main() {
     }
   }
 
+  // 热控（坑7）：被动散热平板上连续采样会热节流——首测 home 变重后
+  // reader raster p90 被均匀钳在 31ms（基线 3.9ms）。每段采样前静置降温。
+  const cooldown = Duration(seconds: 45);
+
   testWidgets('scroll perf: home + reader', (tester) async {
     await app.main();
     await pumpFor(tester, const Duration(seconds: 4)); // 目录流 + 首帧安定
@@ -44,6 +48,7 @@ void main() {
     // 预热：首次滚动含 raster 缓存构建，不计入稳态基线（冒烟跑实测
     // 预热污染让 home jank_raster 高达 83%）。
     await flingLoop(tester, homeList, rounds: 4);
+    await Future<void>.delayed(cooldown);
     await binding.traceAction(
       () => flingLoop(tester, homeList),
       reportKey: 'home_scroll',
@@ -55,9 +60,26 @@ void main() {
 
     final readerList = find.byType(Scrollable).hitTestable().first;
     await flingLoop(tester, readerList, rounds: 4); // 预热，同上
+    await Future<void>.delayed(cooldown);
     await binding.traceAction(
       () => flingLoop(tester, readerList),
       reportKey: 'reader_scroll',
+    );
+
+    // ---- 破墨转场（push/pop ×10，§6.1 第 3 行） -------------------------
+    appRouter.pop(); // 退出 Reader 回卷面
+    await pumpFor(tester, const Duration(milliseconds: 600));
+    await Future<void>.delayed(cooldown);
+    await binding.traceAction(
+      () async {
+        for (var i = 0; i < 10; i++) {
+          appRouter.push('/settings');
+          await pumpFor(tester, const Duration(milliseconds: 450));
+          appRouter.pop();
+          await pumpFor(tester, const Duration(milliseconds: 400));
+        }
+      },
+      reportKey: 'transition',
     );
   });
 }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'core/ink/canvas/ink_scroll_canvas.dart';
+import 'core/ink/shading/ink_paper_background.dart';
 import 'core/network/connectivity_service.dart';
 import 'core/theme/app_theme.dart';
 import 'core/utils/chinese_converter.dart';
@@ -43,6 +45,8 @@ class _QldzjAppState extends ConsumerState<QldzjApp> {
     super.initState();
     // Start draining the offline outbox in the background.
     ref.read(syncManagerProvider).start();
+    // 纸纹 shader 预热（烘焙位图前置依赖）：避免首屏纯色兜底帧。
+    InkPaperBackground.warmUp();
   }
 
   @override
@@ -56,6 +60,8 @@ class _QldzjAppState extends ConsumerState<QldzjApp> {
       debugShowCheckedModeBanner: false,
       theme: buildAppTheme(AppThemeId.fromKey(themeKey), fontFamily: fontFamily),
       routerConfig: appRouter,
+      // 一卷画布（P2.1）：持久画卷层跨路由不重建，所有页面浮于其上。
+      builder: (context, child) => InkScrollCanvas(child: child!),
     );
   }
 }

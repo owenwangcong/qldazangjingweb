@@ -14,6 +14,8 @@ void main() {
   Widget gallery(AppThemeId id) => MaterialApp(
         debugShowCheckedModeBanner: false,
         theme: buildAppTheme(id),
+        // P2.1 起 Scaffold 全局透明，组件 golden 须叠在画卷层上看（真实观感）。
+        builder: (context, child) => InkScrollCanvas(child: child!),
         home: Scaffold(
           body: MediaQuery(
             // 禁动画 → EnsoLoading 静止帧，golden 确定。
@@ -51,6 +53,7 @@ void main() {
   group('组件全家福 golden ×6 主题', () {
     for (final id in AppThemeId.values) {
       testWidgets('ink components golden - ${id.key}', (tester) async {
+        await tester.runAsync(InkPaperBackground.warmUp);
         await tester.pumpWidget(gallery(id));
         await tester.pump();
         await expectLater(

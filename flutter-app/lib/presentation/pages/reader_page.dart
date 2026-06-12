@@ -144,7 +144,7 @@ class _ReaderPageState extends ConsumerState<ReaderPage> {
     final book = bookAsync.value;
 
     return Scaffold(
-      backgroundColor: colors.background,
+      // 背景由 InkPaperBacking（路由统一垫纸）提供，保持透明让纸纹透出。
       body: book == null
           ? SafeArea(child: _buildLoadingOrOffline(colors))
           : _buildReader(context, book, colors),

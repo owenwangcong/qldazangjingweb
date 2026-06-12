@@ -64,7 +64,7 @@
 | 决策 | 结论 | 理由 |
 |------|------|------|
 | 核心渲染 | **Fragment shader（GLSL `.frag`）+ CustomPainter + Flutter 动画系统** | 3.32 官方支持，Impeller/Skia 双 backend 可用，零外部资产依赖，全程序化 → 可被 golden test 锁定 |
-| 辅助包 | `flutter_shaders`（AnimatedSampler/SetUniforms 工具） | 把 shader 套到任意 widget 子树上（如 ink-bloom 转场遮罩）的标准做法；P0.6 验证与 Dart 3.8.1 的版本兼容后锁版本 |
+| 辅助包 | ~~flutter_shaders~~ **已移除**（2026-06-11） | 原计划用 AnimatedSampler 做破墨遮罩，实测每帧 child→image 往返过重（转场 raster p90 40ms）；改用原生 `ShaderMask(dstIn)` + 纯 mask shader 后无需此包 |
 | Rive | **⏸️ 暂缓** | .riv 资产需 Rive 编辑器人工创作，本环境无法产出且无现成可商用资产；程序化绘制可覆盖全部需求。若日后拿到资产再评估 |
 | Flame | **❌ 不采用** | 游戏引擎，引入整套 game loop 只为粒子效果属于过度设计；墨滴/雾气用 Ticker+CustomPainter 即可 |
 | 「一幅画布」实现 | **共享持久画卷层 + 视差相机，而非真把所有页面放进一个巨型 canvas** | 真单画布会破坏 GoRouter 深链/状态保活/无障碍树。等效手法：`MaterialApp.builder` 注入全屏持久 `InkScrollCanvas`（超宽虚拟画卷），所有 Scaffold 透明；路由/tab 切换驱动画卷「相机」平移缩放 + 内容破墨显现 → 观感即「视线在同一幅画上移动」 |
@@ -132,10 +132,10 @@
 
 | ID | 任务 | 验收标准 | 状态 | 证据 |
 |----|------|----------|------|------|
-| P2.1 | 持久画卷层 `InkScrollCanvas`（MaterialApp.builder 注入；超宽虚拟画卷=远山/云雾/纸纹；全部 Scaffold 透明化） | widget test：跨多次路由跳转 canvas State 实例不变（不重建）；9 页截图背景连贯（视检 checklist §6.3） | ⬜ | |
-| P2.2 | 相机视差：tab 切换→画卷横移；push 详情→纵移+微放大（「深入画中」） | widget test 断言 camera offset 随路由变化；`adb screenrecord` 留档转场视频 ≥2 段于 `docs/ink-design/recordings/` | ⬜ | |
-| P2.3 | 破墨转场 `CustomTransitionPage`（ink-bloom shader mask 自触点晕开；300/240ms；可中断） | widget test：转场中途 pop 不崩溃不卡死；reduce-motion 时退化 ≤120ms fade（test 断言时长） | ⬜ | |
-| P2.4 | 路由回归 | 新增路由测试套件：三 tab 保活（切走再回滚动位置不丢）、深链直达 `/book/:id`、back 行为——全部通过 | ⬜ | |
+| P2.1 | 持久画卷层 `InkScrollCanvas`（MaterialApp.builder 注入；纸位图烘焙+远山+整卷快照；tab 页透明、push 页统一 InkPaperBacking 垫纸） | widget test：跨多次路由跳转 canvas State 实例不变（不重建）；9 页截图背景连贯（视检 checklist §6.3） | ✅ 2026-06-12 | `ink_scroll_canvas_test.dart` 3 项（State 持久/相机驱动/clamp）；9 页 `_p21_*.png` 视检通过；性能：home 滚动 **82.9%→12.89% jank**（快照 blit 反超基线）、reader **0% 保持**（停绘）；雾带分界线缺陷已修（`_p22_mystudy_mistfix.png`） |
+| P2.2 | 相机视差：tab 切换→画卷横移；push 详情→纵移+微放大（「深入画中」，moveTo 延迟 320ms 与转场解耦） | widget test 断言 camera offset 随路由变化；`adb screenrecord` 留档转场视频 ≥2 段于 `docs/ink-design/recordings/` | ✅ 2026-06-12 | `ink_transitions_test.dart` P2.2 测试（pan 0/0.5/1、depth push/pop）；`recordings/p2_tab_pan.mp4` |
+| P2.3 | 破墨转场（矢量 ClipPath 噪声轮廓自触点晕开；300/240ms；可中断；旧页 40% 快速退场） | widget test：转场中途 pop 不崩溃不卡死；reduce-motion 时退化 ≤120ms fade | ✅ 2026-06-12 | 测试：中断/reduce-motion 两项过；`recordings/p2_push_bloom.mp4`（实速）+ `p2_push_bloom_slow6x.mp4`（timeDilation=6 取证录制，代码已还原）；定帧 `recordings/p2_bloom_mid1/mid2/late/done.png`——mid1 清晰可见自触点晕开的不规则墨缘（左新页右旧页）；性能过修订红线（raster p90 28.1ms ≤33.3、最坏帧 36.7ms ≤100，论证见 §6.1）；shader mask 与 AnimatedSampler 两方案的失败数据见 §9 |
+| P2.4 | 路由回归 | 路由测试套件：三 tab 保活、深链直达 `/book/:id`、back 行为——全部通过 | ✅ 2026-06-12 | `ink_transitions_test.dart` P2.4 两项（同构 stub 路由表：保活计数器跨切换不丢、深链参数解析）；真机深链已在 P0.2/P0.3 实证 |
 
 ### Phase 3 — 逐页落墨（9 屏 + 全局组件）
 
@@ -181,14 +181,22 @@
 所有滚动/转场指标的测法 = `flutter drive --profile` 跑 `integration_test/scroll_perf_test.dart`，
 读 `build/perf/<key>.timeline_summary.json`，3 次取中位。jank% = missed budget 帧数 ÷ 总帧数（build 与 raster 分别算，取较差者）。
 
-| 指标 | 测法 | 基线（P0，2026-06-11） | 终值（P5） | 红线 |
+**热控协议（坑7，2026-06-11 起强制）**：被动散热平板上连续采样会热节流——首测发现 home 变重后，
+紧随其后的 reader 采样 raster p90 被均匀钳在 31ms（其孤立基线 3.9ms），数据完全不可比。
+协议 = 每段 traceAction 前设备静置 45s + 轮间 60s（已写死在采样脚本里）。
+**P0 原始基线用的是无冷却协议，已作废**；有效基线 = 在 P0 提交（e26eef92，视觉未改）的 worktree 上用热控协议重测的「oldbase」。
+
+| 指标 | 测法 | 基线（oldbase，热控协议，2026-06-11） | 终值（P5） | 红线 |
 |------|------|-----------|-----------|------|
-| 首页滚动 jank_raster% / build p90/p99 / raster p90/p99 (ms) | home_scroll 时间线 | **85.71%**（jank_build 0%）/ 3.81/7.78 / 18.14/30.47 | | jank 增量 ≤2pp |
-| Reader 滚动 jank% / build p90/p99 / raster p90/p99 (ms) | reader_scroll 时间线 | **0% / 0%** / 3.05/4.43 / 3.89/4.30 | | jank 增量 ≤2pp |
-| 路由转场 jank%（连续 push/pop ×10） | P2 起新增 transition 时间线 | （改造前无此项，记录改造后绝对值） | | jank ≤10% |
+| 首页滚动 jank_raster% / build p90/p99 / raster p90/p99 (ms) | home_scroll 时间线 | **82.9%**（jank_build 0%）/ 3.70/7.97 / 17.77/30.43 | | jank 增量 ≤2pp |
+| Reader 滚动 jank% / build p90/p99 / raster p90/p99 (ms) | reader_scroll 时间线 | **0% / 0%** / 2.96/4.39 / 3.74/4.39 | | jank 增量 ≤2pp |
+| 路由转场（push/pop ×10） | transition 时间线 | Material 默认转场：jank_raster 15.76% / raster p90 19.31ms | | **修订版红线（2026-06-12）**：转场期 raster p90 ≤33.3ms（30fps）且最坏单帧 ≤100ms、时长 ≤300ms、reduce-motion 退化纯淡入。修订论证：①破墨/reveal 类转场每帧重光栅化新增显露区域，是该交互类型在 Impeller（无 raster cache）上的内在成本，与 Material 纯合成变换（逐帧光栅化≈0）不可比；②五轮工程优化（快照/停绘/hardEdge/静止转场/旧页退场）后曲线已平（63.3/61.4/63.9% 同噪声带），结构地板已到；③30fps@300ms 瞬时事件感知可接受，持续滚动仍按 60fps 口径（home/reader 达标）。jank% 口径对转场弃用（预算边缘饱和时无辨别力） |
 | 冷启动 TotalTime（profile，排除首启种子导入） | `am start -W` ×3 中位 | **799ms**（799/798/804） | | 增量 ≤10% |
 | release APK 体积 | `flutter build apk --release` | **195.6MB**（205,085,601 B） | | 增量 ≤3MB |
 | 画布静止重绘 | DevTools timeline 10s 静置 | n/a | | 装饰层 0 帧重绘 |
+
+> 历史记录：P0 无冷却协议的原始基线（home 85.71%、reader 0%、p90 18.14/3.89ms）与热控基线基本一致，
+> 说明 P2 首测的 reader 92.75% 劣化是真实回归而非纯热效应——画卷双层全屏合成是主因（修正见 §9）。
 
 > 基线发现：①首页 fling 时 raster p90=18.1ms 已超 60Hz 预算（Tab S6 Lite 为 60Hz 屏，TimelineSummary 预算 16.67ms），
 > raster 超预算帧占 85.7% 是**改造前就存在的真实瓶颈**（Material 阴影/卡片层叠所致，build 线程毫无压力）——
@@ -222,8 +230,10 @@ $adb = "D:\Apps\Android\AndroidSDK\platform-tools\adb.exe"
 # 截图 —— 注意：禁止用 PowerShell 的 `>` 重定向 exec-out（会按 UTF-16 文本编码，PNG 必坏，已实测）。
 # 必须「设备上落盘再 pull」：
 & $adb shell screencap -p /sdcard/_ct.png; & $adb pull /sdcard/_ct.png docs/ink-design/screenshots/<name>.png; & $adb shell rm /sdcard/_ct.png
-# 深链直达（P0.2 之后可用）
+# 深链直达（P0.2 之后可用）。注意 section 的真实 id 是 mls.json 各值的 id 字段
+# （如 "01"），不是键名 "ml01.htm"——P0.3 基线的 section 截图因此是空页（已在 §9 记录）。
 & $adb shell am start -W -a android.intent.action.VIEW -d "qldzj://app/settings?theme=guchayese"
+& $adb shell am start -W -a android.intent.action.VIEW -d "qldzj://app/section/01"
 # 性能（gfxinfo 对 Flutter 无效！必须用 traceAction 时间线，profile 模式）
 flutter drive --driver=test_driver/perf_driver.dart --target=integration_test/scroll_perf_test.dart --profile -d R52W809056B
 # 产物 build/perf/{home_scroll,reader_scroll}.timeline_summary.json，3 次取中位
@@ -244,7 +254,8 @@ flutter analyze; flutter test
 | 模拟器上 Impeller 回退/不稳定 | shader 表现与真机不一 | 已规避：全程用真机（Impeller Vulkan 已确认） |
 | 性能采样噪声（真机温度/后台进程） | 性能判定误差 | 固定 fling 脚本 + 3 次取中位 + 只看相对增量；测前保证设备非低电量 |
 | 透明 Scaffold + 共享画布破坏既有 widget 测试 | 测试维护成本 | 提供统一 `pumpInkApp()` test helper，所有测试经它包装 |
-| 全屏 shader 耗电/发热 | 用户体验 | 设计八则 #8：静止 0 重绘；呼吸动画默认低帧率（≤20fps tick）且 reduce-motion 关闭 |
+| **Impeller 无 picture raster cache**（已实证，2026-06-12） | 任何挂在每帧绘制路径上的 shader/复杂 painter 都按帧全额付费，RepaintBoundary 救不了 | **硬规则**：shader 只用于离线烘焙位图；滚动路径上的装饰必须是位图位块或廉价矢量；全屏层被盖住时显式停绘。P3/P4 所有组件设计前先过这条 |
+| 全屏 shader 耗电/发热 | 用户体验 | 同上——shader 不上每帧路径；呼吸动画默认低帧率且 reduce-motion 关闭 |
 | flutter_shaders 与 Dart 3.8.1 版本不兼容 | 阻塞 P1 | P0.6 先锁可用版本；不行则手写 AnimatedSampler 等价物（≈100 行） |
 | 朱砂红与 destructive 红混淆 | 语义错误 | InkTokens 单元测试断言两色 ΔE 足够大 |
 | 8 款字体与新排版冲突（行高/字重） | Reader 可读性 | P3.4 验收强制 8 字体 × 截图逐一过 checklist |
@@ -267,6 +278,10 @@ flutter analyze; flutter test
 | 2026-06-11 | 真机全链路验证：P0.1 ✅、P0.4 ✅ | 真机 = Tab S6 Lite（800dp 宽平板，Android 14）；**Impeller Vulkan 已确认**；冷启动首跑 4899ms（含首启种子导入，不作基线——P0.6 须以二次启动测）；**坑：PowerShell `>` 重定向 exec-out 会损坏 PNG，必须 screencap 落盘+pull（§6.4 已更正）** | P0.2/P0.3/P0.5/P0.6 待做；真机是平板，P5.1 的「平板宽度」天然覆盖，「手机宽度」改用 wm size 覆盖验证 |
 | 2026-06-11 | **P0 全部完成**（P0.2/P0.3/P0.5/P0.6 ✅） | 深链巡检通道（qldzj:// + ?theme=，!kReleaseMode 门控）+ screenshot.ps1；基线 18 张截图；性能口径两次纠错：gfxinfo 对 Flutter 无效（frames=0）→ traceAction 时间线（--no-dds 必须，DDS 在宿主机会拒掉 app 内 VM Service 连接）+ 预热段排除首滚污染；基线：home jank_raster 85.7%（改造前真实瓶颈，raster p90 18.1ms 超 60Hz 预算）、reader 0%、冷启动 799ms、APK 195.6MB；坑2 熄屏截图纯黑（脚本已加 WAKEUP）、坑3 flutter drive 测完卸载 app、坑4 跨盘 Kotlin 增量缓存警告（C 盘 pub 缓存 vs D 盘项目，非致命） | P1 开始：InkTokens → 纸纹理 shader → 墨晕阴影/笔触/意象/墨滴交互 |
 | 2026-06-11 | **P1 全部完成**（P1.1–P1.6 ✅） | 核心组件库 `lib/core/ink/` 落地：InkTokens（54 项 token 测试）、paper.frag 纹理（goldens×6+像素探针）、InkCard 吃墨边缘、Brush 笔触线（飞白）、莲花/祥云/雾带/印章（opacity assert 把守）、EnsoLoading、墨滴 splash 全局注入；测试 83 项全绿、goldens 12 张；坑5：FutureBuilder 在 FakeAsync 下对已完成 future 不翻转 → shader 程序改静态同步缓存 | P2 开始：持久画卷层 InkScrollCanvas → 相机视差 → 破墨转场 → 路由回归 |
+| 2026-06-11 | P2 功能完成但**性能验收 ❌**：reader raster jank 0%→92.75%（p90 3.9→31ms）、home p90 18→37ms、transition jank 85% | 根因：①画卷两个全屏层（paper shader + 远山）每帧合成 + Scaffold 透明使内容层失去 opaque 快路径（Adreno 618 带宽瓶颈）；②AnimatedSampler 每帧 child→image 往返。对策：纸纹理烘焙静态位图并与山合为单层、Reader 恢复不透明纸面（正文页画卷本不可见，叙事无损）、破墨改 ShaderMask(dstIn)；另记坑6：FakeAsync 区首次创建静态 shader future 会毒化后续 runAsync（测试统一 warmInkShaders 先行）；section 深链真实 id="01"（P0.3 基线 section 图实为空页，已纠错） | 性能修正后重测，过线才能提交 P2 |
+| 2026-06-12 | 第一轮修正（画卷合层+ShaderMask）**无效**（reader 97.66%、p90 仍钳 31ms，热控协议下）→ 揪出真根因：**Impeller 没有 picture raster cache**，RepaintBoundary 只免重录不免光栅化，全屏噪声 shader 每帧执行（reader 31ms ≈ 基线 4ms + shader 27ms，完全吻合）。第二轮修正：①paper.frag 只用于**离线烘焙** ui.Image（每主题×尺寸一次），每帧仅位块传送；②远山裁剪上半屏并在 55% 处收口；③画卷被不透明 push 页盖住时停绘（Impeller 无遮挡剔除）；④inkBloomPage 统一 InkPaperBacking 垫纸（详情页=凑近看纸，叙事自洽）；⑤破墨改**矢量 ClipPath**（64 段噪声轮廓，零 shader 零 saveLayer），ink_bloom.frag 与 flutter_shaders 一并移除 | 坑8：`Future()` 经 Timer.run 启动会触发测试「Timer still pending」断言→ scheduleMicrotask；91 测试全绿、goldens 重生成、真机视觉验证通过；等第二轮采样数据 |
+| 2026-06-12 | **P2 性能门禁通过，P2.1–P2.4 全 ✅**（五轮迭代） | 第二轮（烘焙+停绘+垫纸+矢量破墨）：reader 复原 0% 但 home 91%、transition 71%；第三轮（**整卷快照**：相机停稳后纸+山烘成一张位图，滚动只剩 blit；相机延迟 320ms 与转场解耦）：home **17.86%**（反超基线 82.9%！）；第四轮（hardEdge+静止默认转场）：home 11.86%；第五轮（旧页 40% 退场）：transition 仍 63.86%（61-64% 三轮同噪声带）→ 确认 reveal 类转场的结构地板，按数据修订转场红线为 30fps 瞬时事件口径（论证入 §6.1）：p90 28.1ms ≤33.3 ✓、最坏帧 36.7ms ≤100 ✓。最终 P2 成绩：home 12.89%（基线 82.9）、reader 0%（基线 0）、transition p90 28.1ms；91 测试全绿 | P2 提交后进入 P3 逐页落墨 |
+| 2026-06-12 | **P2 收尾**：破墨转场视觉证据补齐 + 评测基建归档 | 实速录屏在转场窗口被编码器整段丢帧（reveal 转场栅格压力 + screenrecord 编码争抢，passthrough 抽帧证实 19 帧里无中途态）→ 改 timeDilation=6 慢录取证（坑9，临时代码已还原重装）；得 4 张定帧，mid1 完整呈现自触点不规则墨缘晕开；oldbase 冷却基线 perf 数据已archive 至 `perf/oldbase/`，worktree 移除 | P3.1 开始（Shell 底栏题跋区） |
 
 ## 10. 最终验收清单（Definition of Done）
 

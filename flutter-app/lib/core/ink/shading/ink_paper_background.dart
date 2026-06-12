@@ -30,6 +30,9 @@ class InkPaperBackground extends StatelessWidget {
     _cached = await _program;
   }
 
+  /// 已加载的程序（画卷层直接取用，未加载时为 null → 纯纸色兜底）。
+  static ui.FragmentProgram? get cachedProgram => _cached;
+
   @override
   Widget build(BuildContext context) {
     final ink = context.ink;

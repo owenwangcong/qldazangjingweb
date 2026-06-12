@@ -48,8 +48,6 @@ dependencies:
   path_provider: ^2.1.5
   flutter_markdown: ^0.7.7+1
   share_plus: ^12.0.2
-  # 水墨改造：fragment shader 工具（AnimatedSampler/SetUniforms），见 docs/ink-design-plan.md §3
-  flutter_shaders: ^0.1.3
 
 dev_dependencies:
   flutter_test:
@@ -88,6 +86,8 @@ flutter:
   uses-material-design: true
 
   # 水墨设计语言的 fragment shaders（impellerc 编译，FragmentProgram 加载）。
+  # 注意：Impeller 无 raster cache，全屏 shader 每帧都会执行——shader 只用于
+  # 离线烘焙（paper.frag 烘成位图），不直接挂在每帧绘制路径上（§9 性能教训）。
   shaders:
     - shaders/paper.frag
 

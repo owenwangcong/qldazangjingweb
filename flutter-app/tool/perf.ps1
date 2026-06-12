@@ -20,11 +20,12 @@ $adb = "D:\Apps\Android\AndroidSDK\platform-tools\adb.exe"
 & $adb shell input keyevent KEYCODE_WAKEUP | Out-Null
 & $adb shell wm dismiss-keyguard | Out-Null
 
-$keys = @("home_scroll", "reader_scroll")
+$keys = @("home_scroll", "reader_scroll", "transition")
 $collected = @{}
 foreach ($k in $keys) { $collected[$k] = @() }
 
 for ($i = 1; $i -le $Runs; $i++) {
+  if ($i -gt 1) { Start-Sleep -Seconds 60 }  # 轮间降温（热控，见 §6.1）
   Write-Output ">>> run $i/$Runs"
   Push-Location $appDir
   try {

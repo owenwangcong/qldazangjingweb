@@ -265,18 +265,31 @@ ThemeData buildAppTheme(AppThemeId id, {String? fontFamily}) {
     // 全 App 统一阅读字体（对齐 web 的全站换字行为）；缺字自动回退系统字体。
     fontFamily: fontFamily,
     colorScheme: scheme,
+    // 默认页转场置为静止：水墨转场全部由 inkBloomPage（破墨）承担；
+    // Android 默认 Zoom 转场会给 outgoing 页加 scrim+scale 合成层，
+    // 在 Impeller 无 raster cache 下白白多付一层全屏（§9 性能教训）。
+    pageTransitionsTheme: const PageTransitionsTheme(builders: {
+      TargetPlatform.android: _StillPageTransitionsBuilder(),
+      TargetPlatform.iOS: _StillPageTransitionsBuilder(),
+      TargetPlatform.windows: _StillPageTransitionsBuilder(),
+      TargetPlatform.macOS: _StillPageTransitionsBuilder(),
+      TargetPlatform.linux: _StillPageTransitionsBuilder(),
+    }),
     // 墨滴涟漪（P1.6）：触点如墨入纸，全局替换 Material ripple。
     splashFactory: const InkDropSplashFactory(),
     splashColor: ink.inkMedium.withValues(alpha: 0.16),
     highlightColor: ink.inkLight.withValues(alpha: 0.08),
-    scaffoldBackgroundColor: c.background,
+    // 一卷画布（P2.1）：页面不再各自铺底色，背景统一由 InkScrollCanvas
+    // 持久层绘制（纸纹理+远山），Scaffold 一律透明。
+    scaffoldBackgroundColor: Colors.transparent,
     cardColor: c.card,
     dividerColor: c.border,
     appBarTheme: AppBarTheme(
-      backgroundColor: c.background,
+      // 半透明纸色：标题可读，又不遮断画卷的连续感。
+      backgroundColor: c.background.withValues(alpha: 0.88),
       foregroundColor: c.foreground,
       elevation: 0,
-      scrolledUnderElevation: 0.5,
+      scrolledUnderElevation: 0,
       centerTitle: true,
     ),
     bottomSheetTheme: BottomSheetThemeData(
@@ -306,4 +319,31 @@ ThemeData buildAppTheme(AppThemeId id, {String? fontFamily}) {
 
 extension AppColorsX on BuildContext {
   AppColors get colors => Theme.of(this).extension<AppColors>()!;
+}
+
+/// 静止页转场 + 快速退场：自身出入场不做动画（让位给 inkBloomPage 的
+/// 破墨层）；被新页压住时前 40% 淡出到 0——opacity 为 0 后 Flutter 跳过
+/// 整页绘制，破墨转场的后 60% 帧只需光栅化新页（§9 性能教训：转场期
+/// 同画两页是 raster 大头）。
+class _StillPageTransitionsBuilder extends PageTransitionsBuilder {
+  const _StillPageTransitionsBuilder();
+
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    return FadeTransition(
+      opacity: ReverseAnimation(
+        CurvedAnimation(
+          parent: secondaryAnimation,
+          curve: const Interval(0, 0.4),
+        ),
+      ),
+      child: child,
+    );
+  }
 }
