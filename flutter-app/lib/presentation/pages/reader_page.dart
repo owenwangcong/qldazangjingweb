@@ -360,6 +360,7 @@ class _ReaderPageState extends ConsumerState<ReaderPage> {
                 onPressed: () => _toggleFavorite(isFavorite, display),
                 icon: Icon(
                   isFavorite ? Icons.favorite : Icons.favorite_border,
+                  semanticLabel: isFavorite ? '取消收藏' : '收藏',
                   color: isFavorite ? colors.destructive : colors.foreground,
                 ),
               ),
@@ -368,21 +369,21 @@ class _ReaderPageState extends ConsumerState<ReaderPage> {
                 constraints:
                     const BoxConstraints(minWidth: 48, minHeight: 48),
                 onPressed: () => _addBookmark(book, display),
-                icon: const Icon(Icons.bookmark_add_outlined),
+                icon: const Icon(Icons.bookmark_add_outlined, semanticLabel: '添加书签'),
               ),
               IconButton(
                 tooltip: '目录',
                 constraints:
                     const BoxConstraints(minWidth: 48, minHeight: 48),
                 onPressed: () => _showToc(book),
-                icon: const Icon(Icons.toc),
+                icon: const Icon(Icons.toc, semanticLabel: '目录'),
               ),
               IconButton(
                 tooltip: '阅读设置',
                 constraints:
                     const BoxConstraints(minWidth: 48, minHeight: 48),
                 onPressed: () => showReaderSettingsSheet(context),
-                icon: const Icon(Icons.text_fields),
+                icon: const Icon(Icons.text_fields, semanticLabel: '阅读设置'),
               ),
             ],
           ),

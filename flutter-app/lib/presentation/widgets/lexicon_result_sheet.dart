@@ -117,7 +117,7 @@ class _LexiconResultSheetState extends ConsumerState<_LexiconResultSheet> {
                   constraints:
                       const BoxConstraints(minWidth: 48, minHeight: 48),
                   onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.close),
+                  icon: const Icon(Icons.close, semanticLabel: '关闭'),
                 ),
               ],
             ),

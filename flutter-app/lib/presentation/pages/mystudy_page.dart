@@ -51,13 +51,13 @@ class MyStudyPage extends ConsumerWidget {
               tooltip: '离线缓存',
               constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
               onPressed: () => context.push('/downloads'),
-              icon: const Icon(Icons.download_done_outlined),
+              icon: const Icon(Icons.download_done_outlined, semanticLabel: '离线缓存'),
             ),
             IconButton(
               tooltip: '设置',
               constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
               onPressed: () => context.push('/settings'),
-              icon: const Icon(Icons.settings_outlined),
+              icon: const Icon(Icons.settings_outlined, semanticLabel: '设置'),
             ),
           ],
           bottom: TabBar(

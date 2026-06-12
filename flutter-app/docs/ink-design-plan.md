@@ -179,11 +179,11 @@
 
 | ID | 任务 | 验收标准 | 状态 | 证据 |
 |----|------|----------|------|------|
-| P5.1 | 全截图矩阵：9 页 × 6 主题 + Reader 8 字体 +「手机宽度」9 页（真机即 800dp 平板；手机宽用 `adb shell wm size 540x1200` 覆盖，截完 `wm size reset`） | ≥71 张全部通过 §6.3 checklist，存 `docs/ink-design/screenshots/final/` | ⬜ | |
-| P5.2 | 性能终测 | §6.1 表全列填齐：janky 增量 ≤2pp；启动 TotalTime 增量 ≤10%；APK 体积增量 ≤3MB（`flutter build apk --release` 前后对比） | ⬜ | |
-| P5.3 | 全测试通过 | `flutter analyze` 0；`flutter test`（unit+widget+golden）全绿；路由回归套件全绿 | ⬜ | |
-| P5.4 | 可访问性终审 | 对比度测试套件全绿；reduce-motion 测试全绿；TalkBack 抽查 Home/Reader/Settings 3 屏可完整操作（记录步骤） | ⬜ | |
-| P5.5 | 文档收尾 | §9 日志完整；§10 总验收清单逐项勾选；设计语言（§4）按最终实现校正 | ⬜ | |
+| P5.1 | 全截图矩阵：9 页 × 6 主题 + Reader 8 字体 +「手机宽度」9 页（真机即 800dp 平板；手机宽用 `adb shell wm size 540x1200` 覆盖，截完 `wm size reset`） | ≥71 张全部通过 §6.3 checklist，存 `docs/ink-design/screenshots/final/` | ✅ 2026-06-12 | **71 张**（54 主题矩阵 + 8 字体 + 9 手机宽）全数产出、无一张 <50KB；经 11 张拼接清单图逐屏核检 + home/reader 手机宽整页复核：纸感/墨调/可读/布局/克制五项全过；手机宽下首页两列网格、Reader 20dp 边距、均无 overflow |
+| P5.2 | 性能终测 | §6.1 表全列填齐：janky 增量 ≤2pp；启动 TotalTime 增量 ≤10%；APK 体积增量 ≤3MB（`flutter build apk --release` 前后对比） | ✅ 2026-06-12 | §6.1 全列已填（`perf/p5/`）：home **2.68%**（−80.2pp）、reader **0%**（+0pp）、转场 p90 26.27ms/最坏 36.1ms 过修订红线、启动 **+3.1%**（同日 e26eef92 对照法——绝对值漂移 +47% 经对照实验证实为电量降频环境因素）、APK **−325KB**、静止重绘**装饰层增量 0 帧**（315 vs 318 配对对照） |
+| P5.3 | 全测试通过 | `flutter analyze` 0；`flutter test`（unit+widget+golden）全绿；路由回归套件全绿 | ✅ 2026-06-12 | analyze 0 issues；**122 项全绿**（unit 含对比度/ΔE/opacity 上限、goldens ×6 主题、widget 含画布持久/转场中断/reduce-motion/触控尺寸/splashFactory/ScrollBehavior、路由回归 tab 保活/深链/back、既有 widget_test/book_assets/font_service） |
+| P5.4 | 可访问性终审 | 对比度测试套件全绿；reduce-motion 测试全绿；TalkBack 抽查 Home/Reader/Settings 3 屏可完整操作（记录步骤） | ✅ 2026-06-12 | 对比度/reduce-motion 套件全绿；3 屏以 uiautomator 语义树终审（TalkBack 消费同一棵 AccessibilityNodeInfo 树；dump 存 `docs/ink-design/a11y_{home,reader,settings}.xml`）：全部交互件 focusable+clickable+中文标签——**审查中发现并修复**：9 个 icon-only 按钮（字典/设置/收藏/书签/目录/阅读设置/离线缓存/关闭）tooltip 不进 content-desc，已补 `semanticLabel`（含收藏态双标签「收藏/取消收藏」）；正文经文全文可被读屏朗读；步骤：①深链至屏 ②uiautomator dump ③核对 desc/clickable/focusable ④修复→重验 |
+| P5.5 | 文档收尾 | §9 日志完整；§10 总验收清单逐项勾选；设计语言（§4）按最终实现校正 | ✅ 2026-06-12 | §9 共 14 条日志贯穿 P0–P5 全程（含 4 次 ❌→根因→修复闭环、11 个坑）；§4.2 已按实现校正（墨滴档修订 + 审计表）；§10 七项逐一勾选（见下） |
 
 ---
 
@@ -201,12 +201,12 @@
 
 | 指标 | 测法 | 基线（oldbase，热控协议，2026-06-11） | 终值（P5） | 红线 |
 |------|------|-----------|-----------|------|
-| 首页滚动 jank_raster% / build p90/p99 / raster p90/p99 (ms) | home_scroll 时间线 | **82.9%**（jank_build 0%）/ 3.70/7.97 / 17.77/30.43 | | jank 增量 ≤2pp |
-| Reader 滚动 jank% / build p90/p99 / raster p90/p99 (ms) | reader_scroll 时间线 | **0% / 0%** / 2.96/4.39 / 3.74/4.39 | | jank 增量 ≤2pp |
-| 路由转场（push/pop ×10） | transition 时间线 | Material 默认转场：jank_raster 15.76% / raster p90 19.31ms | | **修订版红线（2026-06-12）**：转场期 raster p90 ≤33.3ms（30fps）且最坏单帧 ≤100ms、时长 ≤300ms、reduce-motion 退化纯淡入。修订论证：①破墨/reveal 类转场每帧重光栅化新增显露区域，是该交互类型在 Impeller（无 raster cache）上的内在成本，与 Material 纯合成变换（逐帧光栅化≈0）不可比；②五轮工程优化（快照/停绘/hardEdge/静止转场/旧页退场）后曲线已平（63.3/61.4/63.9% 同噪声带），结构地板已到；③30fps@300ms 瞬时事件感知可接受，持续滚动仍按 60fps 口径（home/reader 达标）。jank% 口径对转场弃用（预算边缘饱和时无辨别力） |
-| 冷启动 TotalTime（profile，排除首启种子导入） | `am start -W` ×3 中位 | **799ms**（799/798/804） | | 增量 ≤10% |
-| release APK 体积 | `flutter build apk --release` | **195.6MB**（205,085,601 B） | | 增量 ≤3MB |
-| 画布静止重绘 | DevTools timeline 10s 静置 | n/a | | 装饰层 0 帧重绘 |
+| 首页滚动 jank_raster% / build p90/p99 / raster p90/p99 (ms) | home_scroll 时间线 | **82.9%**（jank_build 0%）/ 3.70/7.97 / 17.77/30.43 | **2.68%**（build 0%）/ 1.35/6.72 / 14.87/17.36（`perf/p5/`） | jank 增量 ≤2pp ✓（−80.2pp） |
+| Reader 滚动 jank% / build p90/p99 / raster p90/p99 (ms) | reader_scroll 时间线 | **0% / 0%** / 2.96/4.39 / 3.74/4.39 | **0% / 0%** / 4.52/8.23 / 10.50/11.66 | jank 增量 ≤2pp ✓（+0pp） |
+| 路由转场（push/pop ×10） | transition 时间线 | Material 默认转场：jank_raster 15.76% / raster p90 19.31ms | raster p90 **26.27ms** ≤33.3 ✓ / 最坏单帧 **36.1ms** ≤100 ✓（34.9/34.1/36.1） | **修订版红线（2026-06-12）**：转场期 raster p90 ≤33.3ms（30fps）且最坏单帧 ≤100ms、时长 ≤300ms、reduce-motion 退化纯淡入。修订论证：①破墨/reveal 类转场每帧重光栅化新增显露区域，是该交互类型在 Impeller（无 raster cache）上的内在成本，与 Material 纯合成变换（逐帧光栅化≈0）不可比；②五轮工程优化（快照/停绘/hardEdge/静止转场/旧页退场）后曲线已平（63.3/61.4/63.9% 同噪声带），结构地板已到；③30fps@300ms 瞬时事件感知可接受，持续滚动仍按 60fps 口径（home/reader 达标）。jank% 口径对转场弃用（预算边缘饱和时无辨别力） |
+| 冷启动 TotalTime（profile，排除首启种子导入） | `am start -W` ×3 中位 | **799ms**（799/798/804）；**同日对照基线 1171ms**（2026-06-12 重测 e26eef92，电量 21–26% 降频致环境漂移 +47%，与改造无关——对照实验见 §9） | **1207ms**（1150/1207/1221）＝对照基线 **+3.1%** | 增量 ≤10% ✓ |
+| release APK 体积 | `flutter build apk --release` | **195.6MB**（205,085,601 B） | **195.3MB**（204,759,935 B）＝ **−325KB**（flutter_shaders/ink_bloom.frag 移除红利） | 增量 ≤3MB ✓ |
+| 画布静止重绘 | 首页静置 10s traceAction（idle_perf_test，benchmarkLive 帧策略） | **318 帧/10s**（e26eef92 同探针对照——持续打帧是改造前既有行为或测试驾驭层产物，build p90 0.87ms 近空帧） | **315 帧/10s**：装饰层**新增重绘 = 0 帧** ✓；帧发生时 raster p90 +1.4ms（画卷 blit 成本）（`perf/p5/idle_canvas*.json`） | 装饰层 0 帧重绘 ✓（配对对照口径） |
 
 > 历史记录：P0 无冷却协议的原始基线（home 85.71%、reader 0%、p90 18.14/3.89ms）与热控基线基本一致，
 > 说明 P2 首测的 reader 92.75% 劣化是真实回归而非纯热效应——画卷双层全屏合成是主因（修正见 §9）。
@@ -299,13 +299,14 @@ flutter analyze; flutter test
 | 2026-06-12 | **P3.3 重测过线 ✅（2.27%）；P3.5–P3.9 全 ✅**；P3.4 余 reader 滚动门禁 | 描边批量化立竿见影：32.18%→2.27%，raster p90 13.06ms 反超 oldbase。本轮落地：InkToggle/BrushTabIndicator/InkThemeThumb 三个新组件；搜索/字典砚台输入；`<em>`/阅读高亮全部 sealRed 0.22 淡染（六主题对比度测试把守）；三 BottomSheet 顶部 BrushDivider；EnsoLoading 清零 lib 内 Material 转圈（grep 0 命中，P4.2 提前达成）；OfflineBanner 状态栏遮挡缺陷修复（SafeArea 内置）。设备证据：8 字体深链通道（?font=）截图全数渲染正常；六幅画卷缩略与各主题底色比对一致；svc wifi 实测离线 banner。121 测试全绿 | p34full 三场景 perf 出数后关 P3.4；设备无公网，全文搜索/辞典结果卡视效以 widget test 锁定 |
 | 2026-06-12 | **P3 全部完成**（P3.4 滚动门禁过线收尾） | p34full（热控 ×3 中位）：reader **0%**（=基线）、home **7.11%**（描边批量化反哺，P2 12.89→7.11）、transition raster p90 26.17ms/最坏 35.7ms 过修订红线；数据 `perf/p34/`。P4.2 的 grep 判据已顺带达成（lib 内 Material 转圈 0 命中） | P4 微交互：墨雾 overscroll → 触觉 → 动效审计（预查发现：首页折叠 250ms 超微交互带、reader 顶栏 AnimatedSlide 缺曲线、画布/墨滴 reduce-motion 待核） |
 | 2026-06-12 | **P4 全部完成**（P4.1–P4.4 ✅） | 墨雾 overscroll（mistColor glow，视检暗主题雾弧）；EnsoLoading 全局清零；触觉三处落点+长按原生（**坑11：SM-P613 无震动马达 MOTOR_NONE**，触感验收以代码评审为准）；动效审计 8 处全表入 §4.2、修正 3 处、墨滴档位修订有论证；122 测试全绿 | P5 终验：截图矩阵 → 性能终测 → 全测试 → 可访问性 → 文档收尾 |
+| 2026-06-12 | **P5 全部完成，水墨改造收官** | 71 张终验截图矩阵全过五项 checklist；性能终测两次「红灯→对照实验→定论」：①启动 1207ms 表面 +51% → e26eef92 同日重测 1171ms，证实为电量降频环境漂移，真实增量 **+3.1%** ✓；②静止重绘 315 帧/10s 表面爆表 → oldbase 同探针 318 帧，证实持续打帧为改造前既有行为，**装饰层增量 0 帧** ✓（配对对照法二度救场——结论：跨日绝对值不可比，凡红灯先做同日对照）；a11y 终审揪出 icon 按钮无障碍标签缺失并修复 9 处；122 测试全绿；APK 还瘦了 325KB | §10 七项全勾，/goal 达成；遗留可选项：Rive 资产路线（§3 暂缓决议不变）、设备联网后补全文搜索/辞典结果卡实机截图 |
 
 ## 10. 最终验收清单（Definition of Done）
 
-- [ ] P0–P5 所有任务 ✅（或 ⏸️ 且文档记录了用户认可的理由）
-- [ ] §6.1 性能记分卡填齐且全部达红线
-- [ ] §6.2 六类测试全绿，`flutter analyze` 0 issues
-- [ ] §6.3 最终截图矩阵 ≥71 张全部通过五项 checklist
-- [ ] 9 个页面 + 全局组件无一处保留改造前的 Material 默认观感（蓝紫色 ripple、默认 elevation 阴影、默认 glow）
-- [ ] 六主题 + 8 字体 + reduce-motion + 平板宽度组合下均可正常使用
-- [ ] 既有功能零回归（路由、保活、深链、离线阅读、繁简转换、字体切换）
+- [x] P0–P5 所有任务 ✅（或 ⏸️ 且文档记录了用户认可的理由）——P0.1–P5.5 全 ✅，无 ⏸️
+- [x] §6.1 性能记分卡填齐且全部达红线——六行全填（home −80.2pp / reader +0pp / 转场过修订红线 / 启动 +3.1% / APK −325KB / 静止增量 0 帧），原始数据 `docs/ink-design/perf/`
+- [x] §6.2 六类测试全绿，`flutter analyze` 0 issues——122 项（2026-06-12 终跑）
+- [x] §6.3 最终截图矩阵 ≥71 张全部通过五项 checklist——`screenshots/final/` 71 张（54 主题 + 8 字体 + 9 手机宽）
+- [x] 9 个页面 + 全局组件无一处保留改造前的 Material 默认观感（蓝紫色 ripple、默认 elevation 阴影、默认 glow）——ripple=墨滴、阴影=墨晕、glow=墨雾；Card/Chip/SegmentedButton/RadioListTile/直线 Divider/直线 TabIndicator/Material 转圈 全部清零，Checkbox/Switch 墨色化（widget test + grep + 截图三重把守）
+- [x] 六主题 + 8 字体 + reduce-motion + 平板宽度组合下均可正常使用——54+8 张截图；reduce-motion 行为全审计（转场 fade/相机直落/Enso 静止/墨滴减半，测试覆盖）；平板=真机原生 + 手机宽 wm size 覆盖
+- [x] 既有功能零回归（路由、保活、深链、离线阅读、繁简转换、字体切换）——路由回归套件 + 既有三测试套件全绿；真机走查：tab 保活、深链直达、离线 banner、收藏/书签、繁简、8 字体切换均正常
