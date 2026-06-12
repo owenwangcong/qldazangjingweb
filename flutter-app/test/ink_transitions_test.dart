@@ -178,6 +178,19 @@ void main() {
       expect(seed.contains(origin), isTrue, reason: '种子斑应包含触点');
       expect(seed.getBounds().width, greaterThan(20),
           reason: '种子斑半径应有可见尺度（r0≈28）');
+
+      // S3 径向偏移：外扩/内缩路径与基准路径严格嵌套（环带构造前提）。
+      final base = inkBloomPath(size, 0.5, origin);
+      final outer = inkBloomPath(size, 0.5, origin, radiusOffset: 30);
+      final inner = inkBloomPath(size, 0.5, origin, radiusOffset: -30);
+      for (var t = 0.0; t < 1.0; t += 0.1) {
+        final m = base.computeMetrics().first;
+        final pt = m.getTangentForOffset(m.length * t)!.position;
+        expect(outer.contains(pt), isTrue,
+            reason: '基准轮廓上的点应在 +30 外扩路径内');
+        expect(inner.contains(pt), isFalse,
+            reason: '基准轮廓上的点应在 -30 内缩路径外');
+      }
     }
   });
 

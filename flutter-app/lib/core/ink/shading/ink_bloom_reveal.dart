@@ -1,4 +1,6 @@
 import 'dart:math' as math;
+import 'dart:typed_data';
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
@@ -21,7 +23,27 @@ const double inkReduceMotionFraction = 0.31;
 ///
 /// 起伏由固定相位的正弦叠加生成——确定性、跨帧连贯（同一角度的凸起
 /// 随半径同步生长，像墨沿纸纤维的指状渗透）。
-Path inkBloomPath(Size size, double progress, Offset? origin) {
+///
+/// [radiusOffset]：沿径向整体外扩/内缩（逻辑 px），用于构造贴合噪声轮廓
+/// 的同心环带（S3 纸雾软前沿）——径向渐变 shader 与 wobble（±20%r）会
+/// 错位，唯有从同一顶点族派生才能逐帧贴合。
+Path inkBloomPath(Size size, double progress, Offset? origin,
+    {double radiusOffset = 0}) {
+  final pts = _bloomRing(size, progress, origin, radiusOffset);
+  final path = Path()..moveTo(pts[0].dx, pts[0].dy);
+  for (var i = 1; i < pts.length; i++) {
+    path.lineTo(pts[i].dx, pts[i].dy);
+  }
+  path.close();
+  return path;
+}
+
+const int _bloomSegments = 32;
+
+/// 墨晕轮廓的逐角度顶点（含首尾重合点，共 segments+1 个）——
+/// [inkBloomPath]（裁剪/描边）与纸雾三角带（S3）共用同一份顶点数学。
+List<Offset> _bloomRing(
+    Size size, double progress, Offset? origin, double radiusOffset) {
   final o = origin == null
       ? size.center(Offset.zero)
       : Offset(
@@ -41,25 +63,18 @@ Path inkBloomPath(Size size, double progress, Offset? origin) {
   final growth = 0.7 * progress + 0.3 * progress * progress;
   final r = r0 + (1.22 * maxDist - r0) * growth;
 
-  const segments = 32;
-  final path = Path();
-  for (var i = 0; i <= segments; i++) {
-    final a = i / segments * 2 * math.pi;
+  final pts = List<Offset>.filled(_bloomSegments + 1, Offset.zero);
+  for (var i = 0; i <= _bloomSegments; i++) {
+    final a = i / _bloomSegments * 2 * math.pi;
     // 三组固定频率/相位的正弦 → 不规则但确定的指状前沿。
     final wobble = 1 +
         0.10 * math.sin(a * 5 + 1.3) +
         0.06 * math.sin(a * 9 + 4.1) +
         0.04 * math.sin(a * 17 + 2.6);
-    final ri = r * wobble.clamp(0.82, 1.2);
-    final pt = o + Offset(math.cos(a) * ri, math.sin(a) * ri);
-    if (i == 0) {
-      path.moveTo(pt.dx, pt.dy);
-    } else {
-      path.lineTo(pt.dx, pt.dy);
-    }
+    final ri = math.max(0.0, r * wobble.clamp(0.82, 1.2) + radiusOffset);
+    pts[i] = o + Offset(math.cos(a) * ri, math.sin(a) * ri);
   }
-  path.close();
-  return path;
+  return pts;
 }
 
 /// 破墨显现（P2.3）：新页内容自 [origin] 以噪声扰动的墨晕前沿晕开，
@@ -185,8 +200,20 @@ class _BloomClipper extends CustomClipper<Path> {
       oldClipper.progress != progress || oldClipper.origin != origin;
 }
 
-/// 墨缘环：沿墨晕前沿描 4 道渐宽渐淡的环（round join 防 32 段折线
-/// 尖刺），progress→1 时整体衰减归零，终帧干净。
+/// 墨缘前沿：纸雾软带（S3）+ 墨缘环。
+///
+/// 纸雾软带 = **单次 drawVertices 环形三角带**：7 圈顶点沿 [inkBloomPath]
+/// 的同一顶点族径向偏移（−60..+60px），顶点 alpha 0→0.5→0，GPU 插值出
+/// 真正连续的纸色（paperTint）渐变——前沿两侧的新旧内容都向纸色消融，
+/// 硬切被掩、帧间位移被软带吸收（透明渐变方案）。
+/// 构造方式是被两轮性能数据逼出来的：
+/// - 宽 stroke：Impeller 对凹折点宽描边产生自重叠几何，半透明双混合出斑块；
+/// - evenOdd 环带填充 ×6：每道一条 stencil-then-cover 通道（bounding 近全
+///   屏），实测转场 raster p90 28.8→60.1ms ❌；
+/// - drawVertices 三角带：单 draw call、零 stencil、顶点色硬件插值。
+///
+/// 墨缘环 = 沿前沿描 4 道渐宽渐淡的环（round join 防 32 段折线尖刺）。
+/// progress>0.8 后整体衰减归零，终帧干净。
 class _BloomFringePainter extends CustomPainter {
   _BloomFringePainter({
     required this.progress,
@@ -198,12 +225,68 @@ class _BloomFringePainter extends CustomPainter {
   final Offset? origin;
   final InkTokens ink;
 
+  /// 软带圈层：径向偏移（px）→ 顶点 alpha（首尾 0 = 真渐出）。
+  static const _mistOffsets = [-60.0, -40.0, -20.0, 0.0, 20.0, 40.0, 60.0];
+  static const _mistAlphas = [0.0, 0.18, 0.38, 0.50, 0.38, 0.18, 0.0];
+
   @override
   void paint(Canvas canvas, Size size) {
-    // 尾段衰减：p>0.7 后线性归零（晕开完成时墨缘融入页面）。
-    final fade = progress < 0.7 ? 1.0 : (1 - (progress - 0.7) / 0.3);
+    // 尾段衰减：p>0.8 后线性归零（晕开完成时前沿融入页面）。
+    final fade = progress < 0.8 ? 1.0 : (1 - progress) / 0.2;
     if (fade <= 0) return;
+
+    _paintMistBand(canvas, size, fade);
+
+    // ---- 墨缘环（骑缝盖在软带之上） ----------------------------------
     final path = inkBloomPath(size, progress, origin);
+    _paintInkRings(canvas, path, fade);
+  }
+
+  /// 纸雾软带：环形三角形网格一次 drawVertices（零 stencil 通道）。
+  void _paintMistBand(Canvas canvas, Size size, double fade) {
+    const ringCount = 7; // _mistOffsets.length
+    const ptsPerRing = _bloomSegments + 1;
+    final positions = Float32List(ringCount * ptsPerRing * 2);
+    final colors = Int32List(ringCount * ptsPerRing);
+    var pi = 0, ci = 0;
+    for (var ring = 0; ring < ringCount; ring++) {
+      final pts = _bloomRing(size, progress, origin, _mistOffsets[ring]);
+      final argb = ink.paperTint
+          .withValues(alpha: _mistAlphas[ring] * fade)
+          .toARGB32();
+      for (final pt in pts) {
+        positions[pi++] = pt.dx;
+        positions[pi++] = pt.dy;
+        colors[ci++] = argb;
+      }
+    }
+    // 相邻两圈之间组四边形（两三角形）。
+    final indices = Uint16List((ringCount - 1) * _bloomSegments * 6);
+    var ii = 0;
+    for (var ring = 0; ring < ringCount - 1; ring++) {
+      final a0 = ring * ptsPerRing;
+      final b0 = (ring + 1) * ptsPerRing;
+      for (var i = 0; i < _bloomSegments; i++) {
+        indices[ii++] = a0 + i;
+        indices[ii++] = b0 + i;
+        indices[ii++] = a0 + i + 1;
+        indices[ii++] = a0 + i + 1;
+        indices[ii++] = b0 + i;
+        indices[ii++] = b0 + i + 1;
+      }
+    }
+    final vertices = ui.Vertices.raw(
+      ui.VertexMode.triangles,
+      positions,
+      colors: colors,
+      indices: indices,
+    );
+    // BlendMode.dst：只用顶点色（paint 不参与）。
+    canvas.drawVertices(vertices, BlendMode.dst, Paint());
+    vertices.dispose();
+  }
+
+  void _paintInkRings(Canvas canvas, Path path, double fade) {
     void ring(Color color, double alpha, double width) {
       canvas.drawPath(
         path,
