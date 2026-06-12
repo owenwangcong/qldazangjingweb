@@ -14,6 +14,7 @@ export 'painting/brush_line.dart';
 export 'painting/enso_loading.dart';
 export 'painting/ink_card.dart';
 export 'painting/ink_drop_splash.dart';
+export 'painting/ink_nav_bar.dart';
 export 'painting/motifs.dart';
 export 'shading/ink_bloom_reveal.dart';
 export 'shading/ink_paper_background.dart';
