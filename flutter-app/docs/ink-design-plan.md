@@ -96,6 +96,13 @@
 | 墨滴 splash（涟漪扩散） | 扩散 420ms + 消散 550ms | easeOutQuart | 保留（半径减半）<br>**修订（2026-06-12 P4.4）**：墨入纸的晕开是持续物理过程，180–240ms 档对应的是状态切换类微交互；墨滴单列并按 P1.6 实现校正 |
 | 装饰呼吸动画（云雾） | ≥6s 循环 | linear/sine | 停止 |
 
+**转场二次打磨（2026-06-12，验收后用户反馈修复）**：破墨前沿增加**墨缘环**
+——沿同一噪声轮廓描 4 道渐宽渐淡的环（墨锋 2.5px/inkStrong α0.14 → 晕带
+10/22/36px 渐淡，round join，p→1 衰减归零），画在裁剪外层骑缝覆盖上下两页
+交界；无 blur 无 saveLayer，~4 drawPath/帧。被盖页弃用 opacity 淡出，改
+**反向墨缘裁剪 InkBloomConceal**（evenOdd「全屏−墨晕」，与 reveal 同曲线同
+原点逐帧互补）；reduce-motion 退化为 push 末 40% 淡出 / pop 头 40% 淡入。
+
 **P4.4 审计结果（2026-06-12，逐处核对）**：
 | 动画处 | 实际 | 规范档 | 结论 |
 |--------|------|--------|------|
@@ -299,6 +306,7 @@ flutter analyze; flutter test
 | 2026-06-12 | **P3.3 重测过线 ✅（2.27%）；P3.5–P3.9 全 ✅**；P3.4 余 reader 滚动门禁 | 描边批量化立竿见影：32.18%→2.27%，raster p90 13.06ms 反超 oldbase。本轮落地：InkToggle/BrushTabIndicator/InkThemeThumb 三个新组件；搜索/字典砚台输入；`<em>`/阅读高亮全部 sealRed 0.22 淡染（六主题对比度测试把守）；三 BottomSheet 顶部 BrushDivider；EnsoLoading 清零 lib 内 Material 转圈（grep 0 命中，P4.2 提前达成）；OfflineBanner 状态栏遮挡缺陷修复（SafeArea 内置）。设备证据：8 字体深链通道（?font=）截图全数渲染正常；六幅画卷缩略与各主题底色比对一致；svc wifi 实测离线 banner。121 测试全绿 | p34full 三场景 perf 出数后关 P3.4；设备无公网，全文搜索/辞典结果卡视效以 widget test 锁定 |
 | 2026-06-12 | **P3 全部完成**（P3.4 滚动门禁过线收尾） | p34full（热控 ×3 中位）：reader **0%**（=基线）、home **7.11%**（描边批量化反哺，P2 12.89→7.11）、transition raster p90 26.17ms/最坏 35.7ms 过修订红线；数据 `perf/p34/`。P4.2 的 grep 判据已顺带达成（lib 内 Material 转圈 0 命中） | P4 微交互：墨雾 overscroll → 触觉 → 动效审计（预查发现：首页折叠 250ms 超微交互带、reader 顶栏 AnimatedSlide 缺曲线、画布/墨滴 reduce-motion 待核） |
 | 2026-06-12 | **P4 全部完成**（P4.1–P4.4 ✅） | 墨雾 overscroll（mistColor glow，视检暗主题雾弧）；EnsoLoading 全局清零；触觉三处落点+长按原生（**坑11：SM-P613 无震动马达 MOTOR_NONE**，触感验收以代码评审为准）；动效审计 8 处全表入 §4.2、修正 3 处、墨滴档位修订有论证；122 测试全绿 | P5 终验：截图矩阵 → 性能终测 → 全测试 → 可访问性 → 文档收尾 |
+| 2026-06-12 | **转场四症同治**（验收后用户反馈：卡顿/圆圈感/露底闪黑/回主页黑底） | 三个根因：①**坑12（P1 级现存缺陷）**：相机驱动挂在 redirect，而 go_router 17 的系统返回走 `routerDelegate.popRoute()→notifyListeners` **不经 redirect**——系统返回后相机永远停在 depth=1、画卷永久停绘、透明主页浮在黑底（用户的「回主页变黑」）；`context.pop()` 路径也有 320+350ms 黑窗。修复：相机驱动迁至 `routerDelegate.addListener`（全导航路径覆盖）+ `InkCanvasCamera.jumpTo`，规则「depth 必跳变（pop 回 tab 立即落位→旧快照第一帧即 blit；push 400ms 后落位，×timeDilation 保慢录正确）、pan 保持延迟 drift」；先写红的 `handlePopRoute` 回归测试再修。②被盖页 Interval(0,0.4) 淡出：pop 前 60% 隐身、push 早退露底，且 0<α<1 整页 saveLayer——改 InkBloomConceal 反向裁剪（evenOdd 互补，p≥1 空裁剪保活子树而非 SizedBox.shrink——后者会 unmount 丢状态）。**考古发现**：shell（MaterialPage）的 canTransitionTo 不接受 CustomTransitionRoute，secondaryAnimation 恒 0——旧 fade 对 tab 页从未生效（天然全程绘制），真正受害的是 push↔push（深 push/pop 在停绘的黑底上隐身）。③硬边圆圈感：墨缘环 ×4 描边（见 §4.2 增补）。慢录取证 4 链路逐帧无黑无露底（`recordings/fix_transitions/`），实速系统返回复测主页满幅纸面；125 测试全绿（+坑12回归/互补性采样/push↔push 裁剪 3 项）。**perf 重测过线**（`perf/transfix/`）：转场 raster p90 29.12ms ≤33.3 ✓、最坏帧 46.3ms ≤100 ✓、jank 率 64.7%→**51.8%**（saveLayer 移除生效）；home 5.34%/reader 0% 噪声带内不回归。期间又记一坑：测试设备低电量（≤15%）时三星弹窗抢焦点会杀掉 flutter drive 会话——perf 采样前确认电量 ≥25% | predictive back 未启用，启用时需在转场内提前 jump（存照） |
 | 2026-06-12 | **P5 全部完成，水墨改造收官** | 71 张终验截图矩阵全过五项 checklist；性能终测两次「红灯→对照实验→定论」：①启动 1207ms 表面 +51% → e26eef92 同日重测 1171ms，证实为电量降频环境漂移，真实增量 **+3.1%** ✓；②静止重绘 315 帧/10s 表面爆表 → oldbase 同探针 318 帧，证实持续打帧为改造前既有行为，**装饰层增量 0 帧** ✓（配对对照法二度救场——结论：跨日绝对值不可比，凡红灯先做同日对照）；a11y 终审揪出 icon 按钮无障碍标签缺失并修复 9 处；122 测试全绿；APK 还瘦了 325KB | §10 七项全勾，/goal 达成；遗留可选项：Rive 资产路线（§3 暂缓决议不变）、设备联网后补全文搜索/辞典结果卡实机截图 |
 
 ## 10. 最终验收清单（Definition of Done）

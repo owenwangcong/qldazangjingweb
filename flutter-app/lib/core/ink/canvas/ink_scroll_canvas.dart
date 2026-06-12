@@ -15,16 +15,30 @@ import '../tokens/ink_tokens.dart';
 class InkCanvasCamera extends ChangeNotifier {
   double _pan = 0;
   double _depth = 0;
+  bool _snap = false;
 
   double get pan => _pan;
   double get depth => _depth;
 
-  void moveTo({double? pan, double? depth}) {
+  /// 最近一次目标更新是否要求直接落位（不播 350ms drift）。
+  /// 转场修复（§9 坑12 一役）：depth 变化一律 snap——push 方向的 drift
+  /// 发生在不可见处纯属浪费；pop 方向必须立即落位，否则透明 tab 页
+  /// 浮在停绘的黑底上。
+  bool get snap => _snap;
+
+  void moveTo({double? pan, double? depth}) =>
+      _update(pan, depth, snap: false);
+
+  void jumpTo({double? pan, double? depth}) =>
+      _update(pan, depth, snap: true);
+
+  void _update(double? pan, double? depth, {required bool snap}) {
     final p = (pan ?? _pan).clamp(0.0, 1.0);
     final d = (depth ?? _depth).clamp(0.0, 1.0);
     if (p == _pan && d == _depth) return;
     _pan = p;
     _depth = d;
+    _snap = snap;
     notifyListeners();
   }
 }
@@ -114,9 +128,17 @@ class InkScrollCanvasState extends State<InkScrollCanvas>
     _fromDepth = _currentDepth;
     _toPan = camera.pan;
     _toDepth = camera.depth;
-    if (reduceMotion) {
-      _drift.value = 1;
-      setState(() {}); // 立即落位（含停绘状态切换）
+    if (reduceMotion || camera.snap) {
+      // 直接落位。通知可能来自路由处理期（routerDelegate listener 同步
+      // 触发 jumpTo），裸 setState 会撞上 setState-during-build——推迟到
+      // 微任务，仍在下一帧之前生效（pop 第一帧即快照 blit）。
+      scheduleMicrotask(() {
+        if (!mounted) return;
+        setState(() => _drift.value = 1);
+        // value 直落不触发 statusListener（status 未变），手动补烘；
+        // _bakeScene 自带「快照已一致则跳过」与停绘守卫，不会白做。
+        _bakeScene();
+      });
     } else {
       _drift.forward(from: 0);
     }
@@ -133,6 +155,11 @@ class InkScrollCanvasState extends State<InkScrollCanvas>
   /// 相机停稳后把「纸+山 @ 当前视点」烘成整卷快照。
   void _bakeScene() {
     if (_suppressed || !mounted) return;
+    // 快照已与目标视点一致 → 跳过（pop-jump 落位时旧快照本就有效，
+    // 重烘的 toImage GPU 往返会白白砸在 pop 后首帧）。
+    if (_scene != null && _scenePan == _toPan && _sceneDepth == _toDepth) {
+      return;
+    }
     final size = _bakedSize;
     final paper = inkPaperImage.value;
     if (size == null || size.isEmpty || paper == null) return;

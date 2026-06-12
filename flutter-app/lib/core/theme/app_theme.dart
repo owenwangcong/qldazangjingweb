@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../ink/painting/ink_drop_splash.dart';
+import '../ink/shading/ink_bloom_reveal.dart';
 import '../ink/tokens/ink_tokens.dart';
 
 /// The six visual themes ported 1:1 from the web app's globals.css.
@@ -346,10 +347,10 @@ extension AppColorsX on BuildContext {
   AppColors get colors => Theme.of(this).extension<AppColors>()!;
 }
 
-/// 静止页转场 + 快速退场：自身出入场不做动画（让位给 inkBloomPage 的
-/// 破墨层）；被新页压住时前 40% 淡出到 0——opacity 为 0 后 Flutter 跳过
-/// 整页绘制，破墨转场的后 60% 帧只需光栅化新页（§9 性能教训：转场期
-/// 同画两页是 raster 大头）。
+/// 静止页转场 + 反向墨缘裁剪：自身出入场不做动画（让位给 inkBloomPage
+/// 的破墨层）；被新页压住时改为 [InkCoveredPage]——墨晕外保持原样可见、
+/// 与上层 reveal 逐帧互补（旧方案的前 40% 淡出会在墨晕未覆盖处露出
+/// 画卷/黑底，且 0<α<1 整页 saveLayer；转场修复 F1，见 §9）。
 class _StillPageTransitionsBuilder extends PageTransitionsBuilder {
   const _StillPageTransitionsBuilder();
 
@@ -361,13 +362,8 @@ class _StillPageTransitionsBuilder extends PageTransitionsBuilder {
     Animation<double> secondaryAnimation,
     Widget child,
   ) {
-    return FadeTransition(
-      opacity: ReverseAnimation(
-        CurvedAnimation(
-          parent: secondaryAnimation,
-          curve: const Interval(0, 0.4),
-        ),
-      ),
+    return InkCoveredPage(
+      secondaryAnimation: secondaryAnimation,
       child: child,
     );
   }

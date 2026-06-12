@@ -14,7 +14,8 @@ import 'package:qldazangjing/presentation/router/app_router.dart';
 /// 用与 appRouter 同构的 stub 路由表（同一 redirect 与转场封装），
 /// 避免真实页面对 Isar/网络的依赖。
 void main() {
-  GoRouter buildStubRouter() => GoRouter(
+  GoRouter buildStubRouter() {
+    final router = GoRouter(
         initialLocation: '/',
         redirect: inkAppRedirect,
         routes: [
@@ -59,6 +60,10 @@ void main() {
           ),
         ],
       );
+    // 相机驱动与 appRouter 同构（routerDelegate listener，坑12）。
+    attachInkCameraDriver(router);
+    return router;
+  }
 
   Widget app(GoRouter router, {bool reduceMotion = false}) =>
       MaterialApp.router(
@@ -84,9 +89,9 @@ void main() {
     await warmInkShaders(tester);
     final router = buildStubRouter();
     await tester.pumpWidget(app(router));
-    // 相机 moveTo 延迟 320ms（与转场解耦）——假时钟推过它再断言。
+    // 相机延迟：tab 横移 320ms / push 跳变 400ms——假时钟推过再断言。
     Future<void> settleCamera() async {
-      await tester.pump(const Duration(milliseconds: 350));
+      await tester.pump(const Duration(milliseconds: 450));
       await tester.pumpAndSettle();
     }
 
@@ -108,8 +113,93 @@ void main() {
     expect(inkCanvasCamera.pan, 1.0, reason: 'push 不改变横向视点');
 
     router.pop();
-    await settleCamera();
-    expect(inkCanvasCamera.depth, 0.0, reason: 'pop 回到卷面');
+    // 坑12 修正后：pop 回卷面立即 jump 落位（不等 320ms），
+    // 否则透明 tab 页会浮在停绘的黑底上。
+    await tester.pump();
+    expect(inkCanvasCamera.depth, 0.0, reason: 'pop 立即回到卷面');
+    await settleCamera(); // 冲掉残留定时器
+  });
+
+  testWidgets('坑12 回归：系统返回键 pop 后相机立即归零（不经 redirect）',
+      (tester) async {
+    await warmInkShaders(tester);
+    final router = buildStubRouter();
+    await tester.pumpWidget(app(router));
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
+
+    router.push('/settings');
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
+    expect(inkCanvasCamera.depth, 1.0);
+
+    // 系统返回：routerDelegate.popRoute() 路径，redirect 不会执行。
+    final handled = await tester.binding.handlePopRoute();
+    expect(handled, isTrue);
+    await tester.pump();
+    expect(inkCanvasCamera.depth, 0.0,
+        reason: '系统返回必须同样驱动相机，否则画卷永久停绘（黑底）');
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
+    expect(find.text('设置页'), findsNothing);
+  });
+
+  test('F1 conceal 与 reveal 墨缘互补：任意采样点恰好属于一页', () {
+    const size = Size(800, 600);
+    const origin = Offset(200, 150);
+    for (final p in [0.15, 0.4, 0.7, 0.9]) {
+      final blob = inkBloomPath(size, p, origin);
+      final conceal = Path()
+        ..fillType = PathFillType.evenOdd
+        ..addRect(Offset.zero & size)
+        ..addPath(inkBloomPath(size, p, origin), Offset.zero);
+      for (var x = 5.0; x < size.width; x += 45) {
+        for (var y = 5.0; y < size.height; y += 45) {
+          final pt = Offset(x, y);
+          expect(conceal.contains(pt), !blob.contains(pt),
+              reason: 'p=$p 处 $pt 应恰好属于 reveal 或 conceal 之一');
+        }
+      }
+    }
+  });
+
+  testWidgets('F1 push↔push 转场：下层页反向裁剪参与绘制（非 opacity 隐身）',
+      (tester) async {
+    await warmInkShaders(tester);
+    final router = buildStubRouter();
+    await tester.pumpWidget(app(router));
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
+
+    // 注：shell（MaterialPage）的 canTransitionTo 不接受 CustomTransitionRoute，
+    // 其 secondaryAnimation 恒为 0 → tab 页被 push 覆盖时全程保持原样绘制
+    // （天然无露底）。conceal 生效区是 push↔push 之间——旧 fade 方案正是
+    // 在这里把下层页隐身、露出停绘的黑底。
+    router.push('/settings');
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
+
+    router.push('/book/0001-01');
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100)); // 深 push 中段
+    // 上层 reveal + 下层 conceal 各一个 ClipPath；下层内容仍在绘制。
+    expect(find.byType(ClipPath), findsAtLeastNWidgets(2));
+    expect(find.text('设置页'), findsOneWidget,
+        reason: '下层 push 页以反向裁剪参与绘制，非隐身');
+
+    // pop 早期：下层页立即以裁剪态显示（旧方案前 60% 隐身）。
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
+    router.pop();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 60)); // pop 前段（240ms 的 1/4）
+    expect(find.byType(ClipPath), findsAtLeastNWidgets(2));
+    expect(find.text('设置页'), findsOneWidget,
+        reason: 'pop 早期下层页即被反向裁剪显示');
+
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
+    expect(find.text('book=0001-01 index=null'), findsNothing);
   });
 
   testWidgets('P2.3 破墨转场存在且中途 pop 不崩溃', (tester) async {
