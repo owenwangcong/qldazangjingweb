@@ -1,0 +1,278 @@
+# 水墨禅意视觉改造 — 规划与跟踪文档
+
+> 目标：把乾隆大藏经 Flutter App 整体重塑为「一幅可游走的中国水墨画」——晕染、留白、笔触、破墨，
+> 含蓄的佛教意象（莲花、祥云、纹样），与现有六主题/八字体有机融合，审美与可用性平衡。
+> 本文档是唯一的规划与进度跟踪载体，由 `/goal` 驱动逐项实施，直到「最终验收」全部 ✅。
+
+---
+
+## 0. 文档用法（给执行者的约定）
+
+- **状态标记**：⬜ 未开始 · 🔄 进行中 · ✅ 验收通过 · ❌ 验收未通过（附原因）· ⏸️ 暂缓（附原因）
+- 每个任务有 **ID / 验收标准（可度量）/ 验证方法（可执行命令或检查步骤）/ 状态 / 证据**。
+  没有证据（测试名、截图路径、数据记录）不得标 ✅。
+- 任务按 Phase 顺序执行；同 Phase 内无依赖的任务可并行。
+- 每轮工作结束在 **§9 进度日志** 追加一条记录（日期、完成项、数据、遗留问题）。
+- 验收数据（性能基线、截图）落在 `flutter-app/docs/ink-design/` 子目录。
+
+---
+
+## 1. 愿景与设计原则
+
+**一句话**：打开 App 像展开一幅手卷——导航不是「翻页」，而是观者的视线在同一幅长卷上移动；
+内容浮于宣纸之上，墨色随六个主题变化浓淡。
+
+### 设计八则（每条都对应可检查项，见 §6）
+
+| # | 原则 | 含义 | 落地约束（可度量） |
+|---|------|------|--------------------|
+| 1 | 留白 | 疏可走马，内容不顶满 | 页面水平边距 ≥16dp；Reader 正文边距 ≥20dp（≥600dp 宽时 ≥10% 屏宽）；区块垂直间距 ≥12dp |
+| 2 | 晕染 | 边缘柔化，无生硬色块 | 阴影一律用 InkShadow（大 blur、低 alpha），禁用 Material elevation 默认阴影 |
+| 3 | 笔触 | 线条有起收笔，非几何直线 | 分隔线/下划线/边框统一用 Brush* 组件，固定随机种子保证可测 |
+| 4 | 破墨 | 转场=墨在水中晕开 | 路由转场用 ink-bloom shader mask，时长 240–400ms，可中断 |
+| 5 | 墨分五色 | 焦浓重淡清，少用纯色 | InkTokens 提供 inkStrong/inkMedium/inkLight 三档 + sealRed 印泥色，UI 不再硬编码颜色 |
+| 6 | 意象克制 | 莲花/祥云等似有似无 | 装饰意象 opacity ≤0.10（暗主题 ≤0.14）；每屏主意象 ≤1 处；代码中 assert 上限 |
+| 7 | 可用性优先 | 美不损读 | 正文有效对比度 ≥4.5:1（叠加纹理后）；触控目标 ≥48×48dp；reduce-motion 全局尊重 |
+| 8 | 性能即禅定 | 画布静则零开销 | 装饰层静止时 0 重绘（RepaintBoundary 隔离）；janky 帧率相对基线增量 ≤2 个百分点 |
+
+---
+
+## 2. 现状基线（2026-06-11 勘察）
+
+### App 结构（flutter 分支 `./flutter-app`）
+- **9 个页面**：Home（藏经目录）/ Search / MyStudy（Shell 三 tab，`StatefulShellRoute.indexedStack`）+ Section / Reader / Dict / Settings / Downloads / About（push 路由）。
+- **3 个全局组件面**：ShellPage 底部 `NavigationBar`、OfflineBanner、若干 BottomSheet（lexicon / 字体选择 / 阅读设置）。
+- **主题**：`core/theme/app_theme.dart`，6 套主题（4 浅 2 暗：莲池禅韵/竹林幽径/月映清辉/琥珀长光/古刹夜色/法鼓梵音），HSL token 经 `AppColors` ThemeExtension 下发——名字本身就是禅意的，水墨层必须按主题色调染墨。
+- **字体**：8 款阅读字体按需 FontLoader 加载（`core/fonts/font_service.dart`），全局换字。
+- **状态/路由**：Riverpod + GoRouter 17。
+- **既有测试**：`test/widget_test.dart`、`book_assets_test.dart`、`font_service_test.dart`（必须始终保持通过）。
+
+### 环境事实（已实测）
+| 项 | 状态 |
+|----|------|
+| Flutter | 3.32.8 stable · Dart 3.8.1（支持 `shaders:` 资源段与 `FragmentProgram`） |
+| Impeller | ✅ **已实测（2026-06-11）**：真机 SM-P613 上 logcat 输出 `Using the Impeller rendering backend (Vulkan)` |
+| Android SDK | `D:\Apps\Android\AndroidSDK`（adb 全路径：`D:\Apps\Android\AndroidSDK\platform-tools\adb.exe`，不在 PATH） |
+| 测试设备 | ✅ **真机已连**：三星 Galaxy Tab S6 Lite（SM-P613，serial `R52W809056B`），Android 14 / API 34，1200×2000 @ 240dpi = **800dp 宽（平板布局）**。手机宽度验证用 `adb shell wm size` 临时覆盖（验完 `wm size reset`）。AVD 仅作真机不在场时的备选 |
+| License | `flutter doctor` 报「Some Android licenses not accepted」——实测不阻塞构建/安装，暂不处理 |
+| 包名 | `com.aeonlectron.dazangjing`；debug 构建+安装+启动全链路已验证（Gradle 缓存热：41s 出 APK） |
+
+---
+
+## 3. 技术选型决策（ADR 摘要）
+
+| 决策 | 结论 | 理由 |
+|------|------|------|
+| 核心渲染 | **Fragment shader（GLSL `.frag`）+ CustomPainter + Flutter 动画系统** | 3.32 官方支持，Impeller/Skia 双 backend 可用，零外部资产依赖，全程序化 → 可被 golden test 锁定 |
+| 辅助包 | `flutter_shaders`（AnimatedSampler/SetUniforms 工具） | 把 shader 套到任意 widget 子树上（如 ink-bloom 转场遮罩）的标准做法；P0.6 验证与 Dart 3.8.1 的版本兼容后锁版本 |
+| Rive | **⏸️ 暂缓** | .riv 资产需 Rive 编辑器人工创作，本环境无法产出且无现成可商用资产；程序化绘制可覆盖全部需求。若日后拿到资产再评估 |
+| Flame | **❌ 不采用** | 游戏引擎，引入整套 game loop 只为粒子效果属于过度设计；墨滴/雾气用 Ticker+CustomPainter 即可 |
+| 「一幅画布」实现 | **共享持久画卷层 + 视差相机，而非真把所有页面放进一个巨型 canvas** | 真单画布会破坏 GoRouter 深链/状态保活/无障碍树。等效手法：`MaterialApp.builder` 注入全屏持久 `InkScrollCanvas`（超宽虚拟画卷），所有 Scaffold 透明；路由/tab 切换驱动画卷「相机」平移缩放 + 内容破墨显现 → 观感即「视线在同一幅画上移动」 |
+| 截图驱动方式 | **深链 + adb**：AndroidManifest 加 `qldzj://` scheme，`adb shell am start -d "qldzj://app/<route>?theme=<key>"` 直达任意页任意主题，再 `adb exec-out screencap` | 比坐标点击稳定、可脚本化、可重复 |
+| 性能度量 | **integration_test `traceAction` 时间线**（frame build/raster avg/p90/p99 + 超预算帧数，profile 模式 `flutter drive`，产物 `build/perf/*.timeline_summary.json`）+ `am start -W`（启动耗时） | ⚠️ 2026-06-11 实测推翻原方案：`dumpsys gfxinfo` 对 Flutter 自绘管线（Impeller/SurfaceView）完全无效，Total frames = 0。traceAction 是 Flutter 官方性能口径，可脚本化、JSON 可解析 |
+
+---
+
+## 4. 水墨设计语言规范（实现时的唯一依据）
+
+### 4.1 InkTokens（新 ThemeExtension，P1.1）
+每主题定义：
+
+| Token | 用途 | 约束 |
+|-------|------|------|
+| `inkStrong / inkMedium / inkLight` | 焦浓墨 / 重墨 / 淡墨清墨（文字、笔触、晕染三档） | 由各主题 foreground 派生色相，浅主题 L 阶梯约 25/45/70，暗主题反相（淡墨=亮） |
+| `paperTint` | 宣纸底色（纹理 shader 的 tint） | 与 `background` ΔE 足够小，不得影响正文对比度 |
+| `sealRed` | 印泥朱砂（点睛：选中态、印章、搜索高亮） | 每屏使用 ≤2 处；与 `destructive` 红可区分 |
+| `mistColor` | 云雾/留白带 | 仅用于装饰层，opacity 上限同设计八则 #6 |
+| `washShadow` | 墨晕阴影参数（color/blur/offset） | blur ≥16，alpha ≤0.18 |
+| `textureIntensity` | 纸纹强度 0–1 | 浅主题 ≤0.5，暗主题 ≤0.35 |
+
+### 4.2 动效规范
+| 场景 | 时长 | 曲线 | reduce-motion 退化 |
+|------|------|------|--------------------|
+| 路由 push/pop（破墨显现） | 300ms（pop 240ms） | easeOutCubic | ≤120ms 纯 fade |
+| Tab 切换（画卷横移） | 350ms | easeInOutCubic | 直接切换 |
+| 微交互（墨滴 splash、按压） | 180–240ms | easeOut | 保留（幅度减半） |
+| 装饰呼吸动画（云雾） | ≥6s 循环 | linear/sine | 停止 |
+
+### 4.3 组件清单（P1 产出，全部带 golden 测试）
+`InkPaperBackground`（宣纸 shader 层）· `InkCard`（吃墨边缘卡片）· `BrushDivider` · `BrushUnderline` ·
+`InkShadowBox` · `SealStamp`（印章）· `EnsoLoading`(墨圈 loading) · `MistBand`（云雾留白带）·
+`LotusOutline / CloudPattern`（白描莲花/祥云 path）· `InkSplashFactory`（墨滴涟漪）。
+
+---
+
+## 5. 工作分解与跟踪
+
+### Phase 0 — 基线与基础设施
+
+| ID | 任务 | 验收标准（全部满足才 ✅） | 验证方法 | 状态 | 证据 |
+|----|------|--------------------------|----------|------|------|
+| P0.1 | 测试设备就绪（真机优先；AVD 仅备选） | `adb devices` 列出设备；debug APK 能构建、安装、启动并渲染首页；截图通道可用 | 实跑全链路 | ✅ 2026-06-11 | 真机 SM-P613；`docs/ink-design/screenshots/_app-home-test.png`（首页渲染正常，琥珀长光主题） |
+| P0.2 | 深链巡检通道：Manifest 加 `qldzj://` scheme；debug 模式支持 `?theme=<key>` 切主题；写 `flutter-app/tool/screenshot.ps1`（参数：路由、主题、输出名 → adb 启动深链+screencap） | 脚本一条命令产出指定页面×主题 PNG；连续截 3 张不同主题颜色确实不同 | 运行脚本，肉眼+文件大小检查 | ✅ 2026-06-11 | `screenshots/_p02_settings_{lianchichanyun,guchayese,hupochangguang}.png` 三主题颜色/页内主题名均不同；坑2：熄屏截图=纯黑，脚本已加 WAKEUP+dismiss-keyguard，设备已开 stay_on_while_plugged_in=7 |
+| P0.3 | 基线截图：9 页面 × 2 主题（琥珀长光、古刹夜色） | 18 张 PNG 存于 `docs/ink-design/screenshots/baseline/`，命名 `<page>_<theme>.png`，无黑屏/白屏（每张 >50KB） | 脚本批跑 | ✅ 2026-06-11 | `screenshots/baseline/` 18 张全数产出（无 <50KB 警告）；抽查 reader_hupochangguang.png 经文渲染正常（大般若经卷一，繁体） |
+| P0.4 | Impeller backend 实测 | logcat 中找到 Impeller/Skia backend 启动日志，结论写入 §2 表格 | `adb logcat -d \| Select-String -Pattern "Impeller"` | ✅ 2026-06-11 | logcat：`Using the Impeller rendering backend (Vulkan)`（android_context_vk_impeller.cc:61）；已写入 §2 |
+| P0.5 | 性能基线：首页滚动、Reader 滚动的 traceAction 时间线（原 gfxinfo 方案已被实测推翻——Flutter 自绘管线下 Total frames=0，根因与替代方案见 §3「性能度量」行） | jank%、build/raster p90/p99 记入 §6.1 基线列；3 次取中位 | `.\tool\perf.ps1`（flutter drive --profile + integration_test traceAction，--no-dds） | ✅ 2026-06-11 | §6.1 已填基线；原始数据 `build/perf/baseline-run{1,2,3}/`；含预热段排除首滚污染（冒烟跑与正式跑数据一致证明 home raster 瓶颈非预热） |
+| P0.6 | 工程准备：pubspec 加 `flutter_shaders` + `shaders:` 段；建 `lib/core/ink/`、`test/goldens/` 骨架；启动时间基线（`am start -W` 3 次中位） | `flutter analyze` 0 issues；既有 3 个测试套件通过；启动 TotalTime 基线记入 §6.1 | `flutter analyze`；`flutter test` | ✅ 2026-06-11 | flutter_shaders 0.1.3 解析成功；占位 paper.frag 过 impellerc（debug/profile/release 三种构建均成功）；analyze 0 issues；11 个既有测试全绿；启动基线 799ms、APK 基线 195.6MB 已入 §6.1；另加 integration_test+flutter_driver（性能口径所需） |
+
+### Phase 1 — 设计语言与核心组件（纸·墨·笔）
+
+统一验收模板（下表「通用」=）：① golden 测试覆盖 6 主题全部通过 ② `flutter analyze` 0 issues ③ 既有测试不破坏。
+
+| ID | 任务 | 专属验收标准 | 状态 | 证据 |
+|----|------|--------------|------|------|
+| P1.1 | `InkTokens` ThemeExtension，六主题全量定义（§4.1） | 通用 + 单元测试：六主题每个 token 非空；`foreground vs background`、`inkStrong vs paperTint 最深处` 对比度 ≥4.5 | ⬜ | |
+| P1.2 | 宣纸纹理 shader `shaders/paper.frag`（fbm 纤维噪声，uniform: tint/intensity/brightness）+ `InkPaperBackground` | 通用 + 静止时 0 重绘（timeline 抽查）+ P0.5 同口径 janky 增量 ≤2pp | ⬜ | |
+| P1.3 | `InkShadowBox` + `InkCard`（墨晕阴影、吃墨边缘） | 通用 + 卡上正文对比度测试 ≥4.5 | ⬜ | |
+| P1.4 | `BrushDivider` / `BrushUnderline`（固定种子笔触线） | 通用 + 同一种子两次绘制像素一致（golden 即证） | ⬜ | |
+| P1.5 | 意象库：白描莲花/祥云/卷云纹 path + `MistBand` + `SealStamp` | 通用 + 单元测试断言 opacity 参数超上限（0.10/0.14）时 assert 失败 | ⬜ | |
+| P1.6 | `EnsoLoading` + `InkSplashFactory`（墨滴涟漪），注入全局 theme | 通用 + widget test：theme.splashFactory 类型正确；按压有 splash 帧 | ⬜ | |
+
+### Phase 2 — 一卷画布（导航与转场）
+
+| ID | 任务 | 验收标准 | 状态 | 证据 |
+|----|------|----------|------|------|
+| P2.1 | 持久画卷层 `InkScrollCanvas`（MaterialApp.builder 注入；超宽虚拟画卷=远山/云雾/纸纹；全部 Scaffold 透明化） | widget test：跨多次路由跳转 canvas State 实例不变（不重建）；9 页截图背景连贯（视检 checklist §6.3） | ⬜ | |
+| P2.2 | 相机视差：tab 切换→画卷横移；push 详情→纵移+微放大（「深入画中」） | widget test 断言 camera offset 随路由变化；`adb screenrecord` 留档转场视频 ≥2 段于 `docs/ink-design/recordings/` | ⬜ | |
+| P2.3 | 破墨转场 `CustomTransitionPage`（ink-bloom shader mask 自触点晕开；300/240ms；可中断） | widget test：转场中途 pop 不崩溃不卡死；reduce-motion 时退化 ≤120ms fade（test 断言时长） | ⬜ | |
+| P2.4 | 路由回归 | 新增路由测试套件：三 tab 保活（切走再回滚动位置不丢）、深链直达 `/book/:id`、back 行为——全部通过 | ⬜ | |
+
+### Phase 3 — 逐页落墨（9 屏 + 全局组件）
+
+每屏统一验收模板：① 截图 × 6 主题全部通过 §6.3 五项 checklist ② 运行无 overflow/异常日志 ③ 关键交互件 ≥48dp（widget test）④ 下表专属指标。
+
+| ID | 屏幕 | 专属指标 | 状态 | 证据 |
+|----|------|----------|------|------|
+| P3.1 | Shell 底部导航（题跋区：选中=朱砂印/笔触下划线） | 选中态除颜色外有形状差异（无障碍）；三 tab 命中区 ≥48dp | ⬜ | |
+| P3.2 | 首页（常用经典=册页题签；部类=笺纸卡；≤1 处淡莲花空态） | 留白规范 §1#1 全达标（widget test 断言 padding） | ⬜ | |
+| P3.3 | Section 页 | 列表项行高 ≥48dp；长列表滚动 janky ≤基线+2pp | ⬜ | |
+| P3.4 | **Reader 页（最高优先级）**：纸面正文、留白边距、章节笔触标题、卷轴式进度、阅读设置面板水墨化 | 8 款字体逐一截图渲染正常（8 张）；正文对比度 ≥4.5（含纹理叠加）；30s 滚动 janky ≤基线+2pp；highlight 色改 sealRed 淡染且对比度 ≥3:1 | ⬜ | |
+| P3.5 | 搜索页（搜索框=砚台意象；结果高亮=朱砂淡染） | 高亮文字对比度 ≥4.5 | ⬜ | |
+| P3.6 | 我的/MyStudy | 书签/笔记卡用 InkCard；slidable 操作可用性不退化 | ⬜ | |
+| P3.7 | 字典页 | 释义区留白规范达标 | ⬜ | |
+| P3.8 | 设置页（主题选择器=六幅小画卷缩略预览） | 六主题预览与实际主题色一致（截图比对） | ⬜ | |
+| P3.9 | Downloads / About / OfflineBanner / 3 个 BottomSheet | BottomSheet 顶部用 BrushDivider；banner 不遮挡内容 | ⬜ | |
+
+### Phase 4 — 微交互打磨
+
+| ID | 任务 | 验收标准 | 状态 | 证据 |
+|----|------|----------|------|------|
+| P4.1 | overscroll 墨雾（替换默认 glow/stretch） | 视检 + widget test：自定义 ScrollBehavior 全局生效 | ⬜ | |
+| P4.2 | 全局 loading 替换为 EnsoLoading | `grep CircularProgressIndicator` 在 lib/ 内 0 命中（除 EnsoLoading 内部实现） | ⬜ | |
+| P4.3 | 触觉反馈：tab 切换/书签/长按配 HapticFeedback 轻震 | 代码审查 checklist + 真机抽查记录 | ⬜ | |
+| P4.4 | 动效时序统一审计（对照 §4.2 表） | 审计表填入文档：每处动画的实际时长/曲线/退化行为，100% 符合规范 | ⬜ | |
+
+### Phase 5 — 终验
+
+| ID | 任务 | 验收标准 | 状态 | 证据 |
+|----|------|----------|------|------|
+| P5.1 | 全截图矩阵：9 页 × 6 主题 + Reader 8 字体 +「手机宽度」9 页（真机即 800dp 平板；手机宽用 `adb shell wm size 540x1200` 覆盖，截完 `wm size reset`） | ≥71 张全部通过 §6.3 checklist，存 `docs/ink-design/screenshots/final/` | ⬜ | |
+| P5.2 | 性能终测 | §6.1 表全列填齐：janky 增量 ≤2pp；启动 TotalTime 增量 ≤10%；APK 体积增量 ≤3MB（`flutter build apk --release` 前后对比） | ⬜ | |
+| P5.3 | 全测试通过 | `flutter analyze` 0；`flutter test`（unit+widget+golden）全绿；路由回归套件全绿 | ⬜ | |
+| P5.4 | 可访问性终审 | 对比度测试套件全绿；reduce-motion 测试全绿；TalkBack 抽查 Home/Reader/Settings 3 屏可完整操作（记录步骤） | ⬜ | |
+| P5.5 | 文档收尾 | §9 日志完整；§10 总验收清单逐项勾选；设计语言（§4）按最终实现校正 | ⬜ | |
+
+---
+
+## 6. 质量度量体系
+
+### 6.1 性能记分卡（P0 填基线，P5 填终值）
+
+所有滚动/转场指标的测法 = `flutter drive --profile` 跑 `integration_test/scroll_perf_test.dart`，
+读 `build/perf/<key>.timeline_summary.json`，3 次取中位。jank% = missed budget 帧数 ÷ 总帧数（build 与 raster 分别算，取较差者）。
+
+| 指标 | 测法 | 基线（P0，2026-06-11） | 终值（P5） | 红线 |
+|------|------|-----------|-----------|------|
+| 首页滚动 jank_raster% / build p90/p99 / raster p90/p99 (ms) | home_scroll 时间线 | **85.71%**（jank_build 0%）/ 3.81/7.78 / 18.14/30.47 | | jank 增量 ≤2pp |
+| Reader 滚动 jank% / build p90/p99 / raster p90/p99 (ms) | reader_scroll 时间线 | **0% / 0%** / 3.05/4.43 / 3.89/4.30 | | jank 增量 ≤2pp |
+| 路由转场 jank%（连续 push/pop ×10） | P2 起新增 transition 时间线 | （改造前无此项，记录改造后绝对值） | | jank ≤10% |
+| 冷启动 TotalTime（profile，排除首启种子导入） | `am start -W` ×3 中位 | **799ms**（799/798/804） | | 增量 ≤10% |
+| release APK 体积 | `flutter build apk --release` | **195.6MB**（205,085,601 B） | | 增量 ≤3MB |
+| 画布静止重绘 | DevTools timeline 10s 静置 | n/a | | 装饰层 0 帧重绘 |
+
+> 基线发现：①首页 fling 时 raster p90=18.1ms 已超 60Hz 预算（Tab S6 Lite 为 60Hz 屏，TimelineSummary 预算 16.67ms），
+> raster 超预算帧占 85.7% 是**改造前就存在的真实瓶颈**（Material 阴影/卡片层叠所致，build 线程毫无压力）——
+> P3.2 水墨化首页时应顺势用自绘 InkShadow 降低 raster 负载，目标不止「不变差」而是改善。
+> ②Reader 滚动毫无压力，给纸纹理 shader 留了充足余量。
+> ③坑3：`flutter drive` 测完会**卸载 app 并清数据**，跑完性能采样必须重装 debug 包再继续截图类工作。
+
+### 6.2 自动化测试要求
+
+| 类别 | 范围 | 通过标准 |
+|------|------|----------|
+| 静态分析 | `flutter analyze` | 0 issues（warning 也不放过——逐条调查后要么修复要么在文档记录豁免理由） |
+| 单元测试 | InkTokens 完整性、对比度计算、意象 opacity 上限 assert | 全绿 |
+| Golden 测试 | §4.3 全部组件 × 6 主题（≥60 张 golden） | 全绿；golden 更新必须附理由 |
+| Widget 测试 | 画布持久性、转场可中断、reduce-motion 退化、触控目标尺寸、splashFactory、ScrollBehavior | 全绿 |
+| 路由回归 | tab 保活、深链、back | 全绿 |
+| 既有测试 | widget_test / book_assets_test / font_service_test | 始终全绿 |
+
+### 6.3 截图视检 checklist（每张截图 5 项，全过该图才 ✅）
+
+1. **纸感**：纹理可见但不干扰任何文字识读（放大 200% 检查正文区域）。
+2. **墨调一致**：页面色彩全部来自该主题 InkTokens（无突兀的 Material 默认蓝/紫/灰）。
+3. **可读**：所有文字完整、无遮挡、无溢出省略异常；正文与背景肉眼对比清晰。
+4. **布局**：无 overflow 条纹、无错位、安全区正确；不同屏宽下网格列数合理。
+5. **克制**：装饰意象不喧宾夺主（盯任意正文 3 秒，注意力不被装饰拉走；意象 ≤1 处/屏）。
+
+### 6.4 常用验证命令（PowerShell，adb 用全路径）
+
+```powershell
+$adb = "D:\Apps\Android\AndroidSDK\platform-tools\adb.exe"
+# 截图 —— 注意：禁止用 PowerShell 的 `>` 重定向 exec-out（会按 UTF-16 文本编码，PNG 必坏，已实测）。
+# 必须「设备上落盘再 pull」：
+& $adb shell screencap -p /sdcard/_ct.png; & $adb pull /sdcard/_ct.png docs/ink-design/screenshots/<name>.png; & $adb shell rm /sdcard/_ct.png
+# 深链直达（P0.2 之后可用）
+& $adb shell am start -W -a android.intent.action.VIEW -d "qldzj://app/settings?theme=guchayese"
+# 性能（gfxinfo 对 Flutter 无效！必须用 traceAction 时间线，profile 模式）
+flutter drive --driver=test_driver/perf_driver.dart --target=integration_test/scroll_perf_test.dart --profile -d R52W809056B
+# 产物 build/perf/{home_scroll,reader_scroll}.timeline_summary.json，3 次取中位
+# 启动耗时
+& $adb shell am start -W com.aeonlectron.dazangjing/.MainActivity
+# 录屏（转场留档）
+& $adb shell screenrecord --time-limit 8 /sdcard/t.mp4; & $adb pull /sdcard/t.mp4
+# 测试
+flutter analyze; flutter test
+```
+
+---
+
+## 7. 风险与缓解
+
+| 风险 | 影响 | 缓解 |
+|------|------|------|
+| 模拟器上 Impeller 回退/不稳定 | shader 表现与真机不一 | 已规避：全程用真机（Impeller Vulkan 已确认） |
+| 性能采样噪声（真机温度/后台进程） | 性能判定误差 | 固定 fling 脚本 + 3 次取中位 + 只看相对增量；测前保证设备非低电量 |
+| 透明 Scaffold + 共享画布破坏既有 widget 测试 | 测试维护成本 | 提供统一 `pumpInkApp()` test helper，所有测试经它包装 |
+| 全屏 shader 耗电/发热 | 用户体验 | 设计八则 #8：静止 0 重绘；呼吸动画默认低帧率（≤20fps tick）且 reduce-motion 关闭 |
+| flutter_shaders 与 Dart 3.8.1 版本不兼容 | 阻塞 P1 | P0.6 先锁可用版本；不行则手写 AnimatedSampler 等价物（≈100 行） |
+| 朱砂红与 destructive 红混淆 | 语义错误 | InkTokens 单元测试断言两色 ΔE 足够大 |
+| 8 款字体与新排版冲突（行高/字重） | Reader 可读性 | P3.4 验收强制 8 字体 × 截图逐一过 checklist |
+| 「画卷」隐喻过强导致导航迷失 | 可用性 | 保留底部导航/AppBar 返回等标准 affordance；P5.4 TalkBack 抽查兜底 |
+
+---
+
+## 8. 范围外（明确不做）
+
+- 不引入 Rive/Flame 运行时（见 §3 决策）。
+- 不改信息架构/路由结构/业务逻辑/数据层。
+- 不做 iOS 端截图验收（本轮以 Android adb 为准；iOS 仅保证编译通过——shader 与 Impeller 在 iOS 兼容性更好，风险低）。
+- 不新增用户可配置的「关闭水墨」开关（reduce-motion 已覆盖动效部分；如终验发现可读性问题再议）。
+
+## 9. 进度日志
+
+| 日期 | 完成 | 关键数据/决定 | 遗留 |
+|------|------|---------------|------|
+| 2026-06-11 | 规划文档建立；环境勘察（Flutter 3.32.8、license 未接受但不阻塞、adb 全路径确认） | 技术路线定为 shader+CustomPainter 程序化方案；Rive 暂缓、Flame 不用 | P0 待做 |
+| 2026-06-11 | 真机全链路验证：P0.1 ✅、P0.4 ✅ | 真机 = Tab S6 Lite（800dp 宽平板，Android 14）；**Impeller Vulkan 已确认**；冷启动首跑 4899ms（含首启种子导入，不作基线——P0.6 须以二次启动测）；**坑：PowerShell `>` 重定向 exec-out 会损坏 PNG，必须 screencap 落盘+pull（§6.4 已更正）** | P0.2/P0.3/P0.5/P0.6 待做；真机是平板，P5.1 的「平板宽度」天然覆盖，「手机宽度」改用 wm size 覆盖验证 |
+| 2026-06-11 | **P0 全部完成**（P0.2/P0.3/P0.5/P0.6 ✅） | 深链巡检通道（qldzj:// + ?theme=，!kReleaseMode 门控）+ screenshot.ps1；基线 18 张截图；性能口径两次纠错：gfxinfo 对 Flutter 无效（frames=0）→ traceAction 时间线（--no-dds 必须，DDS 在宿主机会拒掉 app 内 VM Service 连接）+ 预热段排除首滚污染；基线：home jank_raster 85.7%（改造前真实瓶颈，raster p90 18.1ms 超 60Hz 预算）、reader 0%、冷启动 799ms、APK 195.6MB；坑2 熄屏截图纯黑（脚本已加 WAKEUP）、坑3 flutter drive 测完卸载 app、坑4 跨盘 Kotlin 增量缓存警告（C 盘 pub 缓存 vs D 盘项目，非致命） | P1 开始：InkTokens → 纸纹理 shader → 墨晕阴影/笔触/意象/墨滴交互 |
+
+## 10. 最终验收清单（Definition of Done）
+
+- [ ] P0–P5 所有任务 ✅（或 ⏸️ 且文档记录了用户认可的理由）
+- [ ] §6.1 性能记分卡填齐且全部达红线
+- [ ] §6.2 六类测试全绿，`flutter analyze` 0 issues
+- [ ] §6.3 最终截图矩阵 ≥71 张全部通过五项 checklist
+- [ ] 9 个页面 + 全局组件无一处保留改造前的 Material 默认观感（蓝紫色 ripple、默认 elevation 阴影、默认 glow）
+- [ ] 六主题 + 8 字体 + reduce-motion + 平板宽度组合下均可正常使用
+- [ ] 既有功能零回归（路由、保活、深链、离线阅读、繁简转换、字体切换）

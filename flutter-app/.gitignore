@@ -43,3 +43,6 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# 水墨改造：下划线前缀 = 临时诊断截图，不入库（正式证据无前缀）
+docs/ink-design/screenshots/_*.png

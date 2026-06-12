@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../pages/about_page.dart';
@@ -11,9 +13,28 @@ import '../pages/search_page.dart';
 import '../pages/section_page.dart';
 import '../pages/settings_page.dart';
 import '../pages/shell_page.dart';
+import '../providers/app_providers.dart';
 
 final appRouter = GoRouter(
   initialLocation: '/',
+  // UI 巡检通道（debug/profile 生效，release 关闭）：任意深链可带 ?theme=<key>
+  // 切主题，供 adb 截图脚本逐主题验收，也让 profile 包能按主题做性能采样
+  // （docs/ink-design-plan.md §6.4、tool/screenshot.ps1）。
+  redirect: (context, state) {
+    if (!kReleaseMode) {
+      final themeKey = state.uri.queryParameters['theme'];
+      if (themeKey != null && themeKey.isNotEmpty) {
+        final container = ProviderScope.containerOf(context, listen: false);
+        if (container.read(settingsProvider).themeKey != themeKey) {
+          // 路由解析阶段不能同步改 provider 状态，推迟到下一个事件循环。
+          Future(() {
+            container.read(settingsProvider.notifier).setTheme(themeKey);
+          });
+        }
+      }
+    }
+    return null;
+  },
   routes: [
     StatefulShellRoute.indexedStack(
       builder: (context, state, shell) => ShellPage(shell: shell),
