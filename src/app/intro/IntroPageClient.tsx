@@ -151,27 +151,27 @@ const IntroPageClient: React.FC = () => {
         </div>
         <div className="flex flex-col gap-2">
             <div className="flex flex-row gap-2 pb-1">
-                <Button className="bg-muted/90 backdrop-blur-sm shadow-md"><Text>复制</Text></Button>
+                <Button className="bg-muted shadow-md"><Text>复制</Text></Button>
                 <div className="flex flex-col justify-center"><Text>复制选中的经文</Text></div>
             </div>
             <div className="flex flex-row gap-2 pb-1">
-                <Button className="bg-muted/90 backdrop-blur-sm shadow-md"><Text>搜索</Text></Button>
+                <Button className="bg-muted shadow-md"><Text>搜索</Text></Button>
                 <div className="flex flex-col justify-center"><Text>在搜索引擎中搜索</Text></div>
             </div>
             <div className="flex flex-row gap-2 pb-1">
-                <Button className="bg-muted/90 backdrop-blur-sm shadow-md"><Text>字典</Text></Button>
+                <Button className="bg-muted shadow-md"><Text>字典</Text></Button>
                 <div className="flex flex-col justify-center"><Text>在佛学辞典中查询选中的经文</Text></div>
             </div>
             <div className="flex flex-row gap-2 pb-1">
-                <Button className="bg-muted/90 backdrop-blur-sm shadow-md"><Text>今译</Text></Button>
+                <Button className="bg-muted shadow-md"><Text>今译</Text></Button>
                 <div className="flex flex-col justify-center"><Text>把选中的经文翻译成现代汉语</Text></div>
             </div>
             <div className="flex flex-row gap-2 pb-1">
-                <Button className="bg-muted/90 backdrop-blur-sm shadow-md"><Text>释义</Text></Button>
+                <Button className="bg-muted shadow-md"><Text>释义</Text></Button>
                 <div className="flex flex-col justify-center"><Text>解释选中经文的佛教义理</Text></div>
             </div>
             <div className="flex flex-row gap-2 pb-1">
-                <Button className="bg-muted/90 backdrop-blur-sm shadow-md"><Text>注释</Text></Button>
+                <Button className="bg-muted shadow-md"><Text>注释</Text></Button>
                 <div className="flex flex-col justify-center"><Text>注释选中的经文</Text></div>
             </div>
         </div>

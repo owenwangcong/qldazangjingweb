@@ -44,7 +44,7 @@ export function ClassicTextsContent({ activeTab, classicTexts }: ClassicTextsCon
           <Link
             key={text.id}
             href={`/books/${text.id}`}
-            className="inline-block px-3 py-1.5 md:px-4 md:py-2 border border-border/50 rounded-lg bg-background/40 backdrop-blur-sm hover:bg-primary-hover hover:text-primary-foreground-hover hover:shadow-sm transition-all duration-200 text-xs md:text-sm"
+            className="inline-block px-3 py-1.5 md:px-4 md:py-2 border border-border/50 rounded-lg bg-card hover:bg-primary-hover hover:text-primary-foreground-hover hover:shadow-sm transition-all duration-200 text-xs md:text-sm"
           >
             <Text>{text.title}</Text>
           </Link>

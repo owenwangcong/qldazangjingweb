@@ -223,14 +223,14 @@ const Header: React.FC = () => {
   };
 
   return (
-    <div id="header" className="bg-background text-foreground">
+    <div id="header" className="bg-transparent text-foreground">
       <div data-nosnippet="true" className="fixed top-3 right-3 space-y-2.5 z-50 flex flex-col">
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
               <button
                 onClick={toggleHeaderVisibility}
-                className="w-10 h-10 bg-card/80 backdrop-blur-sm rounded-full shadow-md hover:shadow-lg focus:outline-none hover:bg-primary-hover hover:text-primary-foreground-hover transition-all duration-200"
+                className="w-10 h-10 bg-card rounded-full shadow-md hover:shadow-lg focus:outline-none hover:bg-primary-hover hover:text-primary-foreground-hover transition-all duration-200"
                 aria-label={isHeaderVisible ? "Hide Header" : "Show Header"}
                 data-tour="toggle-visibility"
               >
@@ -252,7 +252,7 @@ const Header: React.FC = () => {
                   <TooltipTrigger asChild>
                     <DropdownMenu.Trigger asChild>
                       <button
-                        className="w-10 h-10 bg-card/80 backdrop-blur-sm rounded-full shadow-md hover:shadow-lg focus:outline-none hover:bg-primary-hover hover:text-primary-foreground-hover transition-all duration-200"
+                        className="w-10 h-10 bg-card rounded-full shadow-md hover:shadow-lg focus:outline-none hover:bg-primary-hover hover:text-primary-foreground-hover transition-all duration-200"
                         aria-label="Select Theme"
                         data-tour="theme-selector"
                       >
@@ -299,7 +299,7 @@ const Header: React.FC = () => {
                 <TooltipTrigger asChild>
                   <button
                     onClick={handleToggleLanguage}
-                    className="w-10 h-10 bg-card/80 backdrop-blur-sm rounded-full shadow-md hover:shadow-lg focus:outline-none hover:bg-primary-hover hover:text-primary-foreground-hover transition-all duration-200"
+                    className="w-10 h-10 bg-card rounded-full shadow-md hover:shadow-lg focus:outline-none hover:bg-primary-hover hover:text-primary-foreground-hover transition-all duration-200"
                     aria-label={isSimplified ? "Switch to Traditional Chinese" : "Switch to Simplified Chinese"}
                     data-tour="language-toggle"
                   >
@@ -320,7 +320,7 @@ const Header: React.FC = () => {
                   <TooltipTrigger asChild>
                     <DialogTrigger asChild>
                       <button
-                        className="w-10 h-10 bg-card/80 backdrop-blur-sm rounded-full shadow-md hover:shadow-lg focus:outline-none hover:bg-primary-hover hover:text-primary-foreground-hover transition-all duration-200"
+                        className="w-10 h-10 bg-card rounded-full shadow-md hover:shadow-lg focus:outline-none hover:bg-primary-hover hover:text-primary-foreground-hover transition-all duration-200"
                         aria-label="Select Font and Width"
                         data-tour="font-settings"
                       >
@@ -516,7 +516,7 @@ const Header: React.FC = () => {
                     <TooltipTrigger asChild>
                       <DropdownMenu.Trigger asChild>
                         <button
-                          className="w-10 h-10 bg-card/80 backdrop-blur-sm rounded-full shadow-md hover:shadow-lg focus:outline-none hover:bg-primary-hover hover:text-primary-foreground-hover transition-all duration-200"
+                          className="w-10 h-10 bg-card rounded-full shadow-md hover:shadow-lg focus:outline-none hover:bg-primary-hover hover:text-primary-foreground-hover transition-all duration-200"
                           aria-label="Select Theme"
                           data-tour="table-of-contents"
                         >
@@ -560,8 +560,8 @@ const Header: React.FC = () => {
                   <TooltipTrigger asChild>
                     <button
                       onClick={toggleFavoriteBook}
-                      className={`w-10 h-10 backdrop-blur-sm rounded-full shadow-md hover:shadow-lg focus:outline-none hover:bg-primary-hover hover:text-primary-foreground-hover transition-all duration-200 ${
-                        book && favoriteBooks.some(fav => fav.bookId === book?.meta?.id) ? 'bg-accentalert/80' : 'bg-card/80'
+                      className={`w-10 h-10 rounded-full shadow-md hover:shadow-lg focus:outline-none hover:bg-primary-hover hover:text-primary-foreground-hover transition-all duration-200 ${
+                        book && favoriteBooks.some(fav => fav.bookId === book?.meta?.id) ? 'bg-accentalert' : 'bg-card'
                       }`}
                       aria-label="Add to Favorites"
                       data-tour="favorites"
@@ -580,7 +580,7 @@ const Header: React.FC = () => {
                   <TooltipTrigger asChild>
                     <button
                       onClick={handleAddBookmark}
-                      className="w-10 h-10 bg-card/80 backdrop-blur-sm rounded-full shadow-md hover:shadow-lg focus:outline-none hover:bg-primary-hover hover:text-primary-foreground-hover transition-all duration-200"
+                      className="w-10 h-10 bg-card rounded-full shadow-md hover:shadow-lg focus:outline-none hover:bg-primary-hover hover:text-primary-foreground-hover transition-all duration-200"
                       aria-label="Add to Bookmarks"
                       data-tour="bookmarks"
                     >
@@ -598,7 +598,7 @@ const Header: React.FC = () => {
                   <TooltipTrigger asChild>
                     <button
                       onClick={handleDownload}
-                      className="w-10 h-10 bg-card/80 backdrop-blur-sm rounded-full shadow-md hover:shadow-lg focus:outline-none hover:bg-primary-hover hover:text-primary-foreground-hover transition-all duration-200"
+                      className="w-10 h-10 bg-card rounded-full shadow-md hover:shadow-lg focus:outline-none hover:bg-primary-hover hover:text-primary-foreground-hover transition-all duration-200"
                       aria-label="Download"
                       data-tour="download"
                     >
@@ -626,19 +626,19 @@ const Header: React.FC = () => {
 
           <div className="flex justify-center text-md py-5 text-xl">
             <nav className="flex flex-wrap justify-center w-full gap-3">
-            <Link href="/" className="flex items-center px-4 py-2.5 rounded-xl bg-card/50 backdrop-blur-sm shadow-sm border border-border/50 hover:bg-primary-hover hover:text-primary-foreground-hover hover:shadow-md transition-all duration-200">
+            <Link href="/" className="flex items-center px-4 py-2.5 rounded-xl bg-card shadow-sm border border-border/50 hover:bg-primary-hover hover:text-primary-foreground-hover hover:shadow-md transition-all duration-200">
                 <Home className="w-5 h-5 mr-2" aria-hidden="true" /> <Text>首页</Text>
               </Link>
-              <Link href="/intro" className="flex items-center px-4 py-2.5 rounded-xl bg-card/50 backdrop-blur-sm shadow-sm border border-border/50 hover:bg-primary-hover hover:text-primary-foreground-hover hover:shadow-md transition-all duration-200">
+              <Link href="/intro" className="flex items-center px-4 py-2.5 rounded-xl bg-card shadow-sm border border-border/50 hover:bg-primary-hover hover:text-primary-foreground-hover hover:shadow-md transition-all duration-200">
                 <Info className="w-5 h-5 mr-2" aria-hidden="true" /> <Text>简介</Text>
               </Link>
-              <Link href="/search" className="flex items-center px-4 py-2.5 rounded-xl bg-card/50 backdrop-blur-sm shadow-sm border border-border/50 hover:bg-primary-hover hover:text-primary-foreground-hover hover:shadow-md transition-all duration-200">
+              <Link href="/search" className="flex items-center px-4 py-2.5 rounded-xl bg-card shadow-sm border border-border/50 hover:bg-primary-hover hover:text-primary-foreground-hover hover:shadow-md transition-all duration-200">
                 <Search className="w-5 h-5 mr-2" aria-hidden="true" /> <Text>搜索</Text>
               </Link>
-              <Link href="/dicts" className="flex items-center px-4 py-2.5 rounded-xl bg-card/50 backdrop-blur-sm shadow-sm border border-border/50 hover:bg-primary-hover hover:text-primary-foreground-hover hover:shadow-md transition-all duration-200">
+              <Link href="/dicts" className="flex items-center px-4 py-2.5 rounded-xl bg-card shadow-sm border border-border/50 hover:bg-primary-hover hover:text-primary-foreground-hover hover:shadow-md transition-all duration-200">
                 <Book className="w-5 h-5 mr-2" aria-hidden="true" /> <Text>辞典</Text>
               </Link>
-              <Link href="/mystudy" className="flex items-center px-4 py-2.5 rounded-xl bg-card/50 backdrop-blur-sm shadow-sm border border-border/50 hover:bg-primary-hover hover:text-primary-foreground-hover hover:shadow-md transition-all duration-200">
+              <Link href="/mystudy" className="flex items-center px-4 py-2.5 rounded-xl bg-card shadow-sm border border-border/50 hover:bg-primary-hover hover:text-primary-foreground-hover hover:shadow-md transition-all duration-200">
                 <Heart className="w-5 h-5 mr-2" aria-hidden="true" /> <Text>我的书房</Text>
               </Link>
             </nav>

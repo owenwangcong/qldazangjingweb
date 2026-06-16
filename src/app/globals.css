@@ -384,7 +384,11 @@ html {
   * {
     @apply border-border;
   }
+  /* 宣纸纹理由固定的 WebGL canvas（PaperBackground，z-index:-1）铺底，
+     因此 body 背景透明、让纹理透出；--background 仍作为半透明卡片的取色基准。
+     兜底纸色由 PaperBackground 同步写到 <html> 上，避免首帧/降级时白闪。 */
   body {
-    @apply bg-background text-foreground;
+    @apply text-foreground;
+    background-color: transparent;
   }
 }
