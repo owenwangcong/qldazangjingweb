@@ -41,7 +41,9 @@
       "Bash(cat \"D:\\Projects\\Cursor\\qldazangjingweb\\README.md\")",
       "Bash(cat \"D:\\Projects\\Cursor\\qldazangjingweb\\.eslintrc.json\")",
       "Bash(npx playwright test --headed)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(cd:*)",
+      "Bash(git push:*)"
     ],
     "deny": [
       "Read(./out/**)",

@@ -1,0 +1,128 @@
+name: qldazangjing
+description: "乾隆大藏经 — 离线优先的佛经阅读应用"
+# The following line prevents the package from being accidentally published to
+# pub.dev using `flutter pub publish`. This is preferred for private packages.
+publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+
+# The following defines the version and build number for your application.
+# A version number is three numbers separated by dots, like 1.2.43
+# followed by an optional build number separated by a +.
+# Both the version and the builder number may be overridden in flutter
+# build by specifying --build-name and --build-number, respectively.
+# In Android, build-name is used as versionName while build-number used as versionCode.
+# Read more about Android versioning at https://developer.android.com/studio/publish/versioning
+# In iOS, build-name is used as CFBundleShortVersionString while build-number is used as CFBundleVersion.
+# Read more about iOS versioning at
+# https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
+# In Windows, build-name is used as the major, minor, and patch parts
+# of the product and file versions while build-number is used as the build suffix.
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.8.1
+
+# Dependencies specify other packages that your package needs in order to work.
+# To automatically upgrade your package dependencies to the latest versions
+# consider running `flutter pub upgrade --major-versions`. Alternatively,
+# dependencies can be manually updated by changing the version numbers below to
+# the latest version available on pub.dev. To see which dependencies have newer
+# versions available, run `flutter pub outdated`.
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # The following adds the Cupertino Icons font to your application.
+  # Use with the CupertinoIcons class for iOS style icons.
+  cupertino_icons: ^1.0.8
+  isar_community: ^3.3.1
+  # 3.3.2 fixes the Android binary version mismatch (3.3.1 shipped a
+  # libisar.so identifying as 3.2.0-dev.2, crashing at startup).
+  isar_community_flutter_libs: ^3.3.2
+  flutter_riverpod: ^2.6.1
+  go_router: ^17.0.0
+  dio: ^5.9.2
+  connectivity_plus: ^7.1.1
+  cached_network_image: ^3.4.1
+  flutter_slidable: ^4.0.3
+  scrollable_positioned_list: ^0.3.8
+  path_provider: ^2.1.5
+  flutter_markdown: ^0.7.7+1
+  share_plus: ^12.0.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  # 滚动性能采样（gfxinfo 对 Flutter 自绘管线无效，须用 traceAction 时间线，见 ink-design-plan.md §6.1）
+  integration_test:
+    sdk: flutter
+  flutter_driver:
+    sdk: flutter
+
+  # The "flutter_lints" package below contains a set of recommended lints to
+  # encourage good coding practices. The lint set provided by the package is
+  # activated in the `analysis_options.yaml` file located at the root of your
+  # package. See that file for information about deactivating specific lint
+  # rules and activating additional ones.
+  flutter_lints: ^5.0.0
+  isar_community_generator: ^3.3.1
+  build_runner: ^2.15.0
+
+# isar_community_generator 3.3.1 pins isar_community to exactly 3.3.1, while
+# isar_community_flutter_libs 3.3.2 (whose Android binary actually matches)
+# pins 3.3.2. Generator 3.3.2 needs Dart >=3.9, unavailable on this SDK, so
+# override the runtime to 3.3.2 — patch-compatible with the generated code.
+dependency_overrides:
+  isar_community: 3.3.2
+
+# For information on the generic Dart part of this file, see the
+# following page: https://dart.dev/tools/pub/pubspec
+
+# The following section is specific to Flutter packages.
+flutter:
+
+  # The following line ensures that the Material Icons font is
+  # included with your application, so that you can use the icons in
+  # the material Icons class.
+  uses-material-design: true
+
+  # 水墨设计语言的 fragment shaders（impellerc 编译，FragmentProgram 加载）。
+  # 注意：Impeller 无 raster cache，全屏 shader 每帧都会执行——shader 只用于
+  # 离线烘焙（paper.frag 烘成位图），不直接挂在每帧绘制路径上（§9 性能教训）。
+  shaders:
+    - shaders/paper.frag
+
+  assets:
+    - assets/data/
+    - assets/opencc/
+    # 全部 1809 部经文正文（gzip），App 完全离线可读。
+    # 重新生成：node scripts/generate-book-assets.js（仓库根目录）
+    - assets/books/
+    # 8 款阅读字体（全量 TTF），运行时 FontLoader 按需加载（见 core/fonts/）。
+    # 故意不在 fonts: 段声明 —— 只有用户选中的字体才会被读入内存。
+    - assets/fonts/
+
+  # An image asset can refer to one or more resolution-specific "variants", see
+  # https://flutter.dev/to/resolution-aware-images
+
+  # For details regarding adding assets from package dependencies, see
+  # https://flutter.dev/to/asset-from-package
+
+  # To add custom fonts to your application, add a fonts section here,
+  # in this "flutter" section. Each entry in this list should have a
+  # "family" key with the font family name, and a "fonts" key with a
+  # list giving the asset and other descriptors for the font. For
+  # example:
+  # fonts:
+  #   - family: Schyler
+  #     fonts:
+  #       - asset: fonts/Schyler-Regular.ttf
+  #       - asset: fonts/Schyler-Italic.ttf
+  #         style: italic
+  #   - family: Trajan Pro
+  #     fonts:
+  #       - asset: fonts/TrajanPro.ttf
+  #       - asset: fonts/TrajanPro_Bold.ttf
+  #         weight: 700
+  #
+  # For details regarding fonts from package dependencies,
+  # see https://flutter.dev/to/font-from-package

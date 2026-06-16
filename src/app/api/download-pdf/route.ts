@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
     await page.evaluateOnNewDocument((fontFamily, fontSize, isSimplified, selectedFont, selectedWidth, theme) => {
         if (fontFamily && fontFamily.trim() !== '') localStorage.setItem('fontFamily', fontFamily);
         if (fontSize && fontSize.trim() !== '') localStorage.setItem('fontSize', fontSize);
-        if (isSimplified !== undefined) localStorage.setItem('isSimplified', isSimplified.toString());
+        if (isSimplified !== undefined && isSimplified !== null) localStorage.setItem('isSimplified', String(isSimplified));
         if (selectedFont && selectedFont.trim() !== '') localStorage.setItem('selectedFont', selectedFont);
         if (selectedWidth && selectedWidth.trim() !== '') localStorage.setItem('selectedWidth', selectedWidth);
         if (theme && theme.trim() !== '') localStorage.setItem('theme', theme);

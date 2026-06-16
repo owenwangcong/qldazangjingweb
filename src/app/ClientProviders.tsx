@@ -7,6 +7,7 @@ import { ThemeProvider } from './context/ThemeContext';
 import { MyStudyProvider } from './context/MyStudyContext';
 import { AnnotationProvider } from './context/AnnotationContext';
 import FontWrapper from './components/FontWrapper';
+import PaperBackground from './components/PaperBackground';
 import { Toaster } from '@/components/ui/toaster';
 import Script from 'next/script';
 import { usePathname } from 'next/navigation';
@@ -45,6 +46,7 @@ const ClientProviders = ({ children }: { children: React.ReactNode }) => {
           <FontProvider>
             <LanguageProvider>
               <ThemeProvider>
+                <PaperBackground />
                 <FontWrapper>
                   {children}
                 </FontWrapper>

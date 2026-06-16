@@ -240,7 +240,7 @@ export default function Home() {
                   key={key}
                   href={`/juans/${id}`}
                   passHref
-                  className="p-5 border border-border/50 rounded-xl shadow-md w-full max-w-md block bg-card/50 backdrop-blur-sm hover:bg-primary-hover hover:text-primary-foreground-hover hover:shadow-lg transition-all duration-200"
+                  className="p-5 border border-border/50 rounded-xl shadow-md w-full max-w-md block bg-card hover:bg-primary-hover hover:text-primary-foreground-hover hover:shadow-lg transition-all duration-200"
                 >
                   <h2 className="text-xl font-semibold text-center"><Text>{name}</Text></h2>
                 </Link>
