@@ -9,11 +9,6 @@ interface IntroTourProps {
 }
 
 const IntroTour: React.FC<IntroTourProps> = ({ enabled, onExit }) => {
-  // Early return if not in browser
-  if (typeof window === 'undefined') {
-    return null;
-  }
-
   const { isSimplified } = useLanguage();
   const introRef = useRef<any>(null);
   const hasStartedRef = useRef(false);
