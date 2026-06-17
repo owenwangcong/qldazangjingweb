@@ -46,3 +46,6 @@ app.pid
 
 # Playwright MCP test artifacts
 .playwright-mcp/
+
+# Exclude logs folder
+/public
