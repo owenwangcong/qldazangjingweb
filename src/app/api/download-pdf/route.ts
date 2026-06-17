@@ -2,6 +2,44 @@ import logger from '@/app/utils/logger';
 import { NextRequest, NextResponse } from 'next/server';
 import puppeteer from 'puppeteer';
 
+// --- Concurrency guard -------------------------------------------------------
+// Each puppeteer.launch() spawns a headless Chromium tree that can use
+// 300MB-1GB+ RSS. On this shared, memory-constrained box, running several at
+// once exhausts RAM, spills into swap, and can OOM-kill the host. So we allow
+// only ONE PDF render at a time and cap how many may wait; excess requests get
+// 429 instead of piling up browsers (and hanging clients) indefinitely.
+const MAX_CONCURRENT = 1;
+const MAX_QUEUED = 3;
+let active = 0;
+let queued = 0;
+const waiters: Array<() => void> = [];
+
+async function acquireSlot(): Promise<boolean> {
+  if (active < MAX_CONCURRENT) {
+    active++;
+    return true;
+  }
+  if (queued >= MAX_QUEUED) {
+    return false; // too busy — shed load
+  }
+  queued++;
+  await new Promise<void>((resolve) => waiters.push(resolve));
+  // Slot was transferred to us by releaseSlot(); `active` already accounts for it.
+  return true;
+}
+
+function releaseSlot(): void {
+  const next = waiters.shift();
+  if (next) {
+    queued--;
+    // Hand the active slot directly to the next waiter (active count unchanged).
+    next();
+  } else {
+    active--;
+  }
+}
+// -----------------------------------------------------------------------------
+
 export async function POST(req: NextRequest) {
   const userIp = req.headers.get('x-forwarded-for') || req.ip || 'Unknown IP';
   const userAgent = req.headers.get('user-agent') || 'Unknown';
@@ -10,6 +48,16 @@ export async function POST(req: NextRequest) {
 
   let browser = null;
   let page = null;
+
+  // Backpressure: never let more than one Chromium run at once on this box.
+  const gotSlot = await acquireSlot();
+  if (!gotSlot) {
+    logger.warn('POST /download-pdf - rejected (PDF render queue full)', userIp, userAgent, method, requestUrl);
+    return NextResponse.json(
+      { error: 'Server busy generating PDFs. Please retry shortly.' },
+      { status: 429, headers: { 'Retry-After': '30' } }
+    );
+  }
 
   try {
     const { url, fontFamily, fontSize, isSimplified, selectedFont, selectedWidth, theme } = await req.json();
@@ -165,5 +213,7 @@ export async function POST(req: NextRequest) {
         logger.warn('Failed to close browser during cleanup', userIp, userAgent, method, requestUrl);
       }
     }
+    // Always free the concurrency slot, even on early return / error.
+    releaseSlot();
   }
 }

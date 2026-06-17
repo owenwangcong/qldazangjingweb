@@ -14,7 +14,7 @@ set -Eeuo pipefail
 APP_DIR="/var/www/qldazangjingweb"
 SERVICE="qldazangjingweb"
 NODE_BIN="/home/ubuntu/.nvm/versions/node/v20.18.0/bin"
-HEAP_MB="${HEAP_MB:-4096}"          # V8 heap cap for the build (prevents OOM-kill)
+HEAP_MB="${HEAP_MB:-1536}"          # V8 heap cap for the build. Modest: shared box (ES+MySQL+Apache+Docker); 4096 overflowed RAM and OOM-killed the host.
 RESTART=1
 
 [[ "${1:-}" == "--no-restart" ]] && RESTART=0
@@ -32,21 +32,26 @@ if [[ ! -d node_modules ]]; then
   npm ci
 fi
 
-# 2. Clean any partial/stale build so a half-finished .next can't linger.
-echo "==> Removing old .next"
-rm -rf .next
+# 2. Preserve the live build as a fallback (do NOT blindly delete it). If the
+#    new build fails, we restore this so the running app keeps a valid .next
+#    instead of crash-looping under systemd.
+echo "==> Backing up current .next (if any)"
+rm -rf .next.bak
+[[ -d .next ]] && cp -a .next .next.bak
 
 # 3. Build.
 #    CI=true        -> disables the interactive spinner that throws setRawMode EIO
 #    NODE_OPTIONS   -> caps V8 heap so 'next build' isn't OOM-killed
 echo "==> Building production bundle"
-CI=true NODE_OPTIONS="--max-old-space-size=${HEAP_MB}" npm run build
-
-# 4. Verify the build actually produced a valid bundle.
-if [[ ! -f .next/BUILD_ID ]]; then
-  echo "!! Build failed: .next/BUILD_ID missing after build. Aborting." >&2
+if ! CI=true NODE_OPTIONS="--max-old-space-size=${HEAP_MB}" npm run build || [[ ! -f .next/BUILD_ID ]]; then
+  echo "!! Build failed: restoring previous .next and aborting (no restart)." >&2
+  rm -rf .next
+  [[ -d .next.bak ]] && mv .next.bak .next && echo "   Previous .next restored."
   exit 1
 fi
+
+# 4. Build succeeded — drop the fallback.
+rm -rf .next.bak
 echo "==> Build OK (BUILD_ID: $(cat .next/BUILD_ID))"
 
 # 5. Hand off to systemd.

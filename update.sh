@@ -14,7 +14,10 @@ APP_DIR="/var/www/qldazangjingweb"
 SERVICE="qldazangjingweb"
 BRANCH="${1:-main}"
 NODE_BIN="/home/ubuntu/.nvm/versions/node/v20.18.0/bin"
-HEAP_MB="${HEAP_MB:-4096}"
+# Build heap cap. Kept modest because this box is SHARED (ES + MySQL + Apache/
+# Plesk + Docker). A 4 GB build heap on top of a 4 GB ES heap overflowed RAM,
+# spilled into swap, and OOM-killed the box. 1536 MB is enough for this app.
+HEAP_MB="${HEAP_MB:-1536}"
 
 GREEN='\033[0;32m'; YELLOW='\033[1;33m'; RED='\033[0;31m'; NC='\033[0m'
 
@@ -40,18 +43,26 @@ else
   npm install
 fi
 
-# 3. Clean + build with the production-safe flags.
+# 3. Build with the production-safe flags, WITHOUT destroying the live build.
+#    Previously this did `rm -rf .next` before building; when the build then
+#    failed (e.g. OOM), the app was left with no .next and crash-looped under
+#    systemd (~6500 restarts). Now we keep the old build as a fallback and only
+#    discard it once a fresh build succeeds.
 #    CI=true      -> avoids the interactive-spinner setRawMode EIO crash
 #    NODE_OPTIONS -> caps heap so 'next build' isn't OOM-killed
 echo -e "${YELLOW}🔨 Building application...${NC}"
-rm -rf .next
-CI=true NODE_OPTIONS="--max-old-space-size=${HEAP_MB}" npm run build
+rm -rf .next.bak
+[[ -d .next ]] && cp -a .next .next.bak
 
-# 4. Verify the build produced a valid bundle before restarting.
-if [[ ! -f .next/BUILD_ID ]]; then
-  echo -e "${RED}❌ Build failed: .next/BUILD_ID missing. Service NOT restarted.${NC}" >&2
+if ! CI=true NODE_OPTIONS="--max-old-space-size=${HEAP_MB}" npm run build || [[ ! -f .next/BUILD_ID ]]; then
+  echo -e "${RED}❌ Build failed. Restoring previous build and NOT restarting.${NC}" >&2
+  rm -rf .next
+  [[ -d .next.bak ]] && mv .next.bak .next && echo -e "${YELLOW}   Previous .next restored — live app untouched.${NC}"
   exit 1
 fi
+
+# 4. Build succeeded — drop the fallback.
+rm -rf .next.bak
 echo -e "${GREEN}   Build OK (BUILD_ID: $(cat .next/BUILD_ID))${NC}"
 
 # 5. Restart via systemd.

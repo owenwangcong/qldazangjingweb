@@ -84,7 +84,9 @@ function setupGracefulShutdown(server) {
       memoryUsage: process.memoryUsage(),
       platform: process.platform,
       workingDirectory: process.cwd(),
-      environment: process.env,
+      // NOTE: do NOT log the full process.env — it contains secrets
+      // (e.g. ELASTICSEARCH_PASSWORD) and these logs are not access-controlled.
+      nodeEnv: process.env.NODE_ENV,
       argv: process.argv,
       execPath: process.execPath,
       sessionId: typeof process.getsid === 'function' ? process.getsid(process.pid) : 'unknown',
@@ -150,13 +152,12 @@ const logError = (error, context) => {
     networkInterfaces: Object.keys(require('os').networkInterfaces()),
     hostname: require('os').hostname()
   };
-  
+
   const logMessage = JSON.stringify(errorLog) + '\n';
+  // Write once. (Previously this duplicated the same blob into both crash.log
+  // and abnormal-exit.log; logAbnormalExit owns abnormal-exit.log.)
   fs.appendFileSync(path.join(process.cwd(), 'logs', 'crash.log'), logMessage);
   console.error(`[CRASH] ${errorLog.timestamp} - ${context}:`, error);
-
-  // Also write to a separate abnormal exit log for easier analysis
-  fs.appendFileSync(path.join(process.cwd(), 'logs', 'abnormal-exit.log'), logMessage);
 };
 
 // Comprehensive exit logging function
@@ -183,19 +184,19 @@ const logAbnormalExit = (reason, data, signal = null) => {
       loadavg: require('os').loadavg(),
       totalmem: require('os').totalmem(),
       freemem: require('os').freemem(),
-      cpus: require('os').cpus(),
+      cpus: require('os').cpus().length,
       hostname: require('os').hostname(),
-      networkInterfaces: require('os').networkInterfaces(),
+      networkInterfaces: Object.keys(require('os').networkInterfaces()),
       data: data || null,
       stackTrace: new Error().stack
     };
 
     const logMessage = JSON.stringify(exitInfo, null, 2) + '\n' + '='.repeat(80) + '\n';
-    
-    // Write to multiple log files for redundancy
+
+    // Write once to abnormal-exit.log. (Previously duplicated into crash.log too,
+    // which doubled disk growth — a crash-loop wrote ~4 big blobs per restart.)
     fs.appendFileSync(path.join(process.cwd(), 'logs', 'abnormal-exit.log'), logMessage);
-    fs.appendFileSync(path.join(process.cwd(), 'logs', 'crash.log'), logMessage);
-    
+
     console.error(`[ABNORMAL EXIT] ${exitInfo.timestamp} - ${reason}`);
     console.error('Full exit details written to abnormal-exit.log');
   } catch (logError) {

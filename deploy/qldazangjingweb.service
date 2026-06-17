@@ -1,0 +1,46 @@
+# /etc/systemd/system/qldazangjingweb.service
+#
+# Versioned copy of the production unit. To apply on the server:
+#   sudo cp deploy/qldazangjingweb.service /etc/systemd/system/qldazangjingweb.service
+#   sudo systemctl daemon-reload
+#   sudo systemctl restart qldazangjingweb
+#
+# Changes vs. the original unit:
+#   - StartLimit*  : stop the infinite crash-restart loop. If the app fails 5x in
+#                    60s (e.g. missing .next build), systemd gives up and surfaces
+#                    a clear "start-limit-hit" state instead of looping ~6500 times.
+#   - MemoryMax    : cgroup cap so the Node process (or a runaway) is killed in
+#                    isolation rather than triggering a global OOM that takes down
+#                    Elasticsearch / MySQL / Apache on this shared box.
+#   - MemoryAccounting=yes makes `systemctl show -p MemoryCurrent` reliable.
+
+[Unit]
+Description=qldazangjingweb Next.js app
+After=network.target
+# Give up after 5 failed starts within 60s instead of looping forever.
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/var/www/qldazangjingweb
+Environment=NODE_ENV=production
+Environment=PORT=3000
+# Cap Node's own V8 heap so the runtime stays well under the cgroup limit.
+Environment=NODE_OPTIONS=--max-old-space-size=896
+# point to your nvm node explicitly (systemd has no nvm)
+ExecStart=/home/ubuntu/.nvm/versions/node/v20.18.0/bin/node /var/www/qldazangjingweb/server.js
+Restart=on-failure
+RestartSec=5
+
+# Memory hardening (shared box: also runs ES, MySQL, Apache/Plesk, Docker).
+MemoryAccounting=yes
+MemoryMax=1200M
+MemoryHigh=1G
+
+StandardOutput=append:/var/www/qldazangjingweb/logs/app.log
+StandardError=append:/var/www/qldazangjingweb/logs/app.log
+
+[Install]
+WantedBy=multi-user.target

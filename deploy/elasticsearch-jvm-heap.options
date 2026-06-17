@@ -1,0 +1,17 @@
+# Elasticsearch JVM heap — pin small and explicit.
+#
+# WHY: with no -Xms/-Xmx set, ES auto-sizes its heap to ~50% of RAM. On this
+# 7.6 GB box it grabbed ~4 GB (confirmed by the OOM-kill: java anon-rss 4.2 GB),
+# leaving no headroom for Node + a `next build` + MySQL/Apache/Plesk/Docker.
+# That overflow is what filled the swapfile and ultimately OOM-killed ES itself.
+#
+# A 1 GB heap is plenty for a single small index (buddhist_texts). Raise to 1500m
+# only if you see frequent young-GC pressure in the ES logs.
+#
+# INSTALL on the server:
+#   sudo cp deploy/elasticsearch-jvm-heap.options /etc/elasticsearch/jvm.options.d/heap.options
+#   sudo systemctl start elasticsearch        # (it is currently failed/stopped)
+#   curl -s localhost:9200/_cat/nodes?v&h=name,heap.percent,heap.max
+#
+-Xms1g
+-Xmx1g
