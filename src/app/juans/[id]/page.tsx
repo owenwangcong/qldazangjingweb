@@ -28,7 +28,7 @@ async function loadMlsData(): Promise<Record<string, JuanData>> {
 // Generate metadata for SEO
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
   const { id } = params;
-  const siteUrl = "https://www.qldazangjing.com";
+  const siteUrl = "https://qldazangjing.com";
 
   try {
     const mlsData = await loadMlsData();

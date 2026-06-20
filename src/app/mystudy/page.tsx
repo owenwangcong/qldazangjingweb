@@ -2,7 +2,7 @@ import { Metadata } from 'next';
 import MyStudyPageClient from './MyStudyPageClient';
 
 export async function generateMetadata(): Promise<Metadata> {
-  const siteUrl = "https://www.qldazangjing.com";
+  const siteUrl = "https://qldazangjing.com";
   const description = "管理您的个人学习资料，包括收藏的经书、阅读历史、书签和注释。方便您随时继续学习和研究佛教经典。";
 
   return {

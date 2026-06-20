@@ -43,19 +43,51 @@ else
   npm install
 fi
 
+# verify_build — confirm a build is COMPLETE, not just that it started.
+#   Checking only for .next/BUILD_ID is not enough: an OOM-killed 'next build'
+#   can write BUILD_ID and the JS chunks but die before emitting the CSS, so
+#   BUILD_ID exists yet the page references a stylesheet that 404/400s. That
+#   exact failure shipped a styleless site (CSS -> Next 400 'text/html').
+#   Here we parse the build manifests and assert every referenced .css/.js file
+#   actually exists on disk, so a half-written build is rejected and rolled back.
+verify_build() {
+  [[ -f .next/BUILD_ID ]] || { echo "verify: .next/BUILD_ID missing" >&2; return 1; }
+  node -e '
+    const fs = require("fs"), p = require("path"), root = ".next";
+    const manifests = ["app-build-manifest.json", "build-manifest.json"]
+      .map(f => p.join(root, f)).filter(fs.existsSync);
+    if (!manifests.length) { console.error("verify: no build manifest found"); process.exit(1); }
+    const refs = new Set();
+    const collect = o => {
+      if (Array.isArray(o)) o.forEach(collect);
+      else if (o && typeof o === "object") Object.values(o).forEach(collect);
+      else if (typeof o === "string" && /\.(css|js)$/.test(o)) refs.add(o);
+    };
+    for (const m of manifests) collect(JSON.parse(fs.readFileSync(m, "utf8")));
+    const missing = [...refs].filter(f => !fs.existsSync(p.join(root, f)));
+    if (missing.length) {
+      console.error("verify: " + missing.length + " referenced build asset(s) missing:");
+      console.error(missing.slice(0, 20).join("\n"));
+      process.exit(1);
+    }
+    const css = [...refs].filter(f => f.endsWith(".css")).length;
+    console.log("verify: OK — " + refs.size + " referenced assets present (" + css + " css).");
+  ' || return 1
+}
+
 # 3. Build with the production-safe flags, WITHOUT destroying the live build.
 #    Previously this did `rm -rf .next` before building; when the build then
 #    failed (e.g. OOM), the app was left with no .next and crash-looped under
 #    systemd (~6500 restarts). Now we keep the old build as a fallback and only
-#    discard it once a fresh build succeeds.
+#    discard it once a fresh build succeeds AND verifies complete.
 #    CI=true      -> avoids the interactive-spinner setRawMode EIO crash
 #    NODE_OPTIONS -> caps heap so 'next build' isn't OOM-killed
 echo -e "${YELLOW}🔨 Building application...${NC}"
 rm -rf .next.bak
 [[ -d .next ]] && cp -a .next .next.bak
 
-if ! CI=true NODE_OPTIONS="--max-old-space-size=${HEAP_MB}" npm run build || [[ ! -f .next/BUILD_ID ]]; then
-  echo -e "${RED}❌ Build failed. Restoring previous build and NOT restarting.${NC}" >&2
+if ! CI=true NODE_OPTIONS="--max-old-space-size=${HEAP_MB}" npm run build || ! verify_build; then
+  echo -e "${RED}❌ Build failed or incomplete. Restoring previous build and NOT restarting.${NC}" >&2
   rm -rf .next
   [[ -d .next.bak ]] && mv .next.bak .next && echo -e "${YELLOW}   Previous .next restored — live app untouched.${NC}"
   exit 1

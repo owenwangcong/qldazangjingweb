@@ -57,7 +57,7 @@ const wqwh = localFont({
 const GA_TRACKING_ID = 'G-YYK959RPCX';
 
 export async function generateMetadata(): Promise<Metadata> {
-    const siteUrl = "https://www.qldazangjing.com";
+    const siteUrl = "https://qldazangjing.com";
     const description = "乾隆大藏经是清代乾隆年间编纂的一部重要佛教典籍，收录了大量佛教经典、论著和注疏。本网站提供乾隆大藏经的在线阅读、检索、注释和研究功能，让读者能够方便地查阅和学习这部珍贵的佛教文献。乾隆大藏经。龙藏。";
 
     return {

@@ -2,7 +2,7 @@ import { Metadata } from 'next';
 import SearchPageClient from './SearchPageClient';
 
 export async function generateMetadata(): Promise<Metadata> {
-  const siteUrl = "https://www.qldazangjing.com";
+  const siteUrl = "https://qldazangjing.com";
   const description = "在乾隆大藏经中搜索佛教经典、论著和注疏。支持全文搜索和标题搜索，快速查找您需要的佛教文献内容。";
 
   return {

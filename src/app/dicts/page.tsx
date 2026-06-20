@@ -2,7 +2,7 @@ import { Metadata } from 'next';
 import DictsPageClient from './DictsPageClient';
 
 export async function generateMetadata(): Promise<Metadata> {
-  const siteUrl = "https://www.qldazangjing.com";
+  const siteUrl = "https://qldazangjing.com";
   const description = "查询佛教术语和词汇的含义。提供多部佛学辞典的释义，帮助您更好地理解佛教经典中的专业术语。";
 
   return {

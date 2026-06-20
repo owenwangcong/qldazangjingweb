@@ -2,7 +2,7 @@ import { Metadata } from 'next';
 import IntroPageClient from './IntroPageClient';
 
 export async function generateMetadata(): Promise<Metadata> {
-  const siteUrl = "https://www.qldazangjing.com";
+  const siteUrl = "https://qldazangjing.com";
   const description = "了解乾隆大藏经网站的功能和使用方法。本站提供佛教经典的在线阅读、全文搜索、辞典查询、注释和研究功能。";
 
   return {

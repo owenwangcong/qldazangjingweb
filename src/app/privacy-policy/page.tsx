@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 
-const SITE_URL = 'https://www.qldazangjing.com';
+const SITE_URL = 'https://qldazangjing.com';
 const APP_NAME_ZH = '乾隆大藏经';
 const APP_NAME_EN = 'Qianlong Tripitaka (Dazangjing)';
 const APP_PACKAGE = 'com.aeonlectron.dazangjing';
