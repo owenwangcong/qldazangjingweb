@@ -39,7 +39,33 @@ class IsarService {
     );
     final service = IsarService._(isar);
     await service._seedIfNeeded();
+    await service._repairSeeds();
     return service;
+  }
+
+  /// 种子数据修正（幂等，随版本追加）：seed 只在目录为空时导入，
+  /// 已入库的坏数据要在此定点修复。
+  /// 2026-07-20：常用经典·华严的普贤行愿品曾误写不存在的 0089-01
+  /// （0089 是《大方广入如来智德不思议经》且无分卷），指到 0085-01。
+  Future<void> _repairSeeds() async {
+    final broken = await isar.classicEntrys
+        .filter()
+        .bookIdEqualTo('0089-01')
+        .findAll();
+    // 同一坏 id 在同步队列里留下的 404 僵尸重试任务一并清除。
+    final zombies = await isar.outboxOperations
+        .filter()
+        .payloadJsonContains('0089-01')
+        .findAll();
+    if (broken.isEmpty && zombies.isEmpty) return;
+    await isar.writeTxn(() async {
+      for (final e in broken) {
+        e.bookId = '0085-01';
+        await isar.classicEntrys.put(e);
+      }
+      await isar.outboxOperations
+          .deleteAll(zombies.map((z) => z.id).toList());
+    });
   }
 
   /// First-launch import of the bundled catalog so browsing works with zero
