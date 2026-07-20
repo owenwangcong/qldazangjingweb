@@ -10,35 +10,12 @@ import '../../core/pagination/sutra_paginator.dart';
 import '../../core/theme/app_theme.dart';
 import '../../domain/entities/book_entities.dart';
 import '../providers/app_providers.dart';
+import 'block_jump_controller.dart';
 import 'reader_text_utils.dart';
 
-/// shell（reader_page）向翻页视图发起块级跳转的句柄：
-/// TOC / 书签 / 进度恢复都走 [jumpToBlock]。视图未挂载或排版未到达时挂起，
-/// 就绪后自动执行。
-class PagedReaderController {
-  void Function(int blockIndex)? _handler;
-  int? _pendingBlock;
-
-  void jumpToBlock(int blockIndex) {
-    final handler = _handler;
-    if (handler != null) {
-      handler(blockIndex);
-    } else {
-      _pendingBlock = blockIndex;
-    }
-  }
-
-  void _attach(void Function(int) handler) {
-    _handler = handler;
-    final pending = _pendingBlock;
-    _pendingBlock = null;
-    if (pending != null) handler(pending);
-  }
-
-  void _detach(void Function(int) handler) {
-    if (identical(_handler, handler)) _handler = null;
-  }
-}
+/// 块级跳转句柄挪至 block_jump_controller.dart（横竖排共享）；
+/// 保留旧名以免搅动既有调用点。
+typedef PagedReaderController = BlockJumpController;
 
 /// 左右翻页阅读视图（与滚动模式互斥的 reader body）。
 ///
@@ -97,21 +74,21 @@ class _PagedReaderState extends ConsumerState<PagedReader> {
   void initState() {
     super.initState();
     _anchorBlock = widget.anchorBlockIndex ?? 0;
-    widget.controller._attach(_handleJumpToBlock);
+    widget.controller.attach(_handleJumpToBlock);
   }
 
   @override
   void didUpdateWidget(PagedReader oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (!identical(oldWidget.controller, widget.controller)) {
-      oldWidget.controller._detach(_handleJumpToBlock);
-      widget.controller._attach(_handleJumpToBlock);
+      oldWidget.controller.detach(_handleJumpToBlock);
+      widget.controller.attach(_handleJumpToBlock);
     }
   }
 
   @override
   void dispose() {
-    widget.controller._detach(_handleJumpToBlock);
+    widget.controller.detach(_handleJumpToBlock);
     _rekeyDebounce?.cancel();
     _disposePaginator();
     _pageController?.dispose();

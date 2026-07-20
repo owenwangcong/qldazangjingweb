@@ -294,8 +294,15 @@ class _ReaderPageState extends ConsumerState<ReaderPage> {
       children: [
         SafeArea(
           child: isVertical
-              // 古籍竖排（S1 占位；排版引擎按方案 S2~S6 接入）。
               ? VerticalReader(
+                  bookId: widget.bookId,
+                  book: book,
+                  anchorBlockIndex: _anchorBlockFor(book),
+                  controller: _pagedController,
+                  onBlockChanged: _onPagedBlockChanged,
+                  onProgress: (p) => _readProgress.value = p,
+                  onPageInfo: (current, total, done) =>
+                      _pageInfo.value = (current, total, done),
                   onToggleChrome: () =>
                       setState(() => _chromeVisible = !_chromeVisible),
                 )
@@ -386,7 +393,7 @@ class _ReaderPageState extends ConsumerState<ReaderPage> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  if (isPaged)
+                  if (isPaged || isVertical)
                     ValueListenableBuilder<(int, int, bool)?>(
                       valueListenable: _pageInfo,
                       builder: (context, info, _) => info == null
