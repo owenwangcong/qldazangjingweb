@@ -84,13 +84,15 @@ class TokenParagraph {
 /// bt/bm/body 携带真实块索引供进度锚定。
 enum VColumnRole { title, author, bt, bm, body }
 
-/// 一列。tokens 上限 = charsPerCol − indent。散文连排（D5）下正文列
-/// 可跨段/跨块；题署、bt/bm、偈颂列仍各自独立。
+/// 一列。散文连排（D5）下正文列可跨段/跨块；题署、bt/bm、偈颂列独立。
+/// 占用格数：散文 = tokens.length；偈颂 = tokens.length + 句数 − 1
+/// （句间空一格，D6）。均 ≤ charsPerCol − indent。
 class VColumn {
   const VColumn({
     required this.role,
     required this.tokens,
     this.indent = 0,
+    this.verseClauseLen,
   });
 
   final VColumnRole role;
@@ -98,6 +100,10 @@ class VColumn {
 
   /// 顶部空格数（bm 品名低一格 = 1、作者署名下沉等）。
   final int indent;
+
+  /// 非空 = 偈颂列（句长 n）：句间空一格（D6），第 i 个 token 的
+  /// 行号 = indent + i + i ~/ n（绘制侧唯一依据）。
+  final int? verseClauseLen;
 
   /// 本列的进度锚块；题署列为 -1。
   int get blockIndex => tokens.isEmpty ? -1 : tokens.first.blockIndex;

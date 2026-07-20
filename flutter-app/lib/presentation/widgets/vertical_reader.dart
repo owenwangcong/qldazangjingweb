@@ -219,8 +219,10 @@ class _VerticalReaderState extends ConsumerState<VerticalReader> {
           contentSize: contentSize,
           fontFamily: fontState.activeFamily ?? '',
           fontSize: settings.fontSize,
-          lineHeight: settings.lineHeight,
-          letterSpacingEm: settings.letterSpacingEm,
+          // 竖排独立间距（D6 设置项）：行间=列距倍率、字间=列内字距，
+          // 与横排的 lineHeight/letterSpacing 语义解耦。
+          lineHeight: settings.effectiveVerticalColumnPitch,
+          letterSpacingEm: settings.effectiveVerticalCharGapEm,
           isSimplified: settings.isSimplified,
           baiwen: settings.baiwenMode,
           textScaleFactor: scaleFactor,

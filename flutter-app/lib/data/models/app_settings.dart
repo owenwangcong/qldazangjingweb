@@ -54,6 +54,28 @@ class AppSettings {
   /// 竖排白文模式（剥除全部标点）；默认关，旧行回填 false 恰为所需。
   bool baiwenMode = false;
 
+  /// 竖排列内字间距（em，0~0.4）。默认 0 = 紧排（刻本式）。
+  /// ⚠️ isar_community 给旧行新增 double 字段回填 **NaN**（不是 0！
+  /// 2026-07-20 真机白屏事故实证：NaN 经 math.max 传染到网格 floor 崩溃），
+  /// 读取一律走 NaN 安全的 [effectiveVerticalCharGapEm]。
+  double verticalCharGapEm = 0;
+
+  /// 竖排列距倍率（1.35~3.0）。旧行回填 NaN、未设置为 0——
+  /// 读取一律走 [effectiveVerticalColumnPitch]。
+  double verticalColumnPitch = 0;
+
+  @ignore
+  double get effectiveVerticalCharGapEm {
+    final v = verticalCharGapEm;
+    return v.isFinite ? v.clamp(0.0, 0.4).toDouble() : 0.0;
+  }
+
+  @ignore
+  double get effectiveVerticalColumnPitch {
+    final v = verticalColumnPitch;
+    return v.isFinite && v > 0 ? v.clamp(1.35, 3.0).toDouble() : 1.75;
+  }
+
   /// Web: hasSeenBookTour.
   bool hasSeenReaderTips = false;
 

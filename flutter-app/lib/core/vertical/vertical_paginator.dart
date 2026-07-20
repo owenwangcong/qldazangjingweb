@@ -118,19 +118,27 @@ class VerticalPagination {
       final safeIndent = indent.clamp(0, grid.charsPerCol - 1);
       final capacity = grid.charsPerCol - safeIndent;
       var perCol = capacity;
-      if (verseN != null && verseN <= capacity) {
-        perCol = (capacity ~/ verseN) * verseN;
+      final verseFits = verseN != null && verseN <= capacity;
+      if (verseFits) {
+        // 句间空一格（D6）：k 句占 k×n + (k−1) 格 → k = (容量+1) ÷ (n+1)。
+        final k = math.max(1, (capacity + 1) ~/ (verseN + 1));
+        perCol = k * verseN;
       }
       assert(perCol >= 1);
       for (var start = 0; start < tokens.length; start += perCol) {
         final end = math.min(start + perCol, tokens.length);
+        final chunk = tokens.sublist(start, end);
         addColumn(VColumn(
           role: role,
-          tokens: tokens.sublist(start, end),
+          tokens: chunk,
           indent: safeIndent,
+          verseClauseLen: verseFits ? verseN : null,
         ));
-        // A6 不变式：偈颂列内 token 数恒为句长整数倍。
-        assert(verseN == null || verseN > capacity || (end - start) % verseN == 0);
+        // A6 不变式：偈颂列内 token 数恒为句长整数倍，且含句间空格后
+        // 不超列容量。
+        assert(!verseFits || chunk.length % verseN == 0);
+        assert(!verseFits ||
+            chunk.length + (chunk.length ~/ verseN) - 1 <= capacity);
       }
     }
 

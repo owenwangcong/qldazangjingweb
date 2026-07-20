@@ -183,8 +183,8 @@ void main() {
           reason: '块始于列中段时锚定仍指其首 token 所在页');
     });
 
-    test('偈颂按句折列：列内 token 数为句长整数倍且句子不跨列', () {
-      // 35 格/列，五言 → 每列 7 句整。
+    test('偈颂按句折列且句间空一格（D6）：k 句占 k×n+(k−1) 格', () {
+      // 35 格/列，五言：k = (35+1)÷(5+1) = 6 句/列（占满 6×5+5=35 格）。
       final verse = '诸法从本来，常自寂灭相。佛子行道已，来世得作佛。' * 5; // 20 句
       final book = bookOf([
         JuanBlock(id: 'b', type: JuanBlockType.p, paragraphs: [verse]),
@@ -196,11 +196,15 @@ void main() {
           .toList();
       expect(verseCols, isNotEmpty);
       for (final c in verseCols) {
+        expect(c.verseClauseLen, 5);
         expect(c.tokens.length % 5, 0, reason: 'A6：句子绝不跨列');
-        expect(c.tokens.length, lessThanOrEqualTo(35));
+        final clauses = c.tokens.length ~/ 5;
+        expect(c.tokens.length + clauses - 1,
+            lessThanOrEqualTo(result.grid.charsPerCol),
+            reason: '含句间空格后不得超列容量');
       }
-      // 20 句 × 5 = 100 字 → 7句/列 → 35+35+30。
-      expect(verseCols.map((c) => c.tokens.length).toList(), [35, 35, 30]);
+      // 20 句 → 6+6+6+2 句/列。
+      expect(verseCols.map((c) => c.tokens.length).toList(), [30, 30, 30, 10]);
     });
 
     test('卷首题署：书名列顶格、作者列下沉对齐列底', () {

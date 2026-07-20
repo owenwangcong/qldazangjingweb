@@ -191,9 +191,11 @@ class VerticalPagePainter extends CustomPainter {
     final style = styles.forRole(col.role);
     final roleKey = col.role.name;
     final colLeft = grid.colX(ci);
+    final verseN = col.verseClauseLen;
     for (var ti = 0; ti < col.tokens.length; ti++) {
       final token = col.tokens[ti];
-      final row = col.indent + ti;
+      // 偈颂句间空一格（D6）：每满一句下移一格。
+      final row = col.indent + ti + (verseN == null ? 0 : ti ~/ verseN);
       final tp = glyphs.painterFor(roleKey, token.char, style);
       // 双向居中：矩阵对齐由公式保证，与字体度量无关（C6 核心）。
       final dx = colLeft + (grid.cellW - tp.width) / 2;

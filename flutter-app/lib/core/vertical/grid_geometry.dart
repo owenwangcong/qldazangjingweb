@@ -32,12 +32,23 @@ class VerticalGridSpec {
     required double lineHeight,
     required double letterSpacingEm,
   }) {
-    final safeW = math.max(contentSize.width, 1.0);
-    final safeH = math.max(contentSize.height, 1.0);
-    final cellHFactor = 1 + math.max(0.0, letterSpacingEm);
-    final pitchFactor = lineHeight.clamp(minLineHeight, maxLineHeight);
+    // 非有限输入防御（2026-07-20 真机白屏事故：isar 旧行 double 回填
+    // NaN，经 math.max 传染到 floor 崩溃）——上游应传 effective 值，
+    // 此处为最后防线：坏值替换为安全默认，绝不让 NaN 进网格。
+    assert(fontSize.isFinite && lineHeight.isFinite && letterSpacingEm.isFinite,
+        '几何输入含非有限值: fs=$fontSize lh=$lineHeight ls=$letterSpacingEm');
+    final safeFontSize = fontSize.isFinite ? fontSize : 20.0;
+    final safeLineHeight = lineHeight.isFinite ? lineHeight : 1.75;
+    final safeLetterSpacing = letterSpacingEm.isFinite ? letterSpacingEm : 0.0;
 
-    var fs = math.max(fontSize, 1.0);
+    final safeW = math.max(
+        contentSize.width.isFinite ? contentSize.width : 1.0, 1.0);
+    final safeH = math.max(
+        contentSize.height.isFinite ? contentSize.height : 1.0, 1.0);
+    final cellHFactor = 1 + math.max(0.0, safeLetterSpacing);
+    final pitchFactor = safeLineHeight.clamp(minLineHeight, maxLineHeight);
+
+    var fs = math.max(safeFontSize, 1.0);
     final maxFs = math.min(safeH / cellHFactor, safeW);
     final degraded = fs > maxFs;
     if (degraded) fs = maxFs;

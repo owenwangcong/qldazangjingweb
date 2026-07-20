@@ -87,33 +87,59 @@ class _ReaderSettingsSheet extends ConsumerWidget {
               display: settings.fontSize.round().toString(),
               onChanged: controller.setFontSize,
             ),
-            _SliderRow(
-              label: '行距',
-              value: settings.lineHeight,
-              min: 1.0,
-              max: 3.0,
-              divisions: 8,
-              display: settings.lineHeight.toStringAsFixed(2),
-              onChanged: controller.setLineHeight,
-            ),
-            _SliderRow(
-              label: '字距',
-              value: settings.letterSpacingEm,
-              min: -0.05,
-              max: 0.15,
-              divisions: 4,
-              display: settings.letterSpacingEm.toStringAsFixed(2),
-              onChanged: controller.setLetterSpacing,
-            ),
-            _SliderRow(
-              label: '段距',
-              value: settings.paragraphSpacing,
-              min: 0,
-              max: 40,
-              divisions: 8,
-              display: settings.paragraphSpacing.round().toString(),
-              onChanged: controller.setParagraphSpacing,
-            ),
+            // 横排（滚动/翻页）的间距项；竖排另有字间/行间语义（D5/D6）。
+            if (!settings.isVertical) ...[
+              _SliderRow(
+                label: '行距',
+                value: settings.lineHeight,
+                min: 1.0,
+                max: 3.0,
+                divisions: 8,
+                display: settings.lineHeight.toStringAsFixed(2),
+                onChanged: controller.setLineHeight,
+              ),
+              _SliderRow(
+                label: '字距',
+                value: settings.letterSpacingEm,
+                min: -0.05,
+                max: 0.15,
+                divisions: 4,
+                display: settings.letterSpacingEm.toStringAsFixed(2),
+                onChanged: controller.setLetterSpacing,
+              ),
+              _SliderRow(
+                label: '段距',
+                value: settings.paragraphSpacing,
+                min: 0,
+                max: 40,
+                divisions: 8,
+                display: settings.paragraphSpacing.round().toString(),
+                onChanged: controller.setParagraphSpacing,
+              ),
+            ],
+            // 竖排间距：字间 = 列内字距（em），行间 = 列距倍率。
+            if (settings.isVertical) ...[
+              _SliderRow(
+                label: '字间',
+                value: settings.effectiveVerticalCharGapEm,
+                min: 0,
+                max: 0.4,
+                divisions: 8,
+                display:
+                    settings.effectiveVerticalCharGapEm.toStringAsFixed(2),
+                onChanged: controller.setVerticalCharGap,
+              ),
+              _SliderRow(
+                label: '行间',
+                value: settings.effectiveVerticalColumnPitch,
+                min: 1.35,
+                max: 3.0,
+                divisions: 11,
+                display:
+                    settings.effectiveVerticalColumnPitch.toStringAsFixed(2),
+                onChanged: controller.setVerticalColumnPitch,
+              ),
+            ],
             const SizedBox(height: 8),
             Row(
               children: [

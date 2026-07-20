@@ -88,15 +88,18 @@ void main() {
       final grid = p.result.grid;
       final page = p.result.pages.first;
 
-      // 期望落点：按列/格公式推导（Ahem 主体盒 20、作者盒 16 → 居中偏移 2）。
+      // 期望落点：按列/格公式推导（Ahem 主体盒 20、作者盒 16 → 居中偏移 2；
+      // 偈颂列行号 = ti + ti÷n，句间空一格 D6）。
       final expected = <Offset>[];
       for (var ci = 0; ci < page.columns.length; ci++) {
         final col = page.columns[ci];
         final boxSize = col.role == VColumnRole.author ? 16.0 : 20.0;
         final inset = (grid.cellW - boxSize) / 2;
+        final n = col.verseClauseLen;
         for (var ti = 0; ti < col.tokens.length; ti++) {
-          expected.add(Offset(grid.colX(ci) + inset,
-              grid.cellY(col.indent + ti) + inset));
+          final row = col.indent + ti + (n == null ? 0 : ti ~/ n);
+          expected.add(
+              Offset(grid.colX(ci) + inset, grid.cellY(row) + inset));
         }
       }
       final actual = p.canvas.paragraphs
@@ -105,12 +108,21 @@ void main() {
           .toList();
       expect(actual, expected, reason: '绘制次序与落点应与网格完全一致');
 
-      // 列内相邻字距恒等于 cellH（含带标点字——C7 的字距零侵占）。
+      // 非偈颂列内相邻字距恒等于 cellH（含带标点字——C7 的字距零侵占）；
+      // 偈颂列的句间空格由上面的精确落点断言覆盖。
+      final proseXs = <double>{};
+      for (var ci = 0; ci < page.columns.length; ci++) {
+        if (page.columns[ci].verseClauseLen == null) {
+          proseXs.add(grid.colX(ci));
+        }
+      }
       final byX = <double, List<double>>{};
       for (final o in actual) {
         byX.putIfAbsent(o.dx, () => []).add(o.dy);
       }
-      for (final dys in byX.values) {
+      for (final e in byX.entries) {
+        if (!proseXs.contains(e.key) && !proseXs.contains(e.key - 2)) continue;
+        final dys = e.value;
         for (var i = 1; i < dys.length; i++) {
           expect(dys[i] - dys[i - 1], moreOrLessEquals(grid.cellH),
               reason: '标点不得挤占字距');
@@ -129,10 +141,13 @@ void main() {
           verseCols.add(ci);
         }
       }
-      expect(verseCols.length, 2, reason: '40 字五言应折为 35+5 两列');
+      expect(verseCols.length, 2, reason: '40 字五言（D6 句间空格）应折为 30+10 两列');
+      expect(page.columns[verseCols[0]].tokens.length, 30);
+      expect(page.columns[verseCols[1]].tokens.length, 10);
       for (final ci in verseCols) {
         expect(page.columns[ci].indent, 0);
         expect(page.columns[ci].tokens.length % 5, 0);
+        expect(page.columns[ci].verseClauseLen, 5);
       }
     });
   });

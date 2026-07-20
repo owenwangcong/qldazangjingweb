@@ -49,12 +49,35 @@ void main() {
       await c.setBaiwenMode(true);
       await c.setShowColumnRules(false);
       // 无关 setter 走 _copy()——若漏抄新字段，此处会被静默重置。
+      await c.setVerticalCharGap(0.2);
+      await c.setVerticalColumnPitch(2.1);
       await c.setFontSize(28);
       await c.setTheme('guchayese');
       expect(c.state.isVertical, isTrue);
       expect(c.state.baiwenMode, isTrue);
       expect(c.state.showColumnRules, isFalse);
       expect(c.state.hideColumnRules, isTrue, reason: '落库为反转字段');
+      expect(c.state.verticalCharGapEm, 0.2);
+      expect(c.state.verticalColumnPitch, 2.1);
+    });
+
+    test('竖排间距默认值、哨兵与 NaN 安全语义', () {
+      final s = AppSettings();
+      expect(s.effectiveVerticalCharGapEm, 0, reason: '默认紧排');
+      expect(s.effectiveVerticalColumnPitch, 1.75, reason: '0 哨兵取默认列距');
+      s.verticalColumnPitch = 2.4;
+      expect(s.effectiveVerticalColumnPitch, 2.4);
+      // isar 给旧行新增 double 字段回填 NaN(2026-07-20 真机白屏事故):
+      // effective getter 是唯一安全读取口。
+      s.verticalCharGapEm = double.nan;
+      s.verticalColumnPitch = double.nan;
+      expect(s.effectiveVerticalCharGapEm, 0);
+      expect(s.effectiveVerticalColumnPitch, 1.75);
+      // 越界值钳制。
+      s.verticalCharGapEm = 9;
+      s.verticalColumnPitch = 99;
+      expect(s.effectiveVerticalCharGapEm, 0.4);
+      expect(s.effectiveVerticalColumnPitch, 3.0);
     });
 
     test('setShowColumnRules 以显示语义写入反转字段', () async {
@@ -124,6 +147,11 @@ void main() {
       expect(controller.state.isVertical, isTrue);
       expect(find.text('乌丝栏'), findsOneWidget);
       expect(find.text('标点'), findsOneWidget);
+      // 竖排间距滑杆（D6）：字间/行间出现，横排的行距/字距/段距隐藏。
+      expect(find.text('字间'), findsOneWidget);
+      expect(find.text('行间'), findsOneWidget);
+      expect(find.text('行距'), findsNothing);
+      expect(find.text('段距'), findsNothing);
       // 默认态：乌丝栏显示、句读模式。
       expect(controller.state.showColumnRules, isTrue);
       expect(controller.state.baiwenMode, isFalse);
