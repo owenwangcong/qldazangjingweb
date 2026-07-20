@@ -1,0 +1,287 @@
+import 'dart:ui';
+
+import 'package:flutter_test/flutter_test.dart';
+import 'package:qldazangjing/core/vertical/grid_geometry.dart';
+import 'package:qldazangjing/core/vertical/token_stream.dart';
+import 'package:qldazangjing/core/vertical/vertical_models.dart';
+import 'package:qldazangjing/core/vertical/vertical_paginator.dart';
+import 'package:qldazangjing/domain/entities/book_entities.dart';
+
+/// 竖排 S4——验收 C1（网格几何公式）/ C4（分页完整性 property）/
+/// C5（blockIndex 锚定）。
+void main() {
+  setUp(VerticalPagination.clearCache);
+
+  group('C1 网格几何', () {
+    test('标准参数全公式精确值', () {
+      final g = VerticalGridSpec.fit(
+        contentSize: const Size(350, 700),
+        fontSize: 20,
+        lineHeight: 1.75,
+        letterSpacingEm: 0,
+      );
+      expect(g.cellW, 20);
+      expect(g.cellH, 20);
+      expect(g.colPitch, 35);
+      expect(g.gap, 15);
+      expect(g.charsPerCol, 35);
+      expect(g.colsPerPage, 10); // floor((350+15)/35)
+      expect(g.gridW, 335); // 10×35−15
+      expect(g.leftInset, 7.5);
+      expect(g.degraded, isFalse);
+      // 列 x 严格等差（公差 colPitch），i=0 最右。
+      expect(g.colX(0), 322.5); // 7.5+335−20
+      expect(g.colX(9), 7.5);
+      for (var i = 1; i < 10; i++) {
+        expect(g.colX(i - 1) - g.colX(i), moreOrLessEquals(35));
+      }
+      // 行 y 严格等差（公差 cellH）。
+      expect(g.cellY(3), 60);
+      expect(g.gridBottom, 700);
+      // 乌丝栏在列隙 0.62 处。
+      expect(g.ruleX(1), g.colX(1) + 20 + 15 * 0.62);
+    });
+
+    test('字距增大格高、行距钳制下限', () {
+      final g = VerticalGridSpec.fit(
+        contentSize: const Size(350, 700),
+        fontSize: 20,
+        lineHeight: 1.0, // 低于下限 1.35 → 钳制
+        letterSpacingEm: 0.1,
+      );
+      expect(g.cellH, moreOrLessEquals(22));
+      expect(g.colPitch, moreOrLessEquals(20 * 1.35));
+    });
+
+    test('A1 兜底：字号钳制到恰容 1 格 1 列', () {
+      final g = VerticalGridSpec.fit(
+        contentSize: const Size(30, 15),
+        fontSize: 40,
+        lineHeight: 1.75,
+        letterSpacingEm: 0,
+      );
+      expect(g.degraded, isTrue);
+      expect(g.fontSize, 15); // min(15/1, 30)
+      expect(g.charsPerCol, greaterThanOrEqualTo(1));
+      expect(g.colsPerPage, greaterThanOrEqualTo(1));
+    });
+  });
+
+  const key = VerticalPaginationKey(
+    bookId: 't',
+    contentSize: Size(350, 700), // 35 格 × 10 列
+    fontFamily: '',
+    fontSize: 20,
+    lineHeight: 1.75,
+    letterSpacingEm: 0,
+    isSimplified: true,
+    baiwen: false,
+    textScaleFactor: 1,
+  );
+
+  BookData bookOf(List<JuanBlock> blocks,
+          {String title = '测试经', String author = '某某译', BookMeta? meta}) =>
+      BookData(
+        meta: meta ??
+            BookMeta(id: 't', bu: '', title: title, author: author),
+        blocks: blocks,
+      );
+
+  String identity(String s) => s;
+
+  VerticalPaginationResult run(BookData book,
+          {VerticalPaginationKey k = key}) =>
+      VerticalPagination.run(key: k, book: book, display: identity);
+
+  group('C4 分页完整性', () {
+    test('property：页内正文 token 拼接 == 输入流（无丢字无重字）', () {
+      final book = bookOf([
+        const JuanBlock(id: 'b0', type: JuanBlockType.bt, paragraphs: ['卷第一']),
+        const JuanBlock(
+            id: 'b1', type: JuanBlockType.bm, paragraphs: ['缘起品第一']),
+        JuanBlock(id: 'b2', type: JuanBlockType.p, paragraphs: [
+          '如是我闻：一时，薄伽梵住王舍城鹫峰山顶，与大苾刍众千二百五十人俱。' * 8,
+          '诸行无常，是生灭法。生灭灭已，寂灭为乐。',
+          '复有五百苾刍尼众，皆阿罗汉。',
+        ]),
+      ]);
+      final stream =
+          buildTokenStream(book: book, display: identity, baiwen: false);
+      final streamChars =
+          stream.expand((p) => p.tokens).map((t) => t.char).join();
+
+      final result = run(book);
+      final pageChars = result.pages
+          .expand((p) => p.columns)
+          .where((c) =>
+              c.role == VColumnRole.bt ||
+              c.role == VColumnRole.bm ||
+              c.role == VColumnRole.body)
+          .expand((c) => c.tokens)
+          .map((t) => t.char)
+          .join();
+      expect(pageChars, streamChars);
+    });
+
+    test('列容量恒不超限；换段必换列（单列单段）', () {
+      final book = bookOf(const [
+        JuanBlock(id: 'b', type: JuanBlockType.p, paragraphs: ['甲' , '乙丙丁']),
+      ]);
+      final result = run(book);
+      for (final page in result.pages) {
+        for (final c in page.columns) {
+          expect(c.tokens.length + c.indent,
+              lessThanOrEqualTo(result.grid.charsPerCol));
+          expect(
+              c.tokens
+                  .map((t) => (t.blockIndex, t.paragraphIndex))
+                  .toSet()
+                  .length,
+              lessThanOrEqualTo(1),
+              reason: '一列只属一段');
+        }
+      }
+    });
+
+    test('偈颂按句折列：列内 token 数为句长整数倍且句子不跨列', () {
+      // 35 格/列，五言 → 每列 7 句整。
+      final verse = '诸法从本来，常自寂灭相。佛子行道已，来世得作佛。' * 5; // 20 句
+      final book = bookOf([
+        JuanBlock(id: 'b', type: JuanBlockType.p, paragraphs: [verse]),
+      ]);
+      final result = run(book);
+      final verseCols = result.pages
+          .expand((p) => p.columns)
+          .where((c) => c.role == VColumnRole.body)
+          .toList();
+      expect(verseCols, isNotEmpty);
+      for (final c in verseCols) {
+        expect(c.tokens.length % 5, 0, reason: 'A6：句子绝不跨列');
+        expect(c.tokens.length, lessThanOrEqualTo(35));
+      }
+      // 20 句 × 5 = 100 字 → 7句/列 → 35+35+30。
+      expect(verseCols.map((c) => c.tokens.length).toList(), [35, 35, 30]);
+    });
+
+    test('卷首题署：书名列顶格、作者列下沉对齐列底', () {
+      final result = run(bookOf(const []));
+      final first = result.pages.first;
+      expect(first.columns[0].role, VColumnRole.title);
+      expect(first.columns[0].indent, 0);
+      final author = first.columns[1];
+      expect(author.role, VColumnRole.author);
+      expect(author.indent + author.tokens.length, result.grid.charsPerCol,
+          reason: '下沉至列底（仿卷端题署）');
+    });
+
+    test('bm 品名低一格；bt 顶格', () {
+      final book = bookOf(const [
+        JuanBlock(id: 'b0', type: JuanBlockType.bt, paragraphs: ['卷第一']),
+        JuanBlock(id: 'b1', type: JuanBlockType.bm, paragraphs: ['缘起品']),
+      ]);
+      final cols = run(book).pages.expand((p) => p.columns);
+      expect(cols.firstWhere((c) => c.role == VColumnRole.bt).indent, 0);
+      expect(cols.firstWhere((c) => c.role == VColumnRole.bm).indent, 1);
+    });
+
+    test('插图独占页，前后文字不与之同页', () {
+      final book = bookOf(const [
+        JuanBlock(id: 'b', type: JuanBlockType.p, paragraphs: [
+          '前文若干字。<img src="/images/x.png">后文若干字。',
+        ]),
+      ]);
+      final result = run(book);
+      final imagePages =
+          result.pages.where((p) => p.imageUrl != null).toList();
+      expect(imagePages.length, 1);
+      expect(imagePages.single.columns, isEmpty);
+    });
+
+    test('卷尾 nav 页仅在有前后部时出现', () {
+      final without = run(bookOf(const []));
+      expect(without.pages.any((p) => p.isNavPage), isFalse);
+
+      final withNav = run(
+        bookOf(const [],
+            meta: const BookMeta(
+                id: 't2',
+                bu: '',
+                title: '测',
+                author: '',
+                nextBuId: 'n1',
+                nextBuName: '下一部')),
+        k: const VerticalPaginationKey(
+          bookId: 't2',
+          contentSize: Size(350, 700),
+          fontFamily: '',
+          fontSize: 20,
+          lineHeight: 1.75,
+          letterSpacingEm: 0,
+          isSimplified: true,
+          baiwen: false,
+          textScaleFactor: 1,
+        ),
+      );
+      expect(withNav.pages.last.isNavPage, isTrue);
+    });
+
+    test('空书兜底至少一页', () {
+      final result = run(bookOf(const [], title: '', author: ''));
+      expect(result.pages, hasLength(1));
+    });
+  });
+
+  group('C5 进度锚定', () {
+    test('pageForBlock 单调不减；blockForPage 往返一致', () {
+      final book = bookOf([
+        const JuanBlock(id: 'b0', type: JuanBlockType.bt, paragraphs: ['卷第一']),
+        JuanBlock(
+            id: 'b1',
+            type: JuanBlockType.p,
+            paragraphs: ['如是我闻，一时佛在。' * 60]),
+        const JuanBlock(id: 'b2', type: JuanBlockType.bm, paragraphs: ['品第二']),
+        JuanBlock(
+            id: 'b3',
+            type: JuanBlockType.p,
+            paragraphs: ['复有五百苾刍尼众。' * 60]),
+      ]);
+      final result = run(book);
+      expect(result.pages.length, greaterThan(2), reason: '样本须跨多页');
+
+      var prev = 0;
+      for (var b = 0; b < book.blocks.length; b++) {
+        final page = result.pageForBlock(b);
+        expect(page, greaterThanOrEqualTo(prev));
+        prev = page;
+      }
+      // 往返：块 b 首现页的锚块 ≤ b。
+      for (var b = 0; b < book.blocks.length; b++) {
+        expect(result.blockForPage(result.pageForBlock(b)),
+            lessThanOrEqualTo(b));
+      }
+      // 越界钳制不崩。
+      expect(result.pageForBlock(-5), 0);
+      expect(result.pageForBlock(999), lessThan(result.pages.length));
+    });
+
+    test('缓存命中返回同一实例；不同键重排', () {
+      final book = bookOf(const []);
+      final a = run(book);
+      final b = run(book);
+      expect(identical(a, b), isTrue);
+      final c = run(book,
+          k: const VerticalPaginationKey(
+            bookId: 't',
+            contentSize: Size(350, 700),
+            fontFamily: '',
+            fontSize: 22, // 字号变化
+            lineHeight: 1.75,
+            letterSpacingEm: 0,
+            isSimplified: true,
+            baiwen: false,
+            textScaleFactor: 1,
+          ));
+      expect(identical(a, c), isFalse);
+    });
+  });
+}
