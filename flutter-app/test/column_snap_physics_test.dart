@@ -90,6 +90,30 @@ void main() {
       }
     });
 
+    test('轻扫必进一列:初速≥阈值时不被就近取整拉回原列', () {
+      // 从列边缘 700 出发。v=300(≥250 阈值):即使自然停点取整回落,
+      // 也必须推进到相邻边界 735/665。
+      expect(settle(700, 300), greaterThanOrEqualTo(735));
+      expect(settle(700, -300), lessThanOrEqualTo(665));
+      // v=100(<阈值)的微推:允许就近回位,但仍必须落在边界上
+      // (由上面的全组落点断言覆盖)。
+    });
+
+    test('boundaryAfter/Before:相邻边界与收尾钳制', () {
+      final m = SnapMetrics(List.filled(10, 35.0));
+      expect(m.boundaryAfter(700 % 350, maxExtent: 300), 35);
+      expect(m.boundaryAfter(35, maxExtent: 300), 70);
+      expect(m.boundaryAfter(295, maxExtent: 300), 300, reason: '收尾钳制');
+      expect(m.boundaryBefore(35), 0);
+      expect(m.boundaryBefore(36), 35);
+      expect(m.boundaryBefore(0), 0);
+      final nu = SnapMetrics(const [35.0, 640.0, 35.0]);
+      expect(nu.boundaryAfter(10, maxExtent: 1000), 35);
+      expect(nu.boundaryAfter(35, maxExtent: 1000), 675);
+      expect(nu.boundaryBefore(675), 35);
+      expect(nu.boundaryBefore(700), 675);
+    });
+
     test('大初速直达为摩擦模拟(惯性手感),微距归位为弹簧', () {
       final physics = ColumnSnapPhysics(metrics: metrics);
       final pos = FixedScrollMetrics(

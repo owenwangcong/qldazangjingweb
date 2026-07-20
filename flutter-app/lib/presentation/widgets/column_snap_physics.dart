@@ -57,6 +57,28 @@ class SnapMetrics {
     return lo;
   }
 
+  /// x 之后最近的条目起点（含 maxExtent 收尾钳制）。
+  double boundaryAfter(double x, {required double maxExtent}) {
+    if (itemCount == 0) return 0;
+    final u = uniform;
+    final next =
+        u != null ? ((x / u).floor() + 1) * u : starts[
+            math.min(indexAt(x.clamp(0.0, totalExtent)) + 1, itemCount)];
+    return math.min(next, maxExtent);
+  }
+
+  /// x 之前最近的条目起点。
+  double boundaryBefore(double x) {
+    if (itemCount == 0) return 0;
+    final u = uniform;
+    if (u != null) {
+      final i = (x / u).ceil() - 1;
+      return math.max(i, 0) * u;
+    }
+    final i = indexAt(x);
+    return starts[x > starts[i] ? i : math.max(i - 1, 0)];
+  }
+
   /// 最近吸附目标。候选 = 邻近条目起点，钳制到 [0, maxExtent]；
   /// 卷尾（起点超出 maxExtent 时）以 maxExtent 收尾——末屏左缘齐平，
   /// 右缘允许部分列（方案 B2：左侧是「尚未展开的卷」）。
@@ -92,8 +114,20 @@ class ColumnSnapPhysics extends ScrollPhysics {
   ColumnSnapPhysics applyTo(ScrollPhysics? ancestor) =>
       ColumnSnapPhysics(metrics: metrics, parent: buildParent(ancestor));
 
-  /// 与 ClampingScrollSimulation 手感相近的拖拽系数。
-  static const double _drag = 0.135;
+  /// 拖拽系数（2026-07-20 手感调参：0.135→0.05,惯性行程缩短约 1/3,
+  /// 展卷更「收得住」）。
+  static const double _drag = 0.05;
+
+  /// 轻扫成列阈值：初速达到即保证至少推进一列（吸附果断,不回拉）。
+  static const double _commitVelocity = 250;
+
+  /// 归位弹簧（刚度 100→400）：松手微调的「吸力」明显更强。
+  @override
+  SpringDescription get spring => SpringDescription.withDampingRatio(
+        mass: 0.5,
+        stiffness: 400,
+        ratio: 1.1,
+      );
 
   @override
   Simulation? createBallisticSimulation(
@@ -106,9 +140,23 @@ class ColumnSnapPhysics extends ScrollPhysics {
     final tolerance = toleranceFor(position);
     final natural =
         FrictionSimulation(_drag, position.pixels, velocity).finalX;
-    final target = metrics
+    var target = metrics
         .nearestBoundary(natural, maxExtent: position.maxScrollExtent)
         .clamp(position.minScrollExtent, position.maxScrollExtent);
+    // 轻扫必进一列：有明确初速却被就近取整拉回原列时,朝滑动方向
+    // 推进到相邻边界（大列距/低速场景的吸附果断性保证）。
+    if (velocity.abs() >= _commitVelocity) {
+      if (velocity > 0 && target <= position.pixels + 0.5) {
+        target = metrics
+            .boundaryAfter(position.pixels,
+                maxExtent: position.maxScrollExtent)
+            .clamp(position.minScrollExtent, position.maxScrollExtent);
+      } else if (velocity < 0 && target >= position.pixels - 0.5) {
+        target = metrics
+            .boundaryBefore(position.pixels)
+            .clamp(position.minScrollExtent, position.maxScrollExtent);
+      }
+    }
     final delta = target - position.pixels;
     if (delta.abs() < tolerance.distance && velocity.abs() < tolerance.velocity) {
       return null; // 已静止在列边缘。
