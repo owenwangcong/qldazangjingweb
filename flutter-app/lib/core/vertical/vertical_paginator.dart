@@ -93,10 +93,14 @@ class VerticalPagination {
     }
 
     void addColumn(VColumn column) {
-      final b = column.blockIndex;
-      if (b >= 0 && b < firstPageOfBlock.length) {
-        firstPageOfBlock[b] ??= pages.length; // 正在装填的页
-        lastBlockPlaced = b;
+      // 逐 token 记录块首现页：散文连排后一个块可能始于列中段
+      //（排版修订 D5），只记列首 token 会让 pageForBlock 偏到前块所在页。
+      for (final t in column.tokens) {
+        final b = t.blockIndex;
+        if (b >= 0 && b < firstPageOfBlock.length) {
+          firstPageOfBlock[b] ??= pages.length; // 正在装填的页
+          lastBlockPlaced = b;
+        }
       }
       cols.add(column);
       if (cols.length >= grid.colsPerPage) flushPage();
@@ -151,11 +155,22 @@ class VerticalPagination {
 
     // ---- 正文流 ---------------------------------------------------------------
 
+    // 散文连排缓冲（排版修订 D5，2026-07-20 用户反馈）：仿古籍连排，
+    // 散文段落间**不断列**——句读悬浮已是天然分隔，频繁短列破坏连贯；
+    // 仅偈颂、bt/bm 大章节、插图、卷尾处断列。段落锚点仍逐 token 保留。
+    final proseRun = <GridToken>[];
+    void flushProse() {
+      if (proseRun.isEmpty) return;
+      addChunked(List.of(proseRun), VColumnRole.body);
+      proseRun.clear();
+    }
+
     final stream =
         buildTokenStream(book: book, display: display, baiwen: key.baiwen);
     for (final para in stream) {
       if (para.isImage) {
         // 插图独占页：先封当前页，再单发图片页（沿用横排语义）。
+        flushProse();
         flushPage();
         if (para.blockIndex >= 0 && para.blockIndex < firstPageOfBlock.length) {
           firstPageOfBlock[para.blockIndex] ??= pages.length;
@@ -170,14 +185,23 @@ class VerticalPagination {
       }
       switch (para.blockType) {
         case JuanBlockType.bt:
+          flushProse();
           addChunked(para.tokens, VColumnRole.bt);
         case JuanBlockType.bm:
+          flushProse();
           addChunked(para.tokens, VColumnRole.bm, indent: 1);
         case JuanBlockType.p:
-          addChunked(para.tokens, VColumnRole.body,
-              verseN: para.verseClauseLen);
+          if (para.verseClauseLen != null) {
+            // 偈颂独立断列、按句折列（用户明确保留的唯一小断）。
+            flushProse();
+            addChunked(para.tokens, VColumnRole.body,
+                verseN: para.verseClauseLen);
+          } else {
+            proseRun.addAll(para.tokens);
+          }
       }
     }
+    flushProse();
     flushPage();
 
     // ---- 卷尾 nav 页（仅有前后部时） ------------------------------------------

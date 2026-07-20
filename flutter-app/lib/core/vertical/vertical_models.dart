@@ -84,8 +84,8 @@ class TokenParagraph {
 /// bt/bm/body 携带真实块索引供进度锚定。
 enum VColumnRole { title, author, bt, bm, body }
 
-/// 一列。tokens 上限 = charsPerCol − indent；单列内所有 token 同段
-/// （换段即换列，§7）。
+/// 一列。tokens 上限 = charsPerCol − indent。散文连排（D5）下正文列
+/// 可跨段/跨块；题署、bt/bm、偈颂列仍各自独立。
 class VColumn {
   const VColumn({
     required this.role,

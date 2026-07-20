@@ -123,24 +123,64 @@ void main() {
       expect(pageChars, streamChars);
     });
 
-    test('列容量恒不超限；换段必换列（单列单段）', () {
+    test('列容量恒不超限；散文短段连排进同一列（D5）', () {
       final book = bookOf(const [
-        JuanBlock(id: 'b', type: JuanBlockType.p, paragraphs: ['甲' , '乙丙丁']),
+        JuanBlock(
+            id: 'b',
+            type: JuanBlockType.p,
+            paragraphs: ['甲乙。', '丙丁。', '戊己。']),
       ]);
       final result = run(book);
       for (final page in result.pages) {
         for (final c in page.columns) {
           expect(c.tokens.length + c.indent,
               lessThanOrEqualTo(result.grid.charsPerCol));
-          expect(
-              c.tokens
-                  .map((t) => (t.blockIndex, t.paragraphIndex))
-                  .toSet()
-                  .length,
-              lessThanOrEqualTo(1),
-              reason: '一列只属一段');
         }
       }
+      final bodyCols = result.pages
+          .expand((p) => p.columns)
+          .where((c) => c.role == VColumnRole.body)
+          .toList();
+      expect(bodyCols, hasLength(1), reason: '三个短段应连排同一列，不各起一列');
+      expect(bodyCols.single.tokens.map((t) => t.char).join(), '甲乙丙丁戊己');
+    });
+
+    test('偈颂三明治：前后散文断列，偈颂独立按句折列（D5 唯一小断）', () {
+      final book = bookOf(const [
+        JuanBlock(id: 'b', type: JuanBlockType.p, paragraphs: [
+          '尔时世尊告曰。',
+          '诸法从本来，常自寂灭相。佛子行道已，来世得作佛。',
+          '闻者皆大欢喜。',
+        ]),
+      ]);
+      final bodyCols = run(book)
+          .pages
+          .expand((p) => p.columns)
+          .where((c) => c.role == VColumnRole.body)
+          .toList();
+      expect(bodyCols, hasLength(3), reason: '散文|偈颂|散文 各自成列');
+      expect(bodyCols[0].tokens.map((t) => t.char).join(), '尔时世尊告曰');
+      expect(bodyCols[1].tokens.length % 5, 0, reason: '偈颂列按句折列');
+      expect(bodyCols[2].tokens.map((t) => t.char).join(), '闻者皆大欢喜');
+    });
+
+    test('跨块散文连排：后块始于列中段，pageForBlock 仍精确（逐 token 记录）', () {
+      final book = bookOf([
+        JuanBlock(id: 'b0', type: JuanBlockType.p, paragraphs: ['阿' * 400]),
+        JuanBlock(id: 'b1', type: JuanBlockType.p, paragraphs: ['弥' * 100]),
+      ]);
+      final result = run(book);
+      // 卷首题署 2 列 + 连排正文：b1 首 token 在正文第 400~/35=11 列中段，
+      // 全局第 13 列 → 第 2 页（10 列/页）。
+      final joined = result.pages
+          .expand((p) => p.columns)
+          .where((c) => c.role == VColumnRole.body)
+          .expand((c) => c.tokens)
+          .map((t) => t.char)
+          .join();
+      expect(joined, '阿' * 400 + '弥' * 100, reason: '跨块连排无缝续排');
+      expect(result.pageForBlock(1), 1,
+          reason: '块始于列中段时锚定仍指其首 token 所在页');
     });
 
     test('偈颂按句折列：列内 token 数为句长整数倍且句子不跨列', () {
