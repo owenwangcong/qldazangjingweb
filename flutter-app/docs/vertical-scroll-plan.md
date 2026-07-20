@@ -1,6 +1,6 @@
 # 竖排滚动(展卷)模式 — 实施方案
 
-> 状态:设计待确认(回复「确认设计,开始实施」后进入实施)
+> 状态:**V1~V9 全部完成**(2026-07-20,提交 900ca776 起)。实测:真书指纹对拍逐位不变;42 组初速落点全在列边缘;真机吸附/跳转/四档互切验证通过;profile 采样 raster jank **0%**(p90 7.87ms,对照翻页 17.28ms/30.9%),build p99 16.46ms 在 60fps 预算内(2 帧超线发生在采样的方向反转瞬间)
 > 母文档:`vertical-reader-plan.md`(竖排翻页 S1~S8 + D1~D6 决策全部沿用)
 > 分支:`feature/vertical-reader` 续作
 
@@ -154,15 +154,15 @@ class ColumnSnapPhysics extends ScrollPhysics {
 
 ## 5. Checklist(实施任务清单,逐项交付+汇报)
 
-- [ ] **V1 两层化重构**:VStripItem 列带层 + 页分组层;新旧管线对拍 property test 全绿后删旧实现;翻页 golden/全量测试零变化
-- [ ] **V2 绘列核心提取**:paintColumnGlyphs 共享;VerticalColumnPainter(单列+右隙乌丝栏);列条目 golden
-- [ ] **V3 SnapMetrics + ColumnSnapPhysics**:均匀/含图两路;ballistic 落点∈边界表的模拟单测(多组初速)
-- [ ] **V4 VerticalScrollReader 视图**:ListView(reverse)+itemExtentBuilder+条目分派;jumpToBlock/进度回调;chrome 点按
-- [ ] **V5 跨列反馈**:lead 列计数+40ms 节流+haptic+音效接口;muteScrollFeedback 设置行
-- [ ] **V6 状态接入**:readingMode 第 4 值、getter、四档 Wrap 选择器、shell 分支、竖排设置行条件放宽
-- [ ] **V7 测试补全**:物理吸附单测、反馈计数单测、widget 冒烟(方向/吸附/跳转/回调)、设置联动、四模式互切进度不漂移
-- [ ] **V8 真机验证**:滚动手感/吸附/震动、含偈颂页视觉推演截屏、profile timeline 采样(tool/perf.ps1 管线,fling 连滚)
-- [ ] **V9 文档与收尾**:方案勾记、母文档交叉引用、提交推送
+- [x] **V1 两层化重构**:VStripItem 列带层 + 页分组层;新旧管线对拍 property test 全绿后删旧实现;翻页 golden/全量测试零变化
+- [x] **V2 绘列核心提取**:paintColumnGlyphs 共享;VerticalColumnPainter(单列+右隙乌丝栏);列条目 golden
+- [x] **V3 SnapMetrics + ColumnSnapPhysics**:均匀/含图两路;ballistic 落点∈边界表的模拟单测(多组初速)
+- [x] **V4 VerticalScrollReader 视图**:ListView(reverse)+itemExtentBuilder+条目分派;jumpToBlock/进度回调;chrome 点按
+- [x] **V5 跨列反馈**:lead 列计数+40ms 节流+haptic+音效接口;muteScrollFeedback 设置行
+- [x] **V6 状态接入**:readingMode 第 4 值、getter、四档 Wrap 选择器、shell 分支、竖排设置行条件放宽
+- [x] **V7 测试补全**:物理吸附单测、反馈计数单测、widget 冒烟(方向/吸附/跳转/回调)、设置联动、四模式互切进度不漂移
+- [x] **V8 真机验证**:滚动手感/吸附/震动、含偈颂页视觉推演截屏、profile timeline 采样(tool/perf.ps1 管线,fling 连滚)
+- [x] **V9 文档与收尾**:方案勾记、母文档交叉引用、提交推送
 
 **每步交付物**:代码 + 对应测试绿 + (V2/V4/V8)坐标/视觉推演;性能红线沿用 §6.1 瞬时事件口径。
 
