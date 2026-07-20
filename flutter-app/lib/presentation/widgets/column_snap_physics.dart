@@ -114,9 +114,9 @@ class ColumnSnapPhysics extends ScrollPhysics {
   ColumnSnapPhysics applyTo(ScrollPhysics? ancestor) =>
       ColumnSnapPhysics(metrics: metrics, parent: buildParent(ancestor));
 
-  /// 拖拽系数（2026-07-20 手感调参：0.135→0.05,惯性行程缩短约 1/3,
-  /// 展卷更「收得住」）。
-  static const double _drag = 0.05;
+  /// 拖拽系数（2026-07-20 两轮手感调参：0.135→0.05→0.01,
+  /// 「滑了很快就停」——行程 ≈ v/4.6,重惯性彻底收干）。
+  static const double _drag = 0.01;
 
   /// 轻扫成列阈值：初速达到即保证至少推进一列（吸附果断,不回拉）。
   static const double _commitVelocity = 250;

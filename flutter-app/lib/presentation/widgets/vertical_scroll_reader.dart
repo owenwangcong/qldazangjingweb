@@ -281,31 +281,31 @@ class _VerticalScrollReaderState extends ConsumerState<VerticalScrollReader> {
               ),
             ),
           ),
-          // 展卷左缘渐隐(2026-07-20 用户反馈):左缘被截的半列向
-          // 「尚未展开的卷」一侧淡出,消除硬切感。纸色渐变覆盖
-          // (零 saveLayer,不走 ShaderMask——Impeller 全屏 saveLayer 铁律)。
-          Positioned(
-            left: hMargin,
-            top: 0,
-            bottom: 0,
-            width: (result.grid.colPitch * 1.3)
-                .clamp(24.0, contentW * 0.3)
-                .toDouble(),
-            child: IgnorePointer(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
-                    colors: [
-                      colors.background,
-                      colors.background.withValues(alpha: 0),
-                    ],
+          // 展卷左缘渐隐(2026-07-20 用户反馈,二次修订):带宽 = 左缘被截
+          // 列的可见宽度(contentW mod colPitch)——静止时渐隐**恰好**只罩
+          // 被截的半列,最左完整列永远不透明。纸色渐变覆盖(零 saveLayer,
+          // 不走 ShaderMask——Impeller 全屏 saveLayer 铁律)。
+          if (contentW % result.grid.colPitch >= 4)
+            Positioned(
+              left: hMargin,
+              top: 0,
+              bottom: 0,
+              width: contentW % result.grid.colPitch,
+              child: IgnorePointer(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                      colors: [
+                        colors.background,
+                        colors.background.withValues(alpha: 0),
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
           // DS3:点按任意处显隐 chrome(translucent 不抢拖动)。
           Positioned.fill(
             child: GestureDetector(
