@@ -12,7 +12,11 @@ import 'vertical_models.dart';
 /// - 全部句子等长，句长 n ∈ [4, 7]（四/五/六/七言）；
 /// - 句数 ≥ 4；
 /// - 段尾必须以句读收束（有游离残句 = 非偈颂）。
-int? detectVerseClauseLen(List<GridToken> tokens) {
+/// 段级偈颂候选：全部句子等长 n ∈ [4,7] 且段尾句读收束 → (n, 句数)。
+/// 不设句数门槛——藏经数据常把偈颂按「联」编码（两句一段，如地藏经
+/// 十二品「吾观地藏威神力，恒河沙劫说难尽，」），单段句数不足以自证，
+/// 由 token_stream 的**相邻段区段归并**凑足总句数（≥4）后统一标注。
+({int n, int clauses})? verseCandidate(List<GridToken> tokens) {
   if (tokens.isEmpty) return null;
   final lengths = <int>[];
   var current = 0;
@@ -24,11 +28,17 @@ int? detectVerseClauseLen(List<GridToken> tokens) {
     }
   }
   if (current != 0) return null;
-  if (lengths.length < 4) return null;
+  if (lengths.isEmpty) return null;
   final n = lengths.first;
   if (n < 4 || n > 7) return null;
   if (lengths.any((l) => l != n)) return null;
-  return n;
+  return (n: n, clauses: lengths.length);
+}
+
+/// 单段自足判定（候选 + 句数 ≥4）；区段归并场景走 [verseCandidate]。
+int? detectVerseClauseLen(List<GridToken> tokens) {
+  final c = verseCandidate(tokens);
+  return c != null && c.clauses >= 4 ? c.n : null;
 }
 
 /// 悬浮堆中含任一句读边界符即视为句子收束

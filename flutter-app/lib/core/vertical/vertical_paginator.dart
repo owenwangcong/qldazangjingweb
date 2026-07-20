@@ -173,12 +173,24 @@ class VerticalPagination {
       proseRun.clear();
     }
 
+    // 偈颂区段缓冲：数据按「联」编码时（两句一段）相邻同 n 段合并折列，
+    // 否则每段各自成列、列内只装得下一联（漏检修复的分页侧配套）。
+    final verseRun = <GridToken>[];
+    int? verseRunN;
+    void flushVerse() {
+      if (verseRun.isEmpty) return;
+      addChunked(List.of(verseRun), VColumnRole.body, verseN: verseRunN);
+      verseRun.clear();
+      verseRunN = null;
+    }
+
     final stream =
         buildTokenStream(book: book, display: display, baiwen: key.baiwen);
     for (final para in stream) {
       if (para.isImage) {
         // 插图独占页：先封当前页，再单发图片页（沿用横排语义）。
         flushProse();
+        flushVerse();
         flushPage();
         if (para.blockIndex >= 0 && para.blockIndex < firstPageOfBlock.length) {
           firstPageOfBlock[para.blockIndex] ??= pages.length;
@@ -194,22 +206,30 @@ class VerticalPagination {
       switch (para.blockType) {
         case JuanBlockType.bt:
           flushProse();
+          flushVerse();
           addChunked(para.tokens, VColumnRole.bt);
         case JuanBlockType.bm:
           flushProse();
+          flushVerse();
           addChunked(para.tokens, VColumnRole.bm, indent: 1);
         case JuanBlockType.p:
           if (para.verseClauseLen != null) {
-            // 偈颂独立断列、按句折列（用户明确保留的唯一小断）。
+            // 偈颂断列、按句折列（用户明确保留的唯一小断）；
+            // 相邻同 n 段并入同一区段。
             flushProse();
-            addChunked(para.tokens, VColumnRole.body,
-                verseN: para.verseClauseLen);
+            if (verseRunN != null && verseRunN != para.verseClauseLen) {
+              flushVerse();
+            }
+            verseRunN = para.verseClauseLen;
+            verseRun.addAll(para.tokens);
           } else {
+            flushVerse();
             proseRun.addAll(para.tokens);
           }
       }
     }
     flushProse();
+    flushVerse();
     flushPage();
 
     // ---- 卷尾 nav 页（仅有前后部时） ------------------------------------------

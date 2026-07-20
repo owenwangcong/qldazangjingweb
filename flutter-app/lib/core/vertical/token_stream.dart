@@ -8,54 +8,43 @@ import 'vertical_models.dart';
 ///
 /// 与 scroll/paged 两模式共享同一段落预处理准源（paragraph_text.dart）：
 /// cleanParagraph 剥弯引号 → splitParagraphSegments 切 <img> →
-/// display() 按段简繁转换 → tokenize（带标点）→ 偈颂检测 →
+/// display() 按段简繁转换 → tokenize（带标点）→ 偈颂**区段归并**检测 →
 /// （白文时）剥除标点。处理次序不可调换：标点归属必须在转换之后，
 /// 偈颂检测必须在白文剥除之前（剥后无句读可切）。
+///
+/// 区段归并（2026-07-20 漏检修复）：藏经数据常把偈颂按「联」编码
+/// （两句一段），单段句数不足 4；故先做段级候选（等长 n、句读收束、
+/// 句数不限），再把**相邻同 n 的正文段**归并为区段，区段总句数 ≥4
+/// 才整体标注——从严门槛保留在区段层，漏检无害化不变。
 List<TokenParagraph> buildTokenStream({
   required BookData book,
   required String Function(String) display,
   required bool baiwen,
 }) {
-  final paragraphs = <TokenParagraph>[];
+  // ---- 第一遍：展开为带标点条目 + 段级偈颂候选 ----------------------------
+  final entries = <_RawEntry>[];
 
   void addText(int b, int p, JuanBlockType type, String raw) {
     final cleaned = cleanParagraph(raw);
     for (final segment in splitParagraphSegments(cleaned)) {
       if (segment.imageUrl != null) {
-        paragraphs.add(TokenParagraph(
-          blockIndex: b,
-          paragraphIndex: p,
-          blockType: type,
-          imageUrl: segment.imageUrl,
-        ));
+        entries.add(_RawEntry.image(b, p, type, segment.imageUrl!));
         continue;
       }
-      // 恒以带标点形态 tokenize——偈颂检测的唯一可靠输入。
       final punctuated = tokenizeText(
         display(segment.text!),
         blockIndex: b,
         paragraphIndex: p,
-        baiwen: false,
+        baiwen: false, // 恒带标点——偈颂检测的唯一可靠输入。
       );
       if (punctuated.isEmpty) continue;
-
-      // 只对正文段检测；标题（bt/bm）不是偈颂。
-      var verse =
-          type == JuanBlockType.p ? detectVerseClauseLen(punctuated) : null;
-
-      final tokens = baiwen ? stripTokensForBaiwen(punctuated) : punctuated;
-      if (tokens.isEmpty) continue;
-      // 白文剥除了独立占格标点后格数可能改变；不再整除句长时撤销
-      // 标注（按散文连排，漏检无害化），维持 A6 不变式。
-      if (verse != null && tokens.length % verse != 0) verse = null;
-      assert(verse == null || tokens.length % verse == 0);
-
-      paragraphs.add(TokenParagraph(
-        blockIndex: b,
-        paragraphIndex: p,
-        blockType: type,
-        tokens: tokens,
-        verseClauseLen: verse,
+      entries.add(_RawEntry.text(
+        b,
+        p,
+        type,
+        punctuated,
+        // 只对正文段做候选；标题（bt/bm）不是偈颂。
+        type == JuanBlockType.p ? verseCandidate(punctuated) : null,
       ));
     }
   }
@@ -73,7 +62,79 @@ List<TokenParagraph> buildTokenStream({
         }
     }
   }
+
+  // ---- 第二遍：相邻同 n 候选归并为区段，总句数 ≥4 → 整体标注 ----------------
+  var i = 0;
+  while (i < entries.length) {
+    final cand = entries[i].cand;
+    if (cand == null) {
+      i++;
+      continue;
+    }
+    var j = i;
+    var clauses = 0;
+    while (j < entries.length && entries[j].cand?.n == cand.n) {
+      clauses += entries[j].cand!.clauses;
+      j++;
+    }
+    if (clauses >= 4) {
+      for (var k = i; k < j; k++) {
+        entries[k].verse = cand.n;
+      }
+    }
+    i = j;
+  }
+
+  // ---- 第三遍：白文剥除 + A6 校验 + 产出 ------------------------------------
+  final paragraphs = <TokenParagraph>[];
+  for (final e in entries) {
+    if (e.imageUrl != null) {
+      paragraphs.add(TokenParagraph(
+        blockIndex: e.blockIndex,
+        paragraphIndex: e.paragraphIndex,
+        blockType: e.blockType,
+        imageUrl: e.imageUrl,
+      ));
+      continue;
+    }
+    final tokens = baiwen ? stripTokensForBaiwen(e.tokens!) : e.tokens!;
+    if (tokens.isEmpty) continue;
+    var verse = e.verse;
+    // 白文剥除了独立占格标点后格数可能改变；不再整除句长时撤销
+    // 标注（按散文连排，漏检无害化），维持 A6 不变式。
+    if (verse != null && tokens.length % verse != 0) verse = null;
+    assert(verse == null || tokens.length % verse == 0);
+    paragraphs.add(TokenParagraph(
+      blockIndex: e.blockIndex,
+      paragraphIndex: e.paragraphIndex,
+      blockType: e.blockType,
+      tokens: tokens,
+      verseClauseLen: verse,
+    ));
+  }
   return paragraphs;
+}
+
+/// 归并期的可变条目（文本或插图二选一）。
+class _RawEntry {
+  _RawEntry.text(this.blockIndex, this.paragraphIndex, this.blockType,
+      this.tokens, this.cand)
+      : imageUrl = null;
+
+  _RawEntry.image(
+      this.blockIndex, this.paragraphIndex, this.blockType, this.imageUrl)
+      : tokens = null,
+        cand = null;
+
+  final int blockIndex;
+  final int paragraphIndex;
+  final JuanBlockType blockType;
+  final List<GridToken>? tokens;
+  final String? imageUrl;
+  final ({int n, int clauses})? cand;
+
+  /// 归并后敲定的偈颂句长（第二遍写入）。
+  int? verse;
 }
 
 /// 把（已转换的）文本段切成占格 token 序列。

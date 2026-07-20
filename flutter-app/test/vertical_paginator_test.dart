@@ -145,6 +145,28 @@ void main() {
       expect(bodyCols.single.tokens.map((t) => t.char).join(), '甲乙丙丁戊己');
     });
 
+    test('按联编码的偈颂区段合并折列（地藏经形态）', () {
+      // 3 段 × 2 句七言 = 6 句归并;35 格列 7 言:k=(35+1)÷8=4 句/列
+      // → 列 [28, 14] tokens,而非每段各自成列。
+      final book = bookOf(const [
+        JuanBlock(id: 'b', type: JuanBlockType.p, paragraphs: [
+          '吾观地藏威神力，恒河沙劫说难尽，',
+          '见闻瞻礼一念间，利益人天无量事。',
+          '若男若女若龙神，报尽应当堕恶道。',
+        ]),
+      ]);
+      final verseCols = run(book)
+          .pages
+          .expand((p) => p.columns)
+          .where((c) => c.role == VColumnRole.body)
+          .toList();
+      expect(verseCols.map((c) => c.tokens.length).toList(), [28, 14],
+          reason: '相邻同 n 联合并为一个区段折列');
+      for (final c in verseCols) {
+        expect(c.verseClauseLen, 7);
+      }
+    });
+
     test('偈颂三明治：前后散文断列，偈颂独立按句折列（D5 唯一小断）', () {
       final book = bookOf(const [
         JuanBlock(id: 'b', type: JuanBlockType.p, paragraphs: [

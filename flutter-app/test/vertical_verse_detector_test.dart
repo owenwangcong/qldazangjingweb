@@ -113,6 +113,52 @@ void main() {
       expect(para.tokens.every((t) => t.trailingPunct.isEmpty), isTrue);
     });
 
+    test('区段归并：按联编码的偈颂(两句一段×3)整体标注(地藏经形态)', () {
+      // 数据实况:地藏经十二品偈按「联」编码,每段仅 2 句 7 言——
+      // 单段句数 <4,靠相邻同 n 归并凑足总句数。
+      final book = bookOf(const [
+        JuanBlock(id: 'b', type: JuanBlockType.p, paragraphs: [
+          '吾观地藏威神力，恒河沙劫说难尽，',
+          '见闻瞻礼一念间，利益人天无量事。',
+          '若男若女若龙神，报尽应当堕恶道，',
+        ]),
+      ]);
+      final paras =
+          buildTokenStream(book: book, display: identity, baiwen: false);
+      expect(paras, hasLength(3));
+      for (final p in paras) {
+        expect(p.verseClauseLen, 7, reason: '区段总句数 6 ≥ 4,整体标注');
+      }
+    });
+
+    test('区段归并：孤立单段两句不标注;散文段截断区段', () {
+      final book = bookOf(const [
+        JuanBlock(id: 'b', type: JuanBlockType.p, paragraphs: [
+          '吾观地藏威神力，恒河沙劫说难尽。', // 孤联,前后无同伴
+          '尔时世尊举金色臂又摩地藏菩萨摩诃萨顶而作是言。', // 散文
+          '见闻瞻礼一念间，利益人天无量事。', // 又一孤联
+        ]),
+      ]);
+      final paras =
+          buildTokenStream(book: book, display: identity, baiwen: false);
+      expect(paras[0].verseClauseLen, isNull, reason: '总句数 2 < 4');
+      expect(paras[1].verseClauseLen, isNull);
+      expect(paras[2].verseClauseLen, isNull);
+    });
+
+    test('区段归并：句长不同的相邻候选不并组', () {
+      final book = bookOf(const [
+        JuanBlock(id: 'b', type: JuanBlockType.p, paragraphs: [
+          '诸行无常，是生灭法。', // 四言 2 句
+          '诸法从本来，常自寂灭相。', // 五言 2 句
+        ]),
+      ]);
+      final paras =
+          buildTokenStream(book: book, display: identity, baiwen: false);
+      expect(paras[0].verseClauseLen, isNull);
+      expect(paras[1].verseClauseLen, isNull);
+    });
+
     test('白文剥除独立占格标点致格数不整除时撤销标注', () {
       // 每句都含一个占格间隔号 → 带标点检测等长命中（6 格/句），
       // 白文剥除 · 后每句 5 格、段长不整除 6 → 撤销标注。
