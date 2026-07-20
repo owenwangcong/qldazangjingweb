@@ -67,28 +67,33 @@ const AppSettingsSchema = CollectionSchema(
       name: r'lineHeight',
       type: IsarType.double,
     ),
-    r'paragraphSpacing': PropertySchema(
+    r'muteScrollFeedback': PropertySchema(
       id: 10,
+      name: r'muteScrollFeedback',
+      type: IsarType.bool,
+    ),
+    r'paragraphSpacing': PropertySchema(
+      id: 11,
       name: r'paragraphSpacing',
       type: IsarType.double,
     ),
     r'readingMode': PropertySchema(
-      id: 11,
+      id: 12,
       name: r'readingMode',
       type: IsarType.string,
     ),
     r'themeKey': PropertySchema(
-      id: 12,
+      id: 13,
       name: r'themeKey',
       type: IsarType.string,
     ),
     r'verticalCharGapEm': PropertySchema(
-      id: 13,
+      id: 14,
       name: r'verticalCharGapEm',
       type: IsarType.double,
     ),
     r'verticalColumnPitch': PropertySchema(
-      id: 14,
+      id: 15,
       name: r'verticalColumnPitch',
       type: IsarType.double,
     ),
@@ -138,11 +143,12 @@ void _appSettingsSerialize(
   writer.writeBool(offsets[7], object.isSimplified);
   writer.writeDouble(offsets[8], object.letterSpacingEm);
   writer.writeDouble(offsets[9], object.lineHeight);
-  writer.writeDouble(offsets[10], object.paragraphSpacing);
-  writer.writeString(offsets[11], object.readingMode);
-  writer.writeString(offsets[12], object.themeKey);
-  writer.writeDouble(offsets[13], object.verticalCharGapEm);
-  writer.writeDouble(offsets[14], object.verticalColumnPitch);
+  writer.writeBool(offsets[10], object.muteScrollFeedback);
+  writer.writeDouble(offsets[11], object.paragraphSpacing);
+  writer.writeString(offsets[12], object.readingMode);
+  writer.writeString(offsets[13], object.themeKey);
+  writer.writeDouble(offsets[14], object.verticalCharGapEm);
+  writer.writeDouble(offsets[15], object.verticalColumnPitch);
 }
 
 AppSettings _appSettingsDeserialize(
@@ -163,11 +169,12 @@ AppSettings _appSettingsDeserialize(
   object.isSimplified = reader.readBool(offsets[7]);
   object.letterSpacingEm = reader.readDouble(offsets[8]);
   object.lineHeight = reader.readDouble(offsets[9]);
-  object.paragraphSpacing = reader.readDouble(offsets[10]);
-  object.readingMode = reader.readString(offsets[11]);
-  object.themeKey = reader.readString(offsets[12]);
-  object.verticalCharGapEm = reader.readDouble(offsets[13]);
-  object.verticalColumnPitch = reader.readDouble(offsets[14]);
+  object.muteScrollFeedback = reader.readBool(offsets[10]);
+  object.paragraphSpacing = reader.readDouble(offsets[11]);
+  object.readingMode = reader.readString(offsets[12]);
+  object.themeKey = reader.readString(offsets[13]);
+  object.verticalCharGapEm = reader.readDouble(offsets[14]);
+  object.verticalColumnPitch = reader.readDouble(offsets[15]);
   return object;
 }
 
@@ -199,14 +206,16 @@ P _appSettingsDeserializeProp<P>(
     case 9:
       return (reader.readDouble(offset)) as P;
     case 10:
-      return (reader.readDouble(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 11:
-      return (reader.readString(offset)) as P;
+      return (reader.readDouble(offset)) as P;
     case 12:
       return (reader.readString(offset)) as P;
     case 13:
-      return (reader.readDouble(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 14:
+      return (reader.readDouble(offset)) as P;
+    case 15:
       return (reader.readDouble(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -926,6 +935,15 @@ extension AppSettingsQueryFilter
   }
 
   QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+  muteScrollFeedbackEqualTo(bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'muteScrollFeedback', value: value),
+      );
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
   paragraphSpacingEqualTo(double value, {double epsilon = Query.epsilon}) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
@@ -1573,6 +1591,20 @@ extension AppSettingsQuerySortBy
   }
 
   QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+  sortByMuteScrollFeedback() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'muteScrollFeedback', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+  sortByMuteScrollFeedbackDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'muteScrollFeedback', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
   sortByParagraphSpacing() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'paragraphSpacing', Sort.asc);
@@ -1782,6 +1814,20 @@ extension AppSettingsQuerySortThenBy
   }
 
   QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+  thenByMuteScrollFeedback() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'muteScrollFeedback', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+  thenByMuteScrollFeedbackDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'muteScrollFeedback', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
   thenByParagraphSpacing() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'paragraphSpacing', Sort.asc);
@@ -1921,6 +1967,13 @@ extension AppSettingsQueryWhereDistinct
   }
 
   QueryBuilder<AppSettings, AppSettings, QDistinct>
+  distinctByMuteScrollFeedback() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'muteScrollFeedback');
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QDistinct>
   distinctByParagraphSpacing() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'paragraphSpacing');
@@ -2026,6 +2079,13 @@ extension AppSettingsQueryProperty
   QueryBuilder<AppSettings, double, QQueryOperations> lineHeightProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'lineHeight');
+    });
+  }
+
+  QueryBuilder<AppSettings, bool, QQueryOperations>
+  muteScrollFeedbackProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'muteScrollFeedback');
     });
   }
 

@@ -39,9 +39,21 @@ class AppSettings {
   @ignore
   bool get isPaged => readingMode == 'paged';
 
-  /// 唯一合法的竖排判断入口（getter 不入库）。
+  /// 唯一合法的竖排翻页判断入口（getter 不入库）。
   @ignore
   bool get isVertical => readingMode == 'vertical';
+
+  /// 竖排滚动（展卷）判断入口（第 4 种模式,vertical-scroll-plan.md）。
+  @ignore
+  bool get isVerticalScroll => readingMode == 'verticalScroll';
+
+  /// 任一竖排形态（翻页/滚动共享排版引擎与竖排设置项）。
+  @ignore
+  bool get usesVerticalEngine => isVertical || isVerticalScroll;
+
+  /// 竖排滚动跨列反馈静音；默认 false = 反馈开启（DS4）,
+  /// isar 旧行 bool 回填 false 恰为默认开。
+  bool muteScrollFeedback = false;
 
   /// 竖排乌丝栏（列间界线）显隐——**反转存储**：isar_community 3.x 给旧行
   /// 新增 bool 字段回填 false（同 [readingMode] 的回填陷阱），「默认开启」

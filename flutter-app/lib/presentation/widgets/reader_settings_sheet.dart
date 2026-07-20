@@ -88,7 +88,7 @@ class _ReaderSettingsSheet extends ConsumerWidget {
               onChanged: controller.setFontSize,
             ),
             // 横排（滚动/翻页）的间距项；竖排另有字间/行间语义（D5/D6）。
-            if (!settings.isVertical) ...[
+            if (!settings.usesVerticalEngine) ...[
               _SliderRow(
                 label: '行距',
                 value: settings.lineHeight,
@@ -118,7 +118,7 @@ class _ReaderSettingsSheet extends ConsumerWidget {
               ),
             ],
             // 竖排间距：字间 = 列内字距（em），行间 = 列距倍率。
-            if (settings.isVertical) ...[
+            if (settings.usesVerticalEngine) ...[
               _SliderRow(
                 label: '字间',
                 value: settings.effectiveVerticalCharGapEm,
@@ -141,22 +141,31 @@ class _ReaderSettingsSheet extends ConsumerWidget {
               ),
             ],
             const SizedBox(height: 8),
-            Row(
+            // 四档换整行布局（DS5）:行尾放不下四档,标签下方铺开。
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 TText('翻页方式',
                     style: TextStyle(fontSize: 15, color: colors.foreground)),
-                const Spacer(),
+                const SizedBox(height: 2),
                 InkToggle(
-                  options: const ['上下滚动', '左右翻页', '古籍竖排'],
-                  selectedIndex:
-                      settings.isVertical ? 2 : (settings.isPaged ? 1 : 0),
-                  onSelect: (i) => controller.setReadingMode(
-                      switch (i) { 2 => 'vertical', 1 => 'paged', _ => 'scroll' }),
+                  options: const ['上下滚动', '左右翻页', '竖排翻页', '竖排展卷'],
+                  selectedIndex: settings.isVerticalScroll
+                      ? 3
+                      : settings.isVertical
+                          ? 2
+                          : (settings.isPaged ? 1 : 0),
+                  onSelect: (i) => controller.setReadingMode(switch (i) {
+                    3 => 'verticalScroll',
+                    2 => 'vertical',
+                    1 => 'paged',
+                    _ => 'scroll'
+                  }),
                 ),
               ],
             ),
-            // 竖排专属项：乌丝栏（默认显示）与句读/白文（默认句读）。
-            if (settings.isVertical) ...[
+            // 竖排专属项（翻页/展卷共享）：乌丝栏与句读/白文。
+            if (settings.usesVerticalEngine) ...[
               Row(
                 children: [
                   TText('乌丝栏',
@@ -184,6 +193,21 @@ class _ReaderSettingsSheet extends ConsumerWidget {
                 ],
               ),
             ],
+            // 展卷跨列反馈（DS4,默认开）：仅竖排展卷模式显示。
+            if (settings.isVerticalScroll)
+              Row(
+                children: [
+                  TText('展卷反馈',
+                      style:
+                          TextStyle(fontSize: 15, color: colors.foreground)),
+                  const Spacer(),
+                  InkToggle(
+                    options: const ['开', '关'],
+                    selectedIndex: settings.muteScrollFeedback ? 1 : 0,
+                    onSelect: (i) => controller.setMuteScrollFeedback(i == 1),
+                  ),
+                ],
+              ),
             Row(
               children: [
                 TText('字体',

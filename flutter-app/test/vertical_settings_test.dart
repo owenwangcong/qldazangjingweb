@@ -49,6 +49,7 @@ void main() {
       await c.setBaiwenMode(true);
       await c.setShowColumnRules(false);
       // 无关 setter 走 _copy()——若漏抄新字段，此处会被静默重置。
+      await c.setMuteScrollFeedback(true);
       await c.setVerticalCharGap(0.2);
       await c.setVerticalColumnPitch(2.1);
       await c.setFontSize(28);
@@ -57,6 +58,7 @@ void main() {
       expect(c.state.baiwenMode, isTrue);
       expect(c.state.showColumnRules, isFalse);
       expect(c.state.hideColumnRules, isTrue, reason: '落库为反转字段');
+      expect(c.state.muteScrollFeedback, isTrue);
       expect(c.state.verticalCharGapEm, 0.2);
       expect(c.state.verticalColumnPitch, 2.1);
     });
@@ -134,14 +136,16 @@ void main() {
       await openSheet(tester);
       expect(find.text('上下滚动'), findsOneWidget);
       expect(find.text('左右翻页'), findsOneWidget);
-      expect(find.text('古籍竖排'), findsOneWidget);
+      expect(find.text('竖排翻页'), findsOneWidget);
+      expect(find.text('竖排展卷'), findsOneWidget);
+      expect(find.text('竖排翻页'), findsOneWidget);
       expect(find.text('乌丝栏'), findsNothing);
       expect(find.text('白文'), findsNothing);
     });
 
     testWidgets('选中古籍竖排 → 模式落库并展开乌丝栏/标点两行', (tester) async {
       await openSheet(tester);
-      await tester.tap(find.text('古籍竖排'));
+      await tester.tap(find.text('竖排翻页'));
       await tester.pumpAndSettle();
 
       expect(controller.state.isVertical, isTrue);
@@ -165,9 +169,33 @@ void main() {
       expect(controller.state.baiwenMode, isTrue);
     });
 
+    testWidgets('选中竖排展卷 → 竖排项共享显示 + 展卷反馈行(默认开)', (tester) async {
+      await openSheet(tester);
+      await tester.tap(find.text('竖排展卷'));
+      await tester.pumpAndSettle();
+
+      expect(controller.state.isVerticalScroll, isTrue);
+      expect(controller.state.usesVerticalEngine, isTrue);
+      // 竖排引擎共享项在展卷下同样显示。
+      expect(find.text('乌丝栏'), findsOneWidget);
+      expect(find.text('字间'), findsOneWidget);
+      // 展卷专属:反馈开关,默认开。
+      expect(find.text('展卷反馈'), findsOneWidget);
+      expect(controller.state.muteScrollFeedback, isFalse);
+      await tester.tap(find.text('关'));
+      await tester.pumpAndSettle();
+      expect(controller.state.muteScrollFeedback, isTrue);
+
+      // 切回竖排翻页:反馈行收起,共享项保留。
+      await tester.tap(find.text('竖排翻页'));
+      await tester.pumpAndSettle();
+      expect(find.text('展卷反馈'), findsNothing);
+      expect(find.text('乌丝栏'), findsOneWidget);
+    });
+
     testWidgets('切回上下滚动 → 竖排专属项收起，开关状态保留', (tester) async {
       await openSheet(tester);
-      await tester.tap(find.text('古籍竖排'));
+      await tester.tap(find.text('竖排翻页'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('白文'));
       await tester.pumpAndSettle();

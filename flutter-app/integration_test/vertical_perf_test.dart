@@ -46,7 +46,7 @@ void main() {
     // 切到竖排：阅读设置 → 古籍竖排 → 收起面板。
     await tester.tap(find.byTooltip('阅读设置'));
     await pumpFor(tester, const Duration(seconds: 1));
-    await tester.tap(find.text('古籍竖排'));
+    await tester.tap(find.text('竖排翻页'));
     await pumpFor(tester, const Duration(seconds: 1));
     // 点面板外 barrier 收起 BottomSheet。
     await tester.tapAt(const Offset(400, 80));

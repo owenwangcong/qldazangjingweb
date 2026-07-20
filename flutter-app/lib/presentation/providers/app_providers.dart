@@ -99,6 +99,7 @@ class SettingsController extends StateNotifier<AppSettings> {
     ..baiwenMode = state.baiwenMode
     ..verticalCharGapEm = state.verticalCharGapEm
     ..verticalColumnPitch = state.verticalColumnPitch
+    ..muteScrollFeedback = state.muteScrollFeedback
     ..hasSeenReaderTips = state.hasSeenReaderTips
     ..classicsActiveTab = state.classicsActiveTab
     ..classicsVisible = state.classicsVisible;
@@ -125,6 +126,8 @@ class SettingsController extends StateNotifier<AppSettings> {
       _persist(_copy()..verticalCharGapEm = v);
   Future<void> setVerticalColumnPitch(double v) =>
       _persist(_copy()..verticalColumnPitch = v);
+  Future<void> setMuteScrollFeedback(bool v) =>
+      _persist(_copy()..muteScrollFeedback = v);
   Future<void> markReaderTipsSeen() =>
       _persist(_copy()..hasSeenReaderTips = true);
   Future<void> setClassicsTab(String tab) =>

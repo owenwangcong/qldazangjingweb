@@ -138,6 +138,120 @@ const Map<String, Offset> _punctNudgeEm = {
   '：': Offset(-0.04, -0.06),
 };
 
+/// 悬浮标点绘制上限（§10 A5：数据全留，绘制截断）。
+const int _maxPunctGlyphs = 2;
+
+/// 共享绘列核心（V2,vertical-scroll-plan.md §2.2）：在 [originX] 起点
+/// 绘一列——字面框双向居中、偈颂行号 i+i÷n（D6 句间空格）、悬浮句读
+/// 落于右侧间隙。翻页画师按 colX(ci) 调用;滚动条目画师按 0 调用。
+void paintColumnGlyphs(
+  Canvas canvas,
+  VerticalGridSpec grid,
+  VerticalPageStyles styles,
+  GlyphCache glyphs,
+  VColumn col,
+  double originX,
+) {
+  final style = styles.forRole(col.role);
+  final roleKey = col.role.name;
+  final verseN = col.verseClauseLen;
+  for (var ti = 0; ti < col.tokens.length; ti++) {
+    final token = col.tokens[ti];
+    // 偈颂句间空一格（D6）：每满一句下移一格。
+    final row = col.indent + ti + (verseN == null ? 0 : ti ~/ verseN);
+    final tp = glyphs.painterFor(roleKey, token.char, style);
+    // 双向居中：矩阵对齐由公式保证，与字体度量无关（C6 核心）。
+    final dx = originX + (grid.cellW - tp.width) / 2;
+    final dy = grid.cellY(row) + (grid.cellH - tp.height) / 2;
+    tp.paint(canvas, Offset(dx, dy));
+
+    if (token.trailingPunct.isNotEmpty) {
+      _paintPunctAt(canvas, grid, styles, glyphs, originX, row,
+          token.trailingPunct);
+    }
+  }
+}
+
+/// 悬浮句读：所属字右下、列隙悬浮区内（C7——标点零侵占字面框，
+/// em 框不越过乌丝栏）。多枚纵向下堆，最多 2 枚。
+void _paintPunctAt(
+  Canvas canvas,
+  VerticalGridSpec grid,
+  VerticalPageStyles styles,
+  GlyphCache glyphs,
+  double originX,
+  int row,
+  String puncts,
+) {
+  final baseX = originX + grid.cellW + grid.gap * 0.06;
+  final cellBottom = grid.cellY(row) + grid.cellH;
+  var drawn = 0;
+  for (final rune in puncts.runes) {
+    if (drawn >= _maxPunctGlyphs) break;
+    final ch = String.fromCharCode(rune);
+    final pp = glyphs.painterFor('punct', ch, styles.punct);
+    final nudge = _punctNudgeEm[ch] ?? Offset.zero;
+    final em = styles.punct.fontSize!;
+    final px = baseX + nudge.dx * em;
+    var py = cellBottom - pp.height * 0.85 +
+        drawn * pp.height * 0.78 +
+        nudge.dy * em;
+    py = math.min(py, grid.gridBottom - pp.height);
+    pp.paint(canvas, Offset(px, py));
+    drawn++;
+  }
+}
+
+/// 滚动条目画师（V2）：单列条目,字面框在条目左侧 [0, cellW],右侧间隙
+/// [cellW, colPitch] 自含悬浮标点与乌丝栏——绘制无跨条目依赖。
+/// [showRule] 画在 x = cellW + 0.62·gap（与翻页 ruleX 公式同源）;
+/// 列带首列（最右）不画,保持两端界线语义与翻页一致。
+class VerticalColumnPainter extends CustomPainter {
+  VerticalColumnPainter({
+    required this.column,
+    required this.grid,
+    required this.styles,
+    required this.glyphs,
+    required this.showRule,
+    required this.ruleColor,
+    required this.ruleStrokeWidth,
+  }) {
+    glyphs.ensureSignature(styles.signature);
+  }
+
+  final VColumn column;
+  final VerticalGridSpec grid;
+  final VerticalPageStyles styles;
+  final GlyphCache glyphs;
+  final bool showRule;
+  final Color ruleColor;
+  final double ruleStrokeWidth;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (showRule) {
+      final x = grid.cellW + grid.gap * 0.62;
+      canvas.drawLine(
+        Offset(x, 0),
+        Offset(x, grid.gridBottom),
+        Paint()
+          ..color = ruleColor
+          ..strokeWidth = ruleStrokeWidth
+          ..strokeCap = ui.StrokeCap.butt,
+      );
+    }
+    paintColumnGlyphs(canvas, grid, styles, glyphs, column, 0);
+  }
+
+  @override
+  bool shouldRepaint(VerticalColumnPainter oldDelegate) =>
+      !identical(oldDelegate.column, column) ||
+      oldDelegate.grid != grid ||
+      oldDelegate.styles.signature != styles.signature ||
+      oldDelegate.showRule != showRule ||
+      oldDelegate.ruleColor != ruleColor;
+}
+
 /// 单页画师（实施方案 §5/§6，验收 C6/C7/C8）。
 /// 只画文字/标点/乌丝栏；纸面背景由主题层提供。
 class VerticalPagePainter extends CustomPainter {
@@ -161,16 +275,14 @@ class VerticalPagePainter extends CustomPainter {
   final Color ruleColor;
   final double ruleStrokeWidth;
 
-  /// 悬浮标点绘制上限（§10 A5：数据全留，绘制截断）。
-  static const int maxPunctGlyphs = 2;
-
   @override
   void paint(Canvas canvas, Size size) {
     assert(page.imageUrl == null && !page.isNavPage,
         '插图/nav 页由 widget 层呈现，不进画布');
     _paintRules(canvas);
     for (var ci = 0; ci < page.columns.length; ci++) {
-      _paintColumn(canvas, ci, page.columns[ci]);
+      paintColumnGlyphs(
+          canvas, grid, styles, glyphs, page.columns[ci], grid.colX(ci));
     }
   }
 
@@ -184,49 +296,6 @@ class VerticalPagePainter extends CustomPainter {
     for (var i = 1; i < page.columns.length; i++) {
       final x = grid.ruleX(i);
       canvas.drawLine(Offset(x, 0), Offset(x, grid.gridBottom), paint);
-    }
-  }
-
-  void _paintColumn(Canvas canvas, int ci, VColumn col) {
-    final style = styles.forRole(col.role);
-    final roleKey = col.role.name;
-    final colLeft = grid.colX(ci);
-    final verseN = col.verseClauseLen;
-    for (var ti = 0; ti < col.tokens.length; ti++) {
-      final token = col.tokens[ti];
-      // 偈颂句间空一格（D6）：每满一句下移一格。
-      final row = col.indent + ti + (verseN == null ? 0 : ti ~/ verseN);
-      final tp = glyphs.painterFor(roleKey, token.char, style);
-      // 双向居中：矩阵对齐由公式保证，与字体度量无关（C6 核心）。
-      final dx = colLeft + (grid.cellW - tp.width) / 2;
-      final dy = grid.cellY(row) + (grid.cellH - tp.height) / 2;
-      tp.paint(canvas, Offset(dx, dy));
-
-      if (token.trailingPunct.isNotEmpty) {
-        _paintPunct(canvas, colLeft, row, token.trailingPunct);
-      }
-    }
-  }
-
-  /// 悬浮句读：所属字右下、列隙悬浮区内（C7——标点零侵占字面框，
-  /// em 框不越过乌丝栏）。多枚纵向下堆，最多 2 枚。
-  void _paintPunct(Canvas canvas, double colLeft, int row, String puncts) {
-    final baseX = colLeft + grid.cellW + grid.gap * 0.06;
-    final cellBottom = grid.cellY(row) + grid.cellH;
-    var drawn = 0;
-    for (final rune in puncts.runes) {
-      if (drawn >= maxPunctGlyphs) break;
-      final ch = String.fromCharCode(rune);
-      final pp = glyphs.painterFor('punct', ch, styles.punct);
-      final nudge = _punctNudgeEm[ch] ?? Offset.zero;
-      final em = styles.punct.fontSize!;
-      final px = baseX + nudge.dx * em;
-      var py = cellBottom - pp.height * 0.85 +
-          drawn * pp.height * 0.78 +
-          nudge.dy * em;
-      py = math.min(py, grid.gridBottom - pp.height);
-      pp.paint(canvas, Offset(px, py));
-      drawn++;
     }
   }
 

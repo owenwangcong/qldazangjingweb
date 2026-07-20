@@ -66,48 +66,32 @@ class VerticalPagination {
       letterSpacingEm: key.letterSpacingEm,
     );
 
-    final pages = <VPage>[];
-    final cols = <VColumn>[];
-    final firstPageOfBlock =
-        List<int?>.filled(math.max(book.blocks.length, 1), null);
+    // ═══ 第一层：列带生成（翻页/滚动共享,V1 两层化） ═══
 
-    // 当前页起点处的阅读上下文块（纯题署页的 firstBlockIndex 来源）。
-    var pageStartBlock = 0;
-    var lastBlockPlaced = 0;
-
-    void flushPage() {
-      if (cols.isEmpty) return;
-      var first = -1;
-      for (final c in cols) {
-        if (c.blockIndex >= 0) {
-          first = c.blockIndex;
-          break;
-        }
-      }
-      pages.add(VPage(
-        columns: List.of(cols),
-        firstBlockIndex: first >= 0 ? first : pageStartBlock,
-      ));
-      cols.clear();
-      pageStartBlock = lastBlockPlaced;
-    }
+    final strip = <VStripItem>[];
+    final stripAnchors = <int>[];
+    final blockCount = math.max(book.blocks.length, 1);
+    final firstStripItemOfBlock = List<int?>.filled(blockCount, null);
+    var stripLastBlock = 0;
 
     void addColumn(VColumn column) {
-      // 逐 token 记录块首现页：散文连排后一个块可能始于列中段
-      //（排版修订 D5），只记列首 token 会让 pageForBlock 偏到前块所在页。
+      // 逐 token 记录块首现条目（散文连排 D5 下块可始于列中段）。
+      final context = stripLastBlock;
+      var anchor = -1;
       for (final t in column.tokens) {
         final b = t.blockIndex;
-        if (b >= 0 && b < firstPageOfBlock.length) {
-          firstPageOfBlock[b] ??= pages.length; // 正在装填的页
-          lastBlockPlaced = b;
+        if (b >= 0 && b < blockCount) {
+          firstStripItemOfBlock[b] ??= strip.length;
+          stripLastBlock = b;
+          if (anchor < 0) anchor = b;
         }
       }
-      cols.add(column);
-      if (cols.length >= grid.colsPerPage) flushPage();
+      strip.add(StripColumn(column));
+      stripAnchors.add(anchor >= 0 ? anchor : context);
     }
 
     /// 把一段 token 装成若干列。偈颂（verseN）按句折列：每列只装
-    /// 整数个句子；句长超出列容量的退化场景回退散文连排。
+    /// 整数个句子且句间空一格（D6）；句长超出列容量的退化场景回退散文连排。
     void addChunked(
       List<GridToken> tokens,
       VColumnRole role, {
@@ -163,9 +147,8 @@ class VerticalPagination {
 
     // ---- 正文流 ---------------------------------------------------------------
 
-    // 散文连排缓冲（排版修订 D5，2026-07-20 用户反馈）：仿古籍连排，
-    // 散文段落间**不断列**——句读悬浮已是天然分隔，频繁短列破坏连贯；
-    // 仅偈颂、bt/bm 大章节、插图、卷尾处断列。段落锚点仍逐 token 保留。
+    // 散文连排缓冲（D5）与偈颂区段缓冲（漏检修复）：仅偈颂、bt/bm、插图、
+    // 卷尾断列。段落/块锚点逐 token 保留。
     final proseRun = <GridToken>[];
     void flushProse() {
       if (proseRun.isEmpty) return;
@@ -173,8 +156,6 @@ class VerticalPagination {
       proseRun.clear();
     }
 
-    // 偈颂区段缓冲：数据按「联」编码时（两句一段）相邻同 n 段合并折列，
-    // 否则每段各自成列、列内只装得下一联（漏检修复的分页侧配套）。
     final verseRun = <GridToken>[];
     int? verseRunN;
     void flushVerse() {
@@ -188,19 +169,15 @@ class VerticalPagination {
         buildTokenStream(book: book, display: display, baiwen: key.baiwen);
     for (final para in stream) {
       if (para.isImage) {
-        // 插图独占页：先封当前页，再单发图片页（沿用横排语义）。
         flushProse();
         flushVerse();
-        flushPage();
-        if (para.blockIndex >= 0 && para.blockIndex < firstPageOfBlock.length) {
-          firstPageOfBlock[para.blockIndex] ??= pages.length;
-          lastBlockPlaced = para.blockIndex;
+        final b = para.blockIndex;
+        if (b >= 0 && b < blockCount) {
+          firstStripItemOfBlock[b] ??= strip.length;
         }
-        pages.add(VPage(
-          firstBlockIndex: para.blockIndex >= 0 ? para.blockIndex : pageStartBlock,
-          imageUrl: para.imageUrl,
-        ));
-        pageStartBlock = lastBlockPlaced;
+        strip.add(StripImage(imageUrl: para.imageUrl!, blockIndex: b));
+        stripAnchors.add(b >= 0 ? b : stripLastBlock);
+        if (b >= 0 && b < blockCount) stripLastBlock = b;
         continue;
       }
       switch (para.blockType) {
@@ -214,8 +191,7 @@ class VerticalPagination {
           addChunked(para.tokens, VColumnRole.bm, indent: 1);
         case JuanBlockType.p:
           if (para.verseClauseLen != null) {
-            // 偈颂断列、按句折列（用户明确保留的唯一小断）；
-            // 相邻同 n 段并入同一区段。
+            // 偈颂断列、按句折列；相邻同 n 段并入同一区段。
             flushProse();
             if (verseRunN != null && verseRunN != para.verseClauseLen) {
               flushVerse();
@@ -230,36 +206,96 @@ class VerticalPagination {
     }
     flushProse();
     flushVerse();
-    flushPage();
-
-    // ---- 卷尾 nav 页（仅有前后部时） ------------------------------------------
 
     final hasNav = (book.meta.lastBuId?.isNotEmpty ?? false) ||
         (book.meta.nextBuId?.isNotEmpty ?? false);
     if (hasNav) {
-      pages.add(VPage(firstBlockIndex: lastBlockPlaced, isNavPage: true));
+      strip.add(const StripNav());
+      stripAnchors.add(stripLastBlock);
     }
+
+    // ═══ 第二层：页分组（仅翻页消费;语义与重构前逐位一致,指纹对拍锁定） ═══
+
+    final pages = <VPage>[];
+    final firstPageOfBlock = List<int?>.filled(blockCount, null);
+    final cols = <VColumn>[];
+    var pageStartBlock = 0;
+    var lastBlockPlaced = 0;
+
+    void flushPage() {
+      if (cols.isEmpty) return;
+      var first = -1;
+      for (final c in cols) {
+        if (c.blockIndex >= 0) {
+          first = c.blockIndex;
+          break;
+        }
+      }
+      pages.add(VPage(
+        columns: List.of(cols),
+        firstBlockIndex: first >= 0 ? first : pageStartBlock,
+      ));
+      cols.clear();
+      pageStartBlock = lastBlockPlaced;
+    }
+
+    for (final item in strip) {
+      switch (item) {
+        case StripColumn(:final column):
+          for (final t in column.tokens) {
+            final b = t.blockIndex;
+            if (b >= 0 && b < blockCount) {
+              firstPageOfBlock[b] ??= pages.length;
+              lastBlockPlaced = b;
+            }
+          }
+          cols.add(column);
+          if (cols.length >= grid.colsPerPage) flushPage();
+        case StripImage(:final imageUrl, :final blockIndex):
+          flushPage();
+          if (blockIndex >= 0 && blockIndex < blockCount) {
+            firstPageOfBlock[blockIndex] ??= pages.length;
+            lastBlockPlaced = blockIndex;
+          }
+          pages.add(VPage(
+            firstBlockIndex: blockIndex >= 0 ? blockIndex : pageStartBlock,
+            imageUrl: imageUrl,
+          ));
+          pageStartBlock = lastBlockPlaced;
+        case StripNav():
+          flushPage();
+          pages.add(VPage(firstBlockIndex: lastBlockPlaced, isNavPage: true));
+      }
+    }
+    flushPage();
 
     // 空书兜底：至少一页，PageView 不允许 itemCount 0。
     if (pages.isEmpty) {
       pages.add(const VPage(firstBlockIndex: 0));
     }
 
-    // ---- 块 → 页映射前向填充（无内容块锚定到前一个已知块所在页） ---------------
+    // ---- 块 → 页/条目映射前向填充 ---------------------------------------------
 
-    final filled = List<int>.filled(firstPageOfBlock.length, 0);
-    var carry = 0;
-    for (var b = 0; b < firstPageOfBlock.length; b++) {
-      final v = firstPageOfBlock[b];
-      if (v != null) carry = math.min(v, pages.length - 1);
-      filled[b] = carry;
+    List<int> forwardFill(List<int?> src, int maxIndex) {
+      final filled = List<int>.filled(src.length, 0);
+      var carry = 0;
+      for (var b = 0; b < src.length; b++) {
+        final v = src[b];
+        if (v != null) carry = math.min(v, maxIndex);
+        filled[b] = carry;
+      }
+      return filled;
     }
 
     return VerticalPaginationResult(
       key: key,
       grid: grid,
+      strip: strip,
       pages: pages,
-      firstPageOfBlock: filled,
+      firstPageOfBlock: forwardFill(firstPageOfBlock, pages.length - 1),
+      firstStripItemOfBlock:
+          forwardFill(firstStripItemOfBlock, math.max(strip.length - 1, 0)),
+      stripAnchors: stripAnchors,
     );
   }
 }

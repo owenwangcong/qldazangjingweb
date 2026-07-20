@@ -109,6 +109,32 @@ class VColumn {
   int get blockIndex => tokens.isEmpty ? -1 : tokens.first.blockIndex;
 }
 
+// ---- 列带（V1 两层化,vertical-scroll-plan.md §2.1） -----------------------
+
+/// 列带条目：翻页与滚动两种竖排形态共享的排版真源。
+/// 翻页 = 列带按 colsPerPage 分组成页;滚动 = 列带直接成横向条目流。
+sealed class VStripItem {
+  const VStripItem();
+}
+
+/// 文字列条目。
+final class StripColumn extends VStripItem {
+  const StripColumn(this.column);
+  final VColumn column;
+}
+
+/// 插图条目（滚动=视口宽条目;翻页=独占页）。
+final class StripImage extends VStripItem {
+  const StripImage({required this.imageUrl, required this.blockIndex});
+  final String imageUrl;
+  final int blockIndex;
+}
+
+/// 卷尾 nav 条目（滚动=末端条目;翻页=卷尾页）。
+final class StripNav extends VStripItem {
+  const StripNav();
+}
+
 /// 一页。三种形态互斥：文字页（columns）/ 插图独占页（imageUrl）/
 /// 卷尾 nav 页（isNavPage）。columns 的列序即阅读序（index 0 = 最右列）。
 class VPage {
@@ -174,20 +200,36 @@ class VerticalPaginationKey {
 }
 
 /// 一次分页运行的产物。分页为同步纯算术（无时间片），结果即终态。
+/// [strip] 是排版真源（V1）,[pages] 由其零拷贝派生（翻页专用）。
 class VerticalPaginationResult {
   VerticalPaginationResult({
     required this.key,
     required this.grid,
+    required this.strip,
     required this.pages,
     required List<int> firstPageOfBlock,
-  }) : _firstPageOfBlock = firstPageOfBlock;
+    required List<int> firstStripItemOfBlock,
+    required List<int> stripAnchors,
+  })  : _firstPageOfBlock = firstPageOfBlock,
+        _firstStripItemOfBlock = firstStripItemOfBlock,
+        _stripAnchors = stripAnchors,
+        assert(stripAnchors.length == strip.length);
 
   final VerticalPaginationKey key;
   final VerticalGridSpec grid;
+
+  /// 列带（阅读序:index 0 = 最右/卷首）。
+  final List<VStripItem> strip;
   final List<VPage> pages;
 
   /// 块 → 首次出现页码（构建期已对无内容块做前向填充，无 null）。
   final List<int> _firstPageOfBlock;
+
+  /// 块 → 首次出现的列带条目索引（同前向填充语义）。
+  final List<int> _firstStripItemOfBlock;
+
+  /// 条目 → 进度锚块（题署等无块条目取其位置的阅读上下文块）。
+  final List<int> _stripAnchors;
 
   int pageForBlock(int blockIndex) {
     if (pages.isEmpty) return 0;
@@ -199,4 +241,15 @@ class VerticalPaginationResult {
   int blockForPage(int page) => pages.isEmpty
       ? 0
       : pages[page.clamp(0, pages.length - 1)].firstBlockIndex;
+
+  int stripItemForBlock(int blockIndex) {
+    if (strip.isEmpty || _firstStripItemOfBlock.isEmpty) return 0;
+    return _firstStripItemOfBlock[
+            blockIndex.clamp(0, _firstStripItemOfBlock.length - 1)]
+        .clamp(0, strip.length - 1);
+  }
+
+  int blockForStripItem(int index) => _stripAnchors.isEmpty
+      ? 0
+      : _stripAnchors[index.clamp(0, _stripAnchors.length - 1)];
 }
