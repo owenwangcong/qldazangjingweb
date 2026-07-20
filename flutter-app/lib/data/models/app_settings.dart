@@ -30,7 +30,7 @@ class AppSettings {
   /// 默认与 Web 一致：--font-lxgw 落霞孤鹜。
   String fontFamily = 'lxgw';
 
-  /// 阅读方式：'scroll' 上下滚动（默认）| 'paged' 左右翻页。
+  /// 阅读方式：'scroll' 上下滚动（默认）| 'paged' 左右翻页 | 'vertical' 古籍竖排。
   /// 注意：isar_community 3.x 给旧行新增的非空 String 回填**空串**而非
   /// Dart 初始值——判断只能用 == 'paged'（见 [isPaged]），不能比对 'scroll'。
   String readingMode = 'scroll';
@@ -38,6 +38,21 @@ class AppSettings {
   /// 唯一合法的翻页判断入口（getter 不入库）。
   @ignore
   bool get isPaged => readingMode == 'paged';
+
+  /// 唯一合法的竖排判断入口（getter 不入库）。
+  @ignore
+  bool get isVertical => readingMode == 'vertical';
+
+  /// 竖排乌丝栏（列间界线）显隐——**反转存储**：isar_community 3.x 给旧行
+  /// 新增 bool 字段回填 false（同 [readingMode] 的回填陷阱），「默认开启」
+  /// 只能以 hide=false 表达才对既有用户生效。读取一律走 [showColumnRules]。
+  bool hideColumnRules = false;
+
+  @ignore
+  bool get showColumnRules => !hideColumnRules;
+
+  /// 竖排白文模式（剥除全部标点）；默认关，旧行回填 false 恰为所需。
+  bool baiwenMode = false;
 
   /// Web: hasSeenBookTour.
   bool hasSeenReaderTips = false;

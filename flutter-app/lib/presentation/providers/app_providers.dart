@@ -95,6 +95,8 @@ class SettingsController extends StateNotifier<AppSettings> {
     ..paragraphSpacing = state.paragraphSpacing
     ..fontFamily = state.fontFamily
     ..readingMode = state.readingMode
+    ..hideColumnRules = state.hideColumnRules
+    ..baiwenMode = state.baiwenMode
     ..hasSeenReaderTips = state.hasSeenReaderTips
     ..classicsActiveTab = state.classicsActiveTab
     ..classicsVisible = state.classicsVisible;
@@ -112,6 +114,11 @@ class SettingsController extends StateNotifier<AppSettings> {
       _persist(_copy()..paragraphSpacing = v);
   Future<void> setReadingMode(String v) =>
       _persist(_copy()..readingMode = v);
+
+  /// 乌丝栏开关以「显示」语义暴露；落库为反转字段（见 AppSettings 注释）。
+  Future<void> setShowColumnRules(bool show) =>
+      _persist(_copy()..hideColumnRules = !show);
+  Future<void> setBaiwenMode(bool v) => _persist(_copy()..baiwenMode = v);
   Future<void> markReaderTipsSeen() =>
       _persist(_copy()..hasSeenReaderTips = true);
   Future<void> setClassicsTab(String tab) =>

@@ -121,13 +121,43 @@ class _ReaderSettingsSheet extends ConsumerWidget {
                     style: TextStyle(fontSize: 15, color: colors.foreground)),
                 const Spacer(),
                 InkToggle(
-                  options: const ['上下滚动', '左右翻页'],
-                  selectedIndex: settings.isPaged ? 1 : 0,
-                  onSelect: (i) =>
-                      controller.setReadingMode(i == 1 ? 'paged' : 'scroll'),
+                  options: const ['上下滚动', '左右翻页', '古籍竖排'],
+                  selectedIndex:
+                      settings.isVertical ? 2 : (settings.isPaged ? 1 : 0),
+                  onSelect: (i) => controller.setReadingMode(
+                      switch (i) { 2 => 'vertical', 1 => 'paged', _ => 'scroll' }),
                 ),
               ],
             ),
+            // 竖排专属项：乌丝栏（默认显示）与句读/白文（默认句读）。
+            if (settings.isVertical) ...[
+              Row(
+                children: [
+                  TText('乌丝栏',
+                      style:
+                          TextStyle(fontSize: 15, color: colors.foreground)),
+                  const Spacer(),
+                  InkToggle(
+                    options: const ['显示', '隐藏'],
+                    selectedIndex: settings.showColumnRules ? 0 : 1,
+                    onSelect: (i) => controller.setShowColumnRules(i == 0),
+                  ),
+                ],
+              ),
+              Row(
+                children: [
+                  TText('标点',
+                      style:
+                          TextStyle(fontSize: 15, color: colors.foreground)),
+                  const Spacer(),
+                  InkToggle(
+                    options: const ['句读', '白文'],
+                    selectedIndex: settings.baiwenMode ? 1 : 0,
+                    onSelect: (i) => controller.setBaiwenMode(i == 1),
+                  ),
+                ],
+              ),
+            ],
             Row(
               children: [
                 TText('字体',

@@ -17,58 +17,68 @@ const AppSettingsSchema = CollectionSchema(
   name: r'AppSettings',
   id: -5633561779022347008,
   properties: {
-    r'classicsActiveTab': PropertySchema(
+    r'baiwenMode': PropertySchema(
       id: 0,
+      name: r'baiwenMode',
+      type: IsarType.bool,
+    ),
+    r'classicsActiveTab': PropertySchema(
+      id: 1,
       name: r'classicsActiveTab',
       type: IsarType.string,
     ),
     r'classicsVisible': PropertySchema(
-      id: 1,
+      id: 2,
       name: r'classicsVisible',
       type: IsarType.bool,
     ),
     r'fontFamily': PropertySchema(
-      id: 2,
+      id: 3,
       name: r'fontFamily',
       type: IsarType.string,
     ),
     r'fontSize': PropertySchema(
-      id: 3,
+      id: 4,
       name: r'fontSize',
       type: IsarType.double,
     ),
     r'hasSeenReaderTips': PropertySchema(
-      id: 4,
+      id: 5,
       name: r'hasSeenReaderTips',
       type: IsarType.bool,
     ),
+    r'hideColumnRules': PropertySchema(
+      id: 6,
+      name: r'hideColumnRules',
+      type: IsarType.bool,
+    ),
     r'isSimplified': PropertySchema(
-      id: 5,
+      id: 7,
       name: r'isSimplified',
       type: IsarType.bool,
     ),
     r'letterSpacingEm': PropertySchema(
-      id: 6,
+      id: 8,
       name: r'letterSpacingEm',
       type: IsarType.double,
     ),
     r'lineHeight': PropertySchema(
-      id: 7,
+      id: 9,
       name: r'lineHeight',
       type: IsarType.double,
     ),
     r'paragraphSpacing': PropertySchema(
-      id: 8,
+      id: 10,
       name: r'paragraphSpacing',
       type: IsarType.double,
     ),
     r'readingMode': PropertySchema(
-      id: 9,
+      id: 11,
       name: r'readingMode',
       type: IsarType.string,
     ),
     r'themeKey': PropertySchema(
-      id: 10,
+      id: 12,
       name: r'themeKey',
       type: IsarType.string,
     ),
@@ -108,17 +118,19 @@ void _appSettingsSerialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  writer.writeString(offsets[0], object.classicsActiveTab);
-  writer.writeBool(offsets[1], object.classicsVisible);
-  writer.writeString(offsets[2], object.fontFamily);
-  writer.writeDouble(offsets[3], object.fontSize);
-  writer.writeBool(offsets[4], object.hasSeenReaderTips);
-  writer.writeBool(offsets[5], object.isSimplified);
-  writer.writeDouble(offsets[6], object.letterSpacingEm);
-  writer.writeDouble(offsets[7], object.lineHeight);
-  writer.writeDouble(offsets[8], object.paragraphSpacing);
-  writer.writeString(offsets[9], object.readingMode);
-  writer.writeString(offsets[10], object.themeKey);
+  writer.writeBool(offsets[0], object.baiwenMode);
+  writer.writeString(offsets[1], object.classicsActiveTab);
+  writer.writeBool(offsets[2], object.classicsVisible);
+  writer.writeString(offsets[3], object.fontFamily);
+  writer.writeDouble(offsets[4], object.fontSize);
+  writer.writeBool(offsets[5], object.hasSeenReaderTips);
+  writer.writeBool(offsets[6], object.hideColumnRules);
+  writer.writeBool(offsets[7], object.isSimplified);
+  writer.writeDouble(offsets[8], object.letterSpacingEm);
+  writer.writeDouble(offsets[9], object.lineHeight);
+  writer.writeDouble(offsets[10], object.paragraphSpacing);
+  writer.writeString(offsets[11], object.readingMode);
+  writer.writeString(offsets[12], object.themeKey);
 }
 
 AppSettings _appSettingsDeserialize(
@@ -128,18 +140,20 @@ AppSettings _appSettingsDeserialize(
   Map<Type, List<int>> allOffsets,
 ) {
   final object = AppSettings();
-  object.classicsActiveTab = reader.readString(offsets[0]);
-  object.classicsVisible = reader.readBool(offsets[1]);
-  object.fontFamily = reader.readString(offsets[2]);
-  object.fontSize = reader.readDouble(offsets[3]);
-  object.hasSeenReaderTips = reader.readBool(offsets[4]);
+  object.baiwenMode = reader.readBool(offsets[0]);
+  object.classicsActiveTab = reader.readString(offsets[1]);
+  object.classicsVisible = reader.readBool(offsets[2]);
+  object.fontFamily = reader.readString(offsets[3]);
+  object.fontSize = reader.readDouble(offsets[4]);
+  object.hasSeenReaderTips = reader.readBool(offsets[5]);
+  object.hideColumnRules = reader.readBool(offsets[6]);
   object.id = id;
-  object.isSimplified = reader.readBool(offsets[5]);
-  object.letterSpacingEm = reader.readDouble(offsets[6]);
-  object.lineHeight = reader.readDouble(offsets[7]);
-  object.paragraphSpacing = reader.readDouble(offsets[8]);
-  object.readingMode = reader.readString(offsets[9]);
-  object.themeKey = reader.readString(offsets[10]);
+  object.isSimplified = reader.readBool(offsets[7]);
+  object.letterSpacingEm = reader.readDouble(offsets[8]);
+  object.lineHeight = reader.readDouble(offsets[9]);
+  object.paragraphSpacing = reader.readDouble(offsets[10]);
+  object.readingMode = reader.readString(offsets[11]);
+  object.themeKey = reader.readString(offsets[12]);
   return object;
 }
 
@@ -151,26 +165,30 @@ P _appSettingsDeserializeProp<P>(
 ) {
   switch (propertyId) {
     case 0:
-      return (reader.readString(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 1:
-      return (reader.readBool(offset)) as P;
-    case 2:
       return (reader.readString(offset)) as P;
-    case 3:
-      return (reader.readDouble(offset)) as P;
-    case 4:
+    case 2:
       return (reader.readBool(offset)) as P;
+    case 3:
+      return (reader.readString(offset)) as P;
+    case 4:
+      return (reader.readDouble(offset)) as P;
     case 5:
       return (reader.readBool(offset)) as P;
     case 6:
-      return (reader.readDouble(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 7:
-      return (reader.readDouble(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 8:
       return (reader.readDouble(offset)) as P;
     case 9:
-      return (reader.readString(offset)) as P;
+      return (reader.readDouble(offset)) as P;
     case 10:
+      return (reader.readDouble(offset)) as P;
+    case 11:
+      return (reader.readString(offset)) as P;
+    case 12:
       return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -277,6 +295,15 @@ extension AppSettingsQueryWhere
 
 extension AppSettingsQueryFilter
     on QueryBuilder<AppSettings, AppSettings, QFilterCondition> {
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+  baiwenModeEqualTo(bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'baiwenMode', value: value),
+      );
+    });
+  }
+
   QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
   classicsActiveTabEqualTo(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -649,6 +676,15 @@ extension AppSettingsQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         FilterCondition.equalTo(property: r'hasSeenReaderTips', value: value),
+      );
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+  hideColumnRulesEqualTo(bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'hideColumnRules', value: value),
       );
     });
   }
@@ -1240,6 +1276,18 @@ extension AppSettingsQueryLinks
 
 extension AppSettingsQuerySortBy
     on QueryBuilder<AppSettings, AppSettings, QSortBy> {
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy> sortByBaiwenMode() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'baiwenMode', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy> sortByBaiwenModeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'baiwenMode', Sort.desc);
+    });
+  }
+
   QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
   sortByClassicsActiveTab() {
     return QueryBuilder.apply(this, (query) {
@@ -1302,6 +1350,19 @@ extension AppSettingsQuerySortBy
   sortByHasSeenReaderTipsDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'hasSeenReaderTips', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy> sortByHideColumnRules() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'hideColumnRules', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+  sortByHideColumnRulesDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'hideColumnRules', Sort.desc);
     });
   }
 
@@ -1384,6 +1445,18 @@ extension AppSettingsQuerySortBy
 
 extension AppSettingsQuerySortThenBy
     on QueryBuilder<AppSettings, AppSettings, QSortThenBy> {
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy> thenByBaiwenMode() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'baiwenMode', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy> thenByBaiwenModeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'baiwenMode', Sort.desc);
+    });
+  }
+
   QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
   thenByClassicsActiveTab() {
     return QueryBuilder.apply(this, (query) {
@@ -1446,6 +1519,19 @@ extension AppSettingsQuerySortThenBy
   thenByHasSeenReaderTipsDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'hasSeenReaderTips', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy> thenByHideColumnRules() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'hideColumnRules', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+  thenByHideColumnRulesDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'hideColumnRules', Sort.desc);
     });
   }
 
@@ -1540,6 +1626,12 @@ extension AppSettingsQuerySortThenBy
 
 extension AppSettingsQueryWhereDistinct
     on QueryBuilder<AppSettings, AppSettings, QDistinct> {
+  QueryBuilder<AppSettings, AppSettings, QDistinct> distinctByBaiwenMode() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'baiwenMode');
+    });
+  }
+
   QueryBuilder<AppSettings, AppSettings, QDistinct>
   distinctByClassicsActiveTab({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -1575,6 +1667,13 @@ extension AppSettingsQueryWhereDistinct
   distinctByHasSeenReaderTips() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'hasSeenReaderTips');
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QDistinct>
+  distinctByHideColumnRules() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'hideColumnRules');
     });
   }
 
@@ -1629,6 +1728,12 @@ extension AppSettingsQueryProperty
     });
   }
 
+  QueryBuilder<AppSettings, bool, QQueryOperations> baiwenModeProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'baiwenMode');
+    });
+  }
+
   QueryBuilder<AppSettings, String, QQueryOperations>
   classicsActiveTabProperty() {
     return QueryBuilder.apply(this, (query) {
@@ -1658,6 +1763,12 @@ extension AppSettingsQueryProperty
   hasSeenReaderTipsProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'hasSeenReaderTips');
+    });
+  }
+
+  QueryBuilder<AppSettings, bool, QQueryOperations> hideColumnRulesProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'hideColumnRules');
     });
   }
 

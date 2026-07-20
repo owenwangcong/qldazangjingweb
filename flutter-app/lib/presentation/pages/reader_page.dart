@@ -19,6 +19,7 @@ import '../widgets/paged_reader.dart';
 import '../widgets/reader_settings_sheet.dart';
 import '../widgets/reader_text_utils.dart';
 import '../widgets/t_text.dart';
+import '../widgets/vertical_reader.dart';
 
 final _bookProvider = StreamProvider.family<BookData?, String>(
   (ref, bookId) => ref.watch(bookRepositoryProvider).watchBook(bookId),
@@ -97,9 +98,11 @@ class _ReaderPageState extends ConsumerState<ReaderPage> {
         if (_itemScrollController.isAttached) {
           _itemScrollController.jumpTo(index: progress.blockIndex + 1);
         }
-        // 翻页模式：视图可能先于进度读取建成（同滚动模式的竞态）；
-        // jumpToBlock 在排版未到达时自动挂起。
-        if (ref.read(settingsProvider).isPaged) {
+        // 翻页/竖排模式：视图可能先于进度读取建成（同滚动模式的竞态）；
+        // jumpToBlock 在排版未到达时自动挂起（竖排 S1 占位期挂起至真实
+        // 视图接入后消化）。
+        final settings = ref.read(settingsProvider);
+        if (settings.isPaged || settings.isVertical) {
           _pagedController.jumpToBlock(progress.blockIndex);
         }
       }
@@ -285,11 +288,18 @@ class _ReaderPageState extends ConsumerState<ReaderPage> {
     final hMargin = screenWidth >= 600 ? screenWidth * 0.10 : 20.0;
 
     final isPaged = settings.isPaged;
+    final isVertical = settings.isVertical;
 
     return Stack(
       children: [
         SafeArea(
-          child: isPaged
+          child: isVertical
+              // 古籍竖排（S1 占位；排版引擎按方案 S2~S6 接入）。
+              ? VerticalReader(
+                  onToggleChrome: () =>
+                      setState(() => _chromeVisible = !_chromeVisible),
+                )
+              : isPaged
               ? PagedReader(
                   bookId: widget.bookId,
                   book: book,
@@ -588,8 +598,10 @@ class _ReaderPageState extends ConsumerState<ReaderPage> {
   ) async {
     HapticFeedback.lightImpact(); // P4.3：落签轻震
     // Anchor on the first visible block — same semantics as the web's
-    // IntersectionObserver-driven currentPartId. 翻页模式取当前页首块。
-    final blockIndex = ref.read(settingsProvider).isPaged
+    // IntersectionObserver-driven currentPartId. 翻页/竖排模式取当前页首块
+    // （竖排占位期 _currentBlock 停留在恢复进度处，锚定仍正确）。
+    final anchorSettings = ref.read(settingsProvider);
+    final blockIndex = anchorSettings.isPaged || anchorSettings.isVertical
         ? (_currentBlock ?? 0).clamp(0, book.blocks.length - 1)
         : (_firstVisibleBlock - 1).clamp(0, book.blocks.length - 1);
     final block = book.blocks[blockIndex];
@@ -627,7 +639,10 @@ class _ReaderPageState extends ConsumerState<ReaderPage> {
           ),
           onTap: () {
             Navigator.pop(sheetContext);
-            if (ref.read(settingsProvider).isPaged) {
+            // 翻页/竖排走块跳转句柄；竖排必须拦在滚动路径之前——
+            // _itemScrollController 未挂载时 scrollTo 直接断言崩溃。
+            final tocSettings = ref.read(settingsProvider);
+            if (tocSettings.isPaged || tocSettings.isVertical) {
               _pagedController.jumpToBlock(entries[i].index);
               return;
             }
