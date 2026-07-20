@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 
 import '../tokens/ink_tokens.dart';
 
@@ -107,12 +108,15 @@ class InkBloomReveal extends StatelessWidget {
       animation: progress,
       builder: (context, _) {
         final p = progress.value;
-        if (p >= 1.0) return child;
+        // ≥0.995 即返回裸 child（视觉差 <0.5% maxDist、正常动画约 2ms）：
+        // 设备高压下 route 动画可停滞在末梢——冻结兜底，保证页面完全可交互
+        //（2026-07-20 真机事故：内存风暴中转场停在高位，AppBar 按钮全灭）。
+        if (p >= 0.995) return child;
         if (p <= 0.0) return const SizedBox.shrink();
         return Stack(
           fit: StackFit.passthrough,
           children: [
-            ClipPath(
+            _VisualOnlyClipPath(
               // hardEdge：抗锯齿 clip 在 Impeller 上走 stencil 路径明显更贵；
               // 墨晕前沿由噪声轮廓 + 墨缘环打散，硬边不可辨。
               clipBehavior: Clip.hardEdge,
@@ -183,6 +187,40 @@ class InkCoveredPage extends StatelessWidget {
     // reveal 裁剪自然覆盖本页；被盖稳态由 Overlay 的 opaque-offstage
     // 机制免费跳绘。
     return child;
+  }
+}
+
+/// 仅作视觉的 ClipPath：**不**按裁剪路径过滤命中。
+///
+/// RenderClipPath 默认把 hit test 限制在裁剪区内——破墨转场期间墨晕圈外
+/// 的点击（四角＝AppBar 返回/设置/书签按钮）会被整体吞掉。转场语义上
+/// 页面已是目标页（Material 自带 Fade/Slide 转场从不过滤命中），裁剪只
+/// 该管显现，不该管交互——尤其动画在高压设备上停滞时（真机事故实证）。
+class _VisualOnlyClipPath extends ClipPath {
+  const _VisualOnlyClipPath({
+    required CustomClipper<Path> super.clipper,
+    super.clipBehavior,
+    super.child,
+  });
+
+  @override
+  RenderClipPath createRenderObject(BuildContext context) =>
+      _RenderVisualOnlyClipPath(clipper: clipper, clipBehavior: clipBehavior);
+}
+
+class _RenderVisualOnlyClipPath extends RenderClipPath {
+  _RenderVisualOnlyClipPath({super.clipper, super.clipBehavior});
+
+  @override
+  bool hitTest(BoxHitTestResult result, {required Offset position}) {
+    // 绕开 _RenderCustomClip 的「裁剪区外直接 miss」，还原 RenderBox
+    // 的标准命中语义（视觉裁剪零交互副作用）。
+    if (!size.contains(position)) return false;
+    if (hitTestChildren(result, position: position) || hitTestSelf(position)) {
+      result.add(BoxHitTestEntry(this, position));
+      return true;
+    }
+    return false;
   }
 }
 

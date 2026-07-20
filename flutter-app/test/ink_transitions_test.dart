@@ -209,7 +209,7 @@ void main() {
     // （InkCoveredPage 接线；Plan B 下正常动效为裸 child，shell 全程绘制）。
     expect(find.byType(InkCoveredPage), findsWidgets,
         reason: 'shell 的 secondaryAnimation 应已接线');
-    expect(find.byType(ClipPath), findsAtLeastNWidgets(1),
+    expect(find.byWidgetPredicate((w) => w is ClipPath), findsAtLeastNWidgets(1),
         reason: '上层 reveal 裁剪在场');
     expect(find.text('+1'), findsOneWidget, reason: 'shell 内容仍在绘制');
 
@@ -236,7 +236,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100)); // 深 push 中段
     // 上层 reveal 一个 ClipPath；下层内容原样在绘（无 FadeTransition 隐身）。
-    expect(find.byType(ClipPath), findsAtLeastNWidgets(1));
+    expect(find.byWidgetPredicate((w) => w is ClipPath), findsAtLeastNWidgets(1));
     expect(find.text('设置页'), findsOneWidget,
         reason: '下层 push 页原样参与绘制，非隐身');
 
@@ -246,7 +246,7 @@ void main() {
     router.pop();
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 60)); // pop 前段
-    expect(find.byType(ClipPath), findsAtLeastNWidgets(1));
+    expect(find.byWidgetPredicate((w) => w is ClipPath), findsAtLeastNWidgets(1));
     expect(find.text('设置页'), findsOneWidget,
         reason: 'pop 早期下层页即刻可见');
 
