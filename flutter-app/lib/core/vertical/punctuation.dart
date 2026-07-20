@@ -28,6 +28,13 @@ bool isFloatingPunct(String ch) =>
     trailingFloatingPunctuation.contains(ch) ||
     leadingFloatingPunctuation.contains(ch);
 
+/// 句读边界（偈颂切句用，方案 §7）：仅句/逗/分/叹/问。
+/// 顿号、冒号不切句——「说偈言：」类引导语混入时靠等长判据自然拒斥。
+const Set<String> clauseBoundaryPunctuation = {
+  '。', '，', '；', '！', '？',
+  ',', ';', '!', '?',
+};
+
 /// 全部标点与符号（白文剥除范围）。\p{S} 覆盖 ～/￥ 等符号类；
 /// 〇（U+3007，Nl 字母数字）不在其内，不会被误剥。
 final RegExp anyPunctOrSymbol = RegExp(r'[\p{P}\p{S}]', unicode: true);
