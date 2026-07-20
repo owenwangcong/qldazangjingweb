@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/audio/scroll_tick_sound.dart';
 import '../../core/ink/ink.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/vertical/vertical_models.dart';
@@ -97,7 +98,13 @@ class _VerticalScrollReaderState extends ConsumerState<VerticalScrollReader> {
   void _fireFeedback() {
     if (ref.read(settingsProvider).muteScrollFeedback) return;
     HapticFeedback.selectionClick();
-    widget.soundHook?.call();
+    // 默认播内置短嗒(无马达设备上的唯一可感知反馈);soundHook 注入可覆盖。
+    final hook = widget.soundHook;
+    if (hook != null) {
+      hook();
+    } else {
+      ScrollTickSound.instance.tick();
+    }
   }
 
   // ---- 分页/度量管理（镜像 VerticalReader 的键与防抖节奏） ------------------

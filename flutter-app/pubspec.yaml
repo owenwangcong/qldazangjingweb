@@ -48,6 +48,7 @@ dependencies:
   path_provider: ^2.1.5
   flutter_markdown: ^0.7.7+1
   share_plus: ^12.0.2
+  audioplayers: ^6.6.0
 
 dev_dependencies:
   flutter_test:
@@ -94,6 +95,8 @@ flutter:
   assets:
     - assets/data/
     - assets/opencc/
+    # 展卷跨列音效（程序化生成的短嗒声，scripts 见 git 历史）。
+    - assets/audio/
     # 全部 1809 部经文正文（gzip），App 完全离线可读。
     # 重新生成：node scripts/generate-book-assets.js（仓库根目录）
     - assets/books/
