@@ -194,7 +194,7 @@ bool baiwenMode = false;       // 白文默认关(旧行回填 false 恰为所�
 | A2 | 空书/空段落/全标点段落(白文后为空) | 产出仅含卷首+卷尾的最小页序列,不崩溃 |
 | A3 | 代理对(扩展 B 区佛经用字) | token 流以 `String.runes` 切分,`assert(char.runes.length >= 1)`;禁止 codeUnit 索引 |
 | A4 | 超长段落(数万字) | 算术分页天然有界;`assert` 分页产物 token 总数 == 输入流总数(无丢字无重字) |
-| A5 | 标点堆叠 > 2 | 绘制截断,数据保留;`assert(trailingPunct.length <= 4)` 上游归属逻辑防失控 |
+| A5 | 标点堆叠 > 2 | 数据全留(病态输入如「字。。。。」合法,不设输入型 assert),绘制侧截断至 2 枚;真正的不变式断言是:占格 token 恒为单 rune、悬浮堆恒为悬浮类字符(token_stream 已断言) |
 | A6 | 偈颂列 | `assert(tokens.length % n == 0)`(按句折列不变式) |
 | A7 | 旋转/分屏尺寸突变 | contentSize 进 key → 自动重分页;当前页经 blockIndex 锚定还原 |
 | A8 | 字体异步加载完成 | activeFamily 翻转 → key 变化重排(沿用横排机制);字形缓存按 family 整体失效 |
