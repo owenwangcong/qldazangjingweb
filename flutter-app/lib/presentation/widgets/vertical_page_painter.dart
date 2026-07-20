@@ -51,8 +51,10 @@ class VerticalPageStyles {
           height: 1.0,
           color: muted,
         ),
-        // 标点字号几何自适应：em 框宽不得越过乌丝栏（S5 坐标推演：
-        // 0.45×fs 在默认 gap 下超悬浮区 0.75px，故以 gap 上限约束）。
+        // 标点字号几何自适应（S5 坐标推演）：0.45×fs 在默认行距下会超出
+        // 悬浮区触碰乌丝栏，故以 gap×0.52 约束；0.28×fs 为可读性保底——
+        // 行距 <1.6 时保底生效，em 框可略过界但墨迹（居框左下象限）仍在
+        // 界内（vertical_painter_test C7 按默认行距做严格 em 框断言）。
         punct = TextStyle(
           fontFamily: fontFamily,
           fontSize: (gap * 0.52).clamp(fontSize * 0.28, fontSize * 0.45),
