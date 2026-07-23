@@ -11,7 +11,8 @@
     "es:setup:reset": "node scripts/setup-elasticsearch.js --reset",
     "es:import": "node scripts/import-to-elasticsearch.js",
     "es:import:force": "node scripts/import-to-elasticsearch.js --force",
-    "es:test": "node scripts/test-elasticsearch.js"
+    "es:test": "node scripts/test-elasticsearch.js",
+    "test:vertical": "playwright test --config=playwright.vertical.config.ts"
   },
   "dependencies": {
     "@elastic/elasticsearch": "^8.12.0",
