@@ -52,6 +52,7 @@ void main() {
       await c.setMuteScrollFeedback(true);
       await c.setVerticalCharGap(0.2);
       await c.setVerticalColumnPitch(2.1);
+      await c.setVerticalFontSize(30);
       await c.setFontSize(28);
       await c.setTheme('guchayese');
       expect(c.state.isVertical, isTrue);
@@ -61,6 +62,8 @@ void main() {
       expect(c.state.muteScrollFeedback, isTrue);
       expect(c.state.verticalCharGapEm, 0.2);
       expect(c.state.verticalColumnPitch, 2.1);
+      expect(c.state.verticalFontSize, 30);
+      expect(c.state.fontSize, 28, reason: '竖排/横排字号互不覆盖');
     });
 
     test('竖排间距默认值、哨兵与 NaN 安全语义', () {
@@ -80,6 +83,22 @@ void main() {
       s.verticalColumnPitch = 99;
       expect(s.effectiveVerticalCharGapEm, 0.4);
       expect(s.effectiveVerticalColumnPitch, 3.0);
+    });
+
+    test('竖排字号默认值、哨兵与 NaN 安全语义', () {
+      final s = AppSettings();
+      expect(s.effectiveVerticalFontSize, 26, reason: '0 哨兵取竖排默认大字号');
+      expect(s.fontSize, 20, reason: '横排默认字号不受竖排解耦影响');
+      s.verticalFontSize = 32;
+      expect(s.effectiveVerticalFontSize, 32);
+      // isar 旧行回填 NaN → 回落默认值。
+      s.verticalFontSize = double.nan;
+      expect(s.effectiveVerticalFontSize, 26);
+      // 越界值钳制到滑杆区间 14~40。
+      s.verticalFontSize = 8;
+      expect(s.effectiveVerticalFontSize, 14);
+      s.verticalFontSize = 99;
+      expect(s.effectiveVerticalFontSize, 40);
     });
 
     test('setShowColumnRules 以显示语义写入反转字段', () async {

@@ -97,6 +97,11 @@ const AppSettingsSchema = CollectionSchema(
       name: r'verticalColumnPitch',
       type: IsarType.double,
     ),
+    r'verticalFontSize': PropertySchema(
+      id: 16,
+      name: r'verticalFontSize',
+      type: IsarType.double,
+    ),
   },
 
   estimateSize: _appSettingsEstimateSize,
@@ -149,6 +154,7 @@ void _appSettingsSerialize(
   writer.writeString(offsets[13], object.themeKey);
   writer.writeDouble(offsets[14], object.verticalCharGapEm);
   writer.writeDouble(offsets[15], object.verticalColumnPitch);
+  writer.writeDouble(offsets[16], object.verticalFontSize);
 }
 
 AppSettings _appSettingsDeserialize(
@@ -175,6 +181,7 @@ AppSettings _appSettingsDeserialize(
   object.themeKey = reader.readString(offsets[13]);
   object.verticalCharGapEm = reader.readDouble(offsets[14]);
   object.verticalColumnPitch = reader.readDouble(offsets[15]);
+  object.verticalFontSize = reader.readDouble(offsets[16]);
   return object;
 }
 
@@ -216,6 +223,8 @@ P _appSettingsDeserializeProp<P>(
     case 14:
       return (reader.readDouble(offset)) as P;
     case 15:
+      return (reader.readDouble(offset)) as P;
+    case 16:
       return (reader.readDouble(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -1452,6 +1461,81 @@ extension AppSettingsQueryFilter
       );
     });
   }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+  verticalFontSizeEqualTo(double value, {double epsilon = Query.epsilon}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'verticalFontSize',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+  verticalFontSizeGreaterThan(
+    double value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'verticalFontSize',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+  verticalFontSizeLessThan(
+    double value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'verticalFontSize',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+  verticalFontSizeBetween(
+    double lower,
+    double upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'verticalFontSize',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+
+          epsilon: epsilon,
+        ),
+      );
+    });
+  }
 }
 
 extension AppSettingsQueryObject
@@ -1667,6 +1751,20 @@ extension AppSettingsQuerySortBy
   sortByVerticalColumnPitchDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'verticalColumnPitch', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+  sortByVerticalFontSize() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'verticalFontSize', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+  sortByVerticalFontSizeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'verticalFontSize', Sort.desc);
     });
   }
 }
@@ -1892,6 +1990,20 @@ extension AppSettingsQuerySortThenBy
       return query.addSortBy(r'verticalColumnPitch', Sort.desc);
     });
   }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+  thenByVerticalFontSize() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'verticalFontSize', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+  thenByVerticalFontSizeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'verticalFontSize', Sort.desc);
+    });
+  }
 }
 
 extension AppSettingsQueryWhereDistinct
@@ -2009,6 +2121,13 @@ extension AppSettingsQueryWhereDistinct
       return query.addDistinctBy(r'verticalColumnPitch');
     });
   }
+
+  QueryBuilder<AppSettings, AppSettings, QDistinct>
+  distinctByVerticalFontSize() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'verticalFontSize');
+    });
+  }
 }
 
 extension AppSettingsQueryProperty
@@ -2119,6 +2238,13 @@ extension AppSettingsQueryProperty
   verticalColumnPitchProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'verticalColumnPitch');
+    });
+  }
+
+  QueryBuilder<AppSettings, double, QQueryOperations>
+  verticalFontSizeProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'verticalFontSize');
     });
   }
 }

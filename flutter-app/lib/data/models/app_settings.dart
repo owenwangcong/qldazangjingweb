@@ -76,6 +76,11 @@ class AppSettings {
   /// 读取一律走 [effectiveVerticalColumnPitch]。
   double verticalColumnPitch = 0;
 
+  /// 竖排字号（逻辑 px，14~40），与横排 [fontSize] 解耦（同 D5/D6 间距
+  /// 解耦的理由：竖排整页大字才有刻本气质，默认 26 > 横排默认 20）。
+  /// 旧行回填 NaN、未设置为 0——读取一律走 [effectiveVerticalFontSize]。
+  double verticalFontSize = 0;
+
   @ignore
   double get effectiveVerticalCharGapEm {
     final v = verticalCharGapEm;
@@ -86,6 +91,12 @@ class AppSettings {
   double get effectiveVerticalColumnPitch {
     final v = verticalColumnPitch;
     return v.isFinite && v > 0 ? v.clamp(1.35, 3.0).toDouble() : 1.75;
+  }
+
+  @ignore
+  double get effectiveVerticalFontSize {
+    final v = verticalFontSize;
+    return v.isFinite && v > 0 ? v.clamp(14.0, 40.0).toDouble() : 26.0;
   }
 
   /// Web: hasSeenBookTour.

@@ -84,8 +84,8 @@ void main() {
     final scrollable =
         tester.state<ScrollableState>(find.byType(Scrollable).first);
     expect(scrollable.position.physics, isA<ColumnSnapPhysics>());
-    // 默认设置 fs20/行间1.75 → colPitch = 35(均匀列书,无插图)。
-    const pitch = 35.0;
+    // 默认竖排字号 26/行间1.75 → colPitch = 45.5(均匀列书,无插图)。
+    const pitch = 45.5;
 
     // 手指左→右滑 = 前进;惯性停止必吸附在列边缘(A-VS1 视图级)。
     await tester.fling(find.byType(ListView), const Offset(320, 0), 1500);

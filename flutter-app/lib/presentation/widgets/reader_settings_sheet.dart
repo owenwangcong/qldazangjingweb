@@ -78,14 +78,24 @@ class _ReaderSettingsSheet extends ConsumerWidget {
             // BottomSheet 顶部干笔分隔（P3.9）。
             const BrushDivider(height: 14, seed: 47),
             const SizedBox(height: 2),
+            // 字号在竖排下读写独立字段（与字间/行间同理的 D5/D6 解耦），
+            // 竖排默认字号更大，互切模式各自记忆。
             _SliderRow(
               label: '字号',
-              value: settings.fontSize,
+              value: settings.usesVerticalEngine
+                  ? settings.effectiveVerticalFontSize
+                  : settings.fontSize,
               min: 14,
               max: 40,
               divisions: 13,
-              display: settings.fontSize.round().toString(),
-              onChanged: controller.setFontSize,
+              display: (settings.usesVerticalEngine
+                      ? settings.effectiveVerticalFontSize
+                      : settings.fontSize)
+                  .round()
+                  .toString(),
+              onChanged: settings.usesVerticalEngine
+                  ? controller.setVerticalFontSize
+                  : controller.setFontSize,
             ),
             // 横排（滚动/翻页）的间距项；竖排另有字间/行间语义（D5/D6）。
             if (!settings.usesVerticalEngine) ...[

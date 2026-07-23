@@ -219,7 +219,9 @@ class _VerticalScrollReaderState extends ConsumerState<VerticalScrollReader> {
       final screenWidth = MediaQuery.sizeOf(context).width;
       final hMargin = screenWidth >= 600 ? screenWidth * 0.10 : 20.0;
       final scaler = MediaQuery.textScalerOf(context);
-      final scaleFactor = scaler.scale(settings.fontSize) / settings.fontSize;
+      // 竖排独立字号（默认大于横排,见 AppSettings.verticalFontSize）。
+      final fontSize = settings.effectiveVerticalFontSize;
+      final scaleFactor = scaler.scale(fontSize) / fontSize;
       final contentW =
           (constraints.maxWidth - 2 * hMargin).clamp(1.0, double.infinity);
       final contentSize = Size(
@@ -234,7 +236,7 @@ class _VerticalScrollReaderState extends ConsumerState<VerticalScrollReader> {
           bookId: widget.bookId,
           contentSize: contentSize,
           fontFamily: fontState.activeFamily ?? '',
-          fontSize: settings.fontSize,
+          fontSize: fontSize,
           lineHeight: settings.effectiveVerticalColumnPitch,
           letterSpacingEm: settings.effectiveVerticalCharGapEm,
           isSimplified: settings.isSimplified,

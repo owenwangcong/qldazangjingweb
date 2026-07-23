@@ -207,7 +207,9 @@ class _VerticalReaderState extends ConsumerState<VerticalReader> {
       final screenWidth = MediaQuery.sizeOf(context).width;
       final hMargin = screenWidth >= 600 ? screenWidth * 0.10 : 20.0;
       final scaler = MediaQuery.textScalerOf(context);
-      final scaleFactor = scaler.scale(settings.fontSize) / settings.fontSize;
+      // 竖排独立字号（默认大于横排,见 AppSettings.verticalFontSize）。
+      final fontSize = settings.effectiveVerticalFontSize;
+      final scaleFactor = scaler.scale(fontSize) / fontSize;
       final contentSize = Size(
         (constraints.maxWidth - 2 * hMargin).clamp(1.0, double.infinity),
         (constraints.maxHeight - VerticalReader.topPad - VerticalReader.bottomPad)
@@ -218,7 +220,7 @@ class _VerticalReaderState extends ConsumerState<VerticalReader> {
           bookId: widget.bookId,
           contentSize: contentSize,
           fontFamily: fontState.activeFamily ?? '',
-          fontSize: settings.fontSize,
+          fontSize: fontSize,
           // 竖排独立间距（D6 设置项）：行间=列距倍率、字间=列内字距，
           // 与横排的 lineHeight/letterSpacing 语义解耦。
           lineHeight: settings.effectiveVerticalColumnPitch,
