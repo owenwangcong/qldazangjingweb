@@ -18,6 +18,7 @@ export interface VerticalChromeProps {
   progress: number;
   onExit: () => void;
   onModeChange: (mode: ReadingMode) => void;
+  onToggleSettings: () => void;
 }
 
 const barBase: React.CSSProperties = {
@@ -53,6 +54,7 @@ export default function VerticalChrome({
   progress,
   onExit,
   onModeChange,
+  onToggleSettings,
 }: VerticalChromeProps) {
   const hidden: React.CSSProperties = visible
     ? {}
@@ -147,6 +149,9 @@ export default function VerticalChrome({
               {page + 1} / {pageCount}
             </span>
           )}
+          <button data-vgear style={modeBtn(false)} onClick={onToggleSettings}>
+            设置
+          </button>
         </div>
       </div>
     </div>

@@ -1,6 +1,6 @@
 # 网页版古籍竖排阅读 — 详细设计与开发跟踪文档
 
-> **状态:WS3 完成(两模式交互 E2E 全绿)| 当前步骤:WS4 进行中 | 详设定稿:2026-07-23**
+> **状态:WS4 完成(响应式管线全绿)| 当前步骤:WS5 进行中 | 详设定稿:2026-07-23**
 > 母文档:`flutter-app/docs/vertical-reader-plan.md`(S1~S8/D1~D6)、`flutter-app/docs/vertical-scroll-plan.md`(V1~V9/DS1~DS5)——排版规则与验收口径沿用,本文只记录 web 侧设计与差异
 > 技术栈:Next.js 14 + React 18 + Tailwind;测试 `@playwright/test`(单测+E2E+截图 golden 一套框架)
 
@@ -134,15 +134,14 @@ export interface StripResult {
 
 ### 5.2 blockIndex 定义与 DOM 锚点映射(横竖互通的基石)
 
-扁平化 `book.juans`,顺序编号:
+(**WS5 修正**:与引擎实现对齐——引擎移植自 Flutter,块 = juans 数组条目,不是逐段扁平)
 
 ```
-for juan of book.juans:
-  type bt/bm → 1 个块 { text: content[0], anchor: juan.id }
-  type p     → content[i] 逐段成块 { text: content[i], anchor: `part-${juan.id}-${i}` }
+blockIndex = book.juans 数组下标(bt/bm/p 各为一块;p 块内 content[i] 是 paragraphIndex)
+DOM 锚点  = document.getElementById(book.juans[b].id)   // bt/bm/p 三类横排都有 id
 ```
 
-- `blockIndex` = 该扁平列表下标。**与横排 DOM 锚点一一对应**:横→竖用「视口内第一个可见锚点元素」求 blockIndex;竖→横用 `anchors[blockIndex]` `scrollIntoView`。
+- **与横排 DOM 锚点一一对应**:横→竖用「视口内第一个可见 juan 元素」求 blockIndex;竖→横用 `juans[b].id` `scrollIntoView`。段内更细定位由 paragraphIndex 保留(互切暂不用)。
 - 进度存储、TOC/搜索跳转、模式互切全部以 blockIndex 为锚(C5 口径)。
 
 ### 5.3 token 流构建规则(tokenStream.ts)
@@ -326,7 +325,7 @@ localStorage 键(FontContext 同款逐键模式;W16 正向命名):
 - [x] **CW8 乌丝栏**:位置 0.62·gap/数量 N−1/首列不画/上下沿与文本区齐平(2026-07-23,column.spec;开关零重排属引擎既证——rule 不在 PaginationKey)
 - [x] **CW9 交互 E2E**:rtl 方向(首列贴右缘);翻页点按落点=整页跨度且页码联动;展卷静止 offset∈列边界;键盘/滚轮;模式互切往返零漂移;Esc 退出回锚点;卷尾 nav(2026-07-23,tests/vertical/reader.spec 8 项)
 - [ ] **CW10 设置联动**:key 分量变化→重排+锚定还原;乌丝栏/反馈→零重排;localStorage 持久化与还原
-- [ ] **CW11 响应式**:viewport 缩放/旋转 E2E→重排+还原;375/768/1280 三断点 golden;超宽被页面宽度封顶
+- [x] **CW11 响应式**:viewport 缩放/旋转 E2E→防抖重排+块锚还原;375/768/1280 三断点几何自适应;超宽被页面宽度封顶(2026-07-23,responsive.spec 4 项;golden 由单测层承担)
 - [ ] **CW12 性能**:3 万字卷 fling 连滚采样(CPU 4× throttle)无长帧;分页 <10ms;Lighthouse 书页分数不回归
 - [ ] **CW13 SSR/SEO**:禁 JS 加载书页输出与现状一致;overlay 不进 SSR 树
 - [x] **CW14 跨端对拍**:0085-01 与 0998 翻页产物指纹(页数/总列数/colHash/anchorHash/pageForBlock 采样)与 Flutter 端硬编码基线**逐位一致**;两端输入 JSON 验证逐字节相同(2026-07-23,realbook.spec)
@@ -355,10 +354,10 @@ localStorage 键(FontContext 同款逐键模式;W16 正向命名):
 - [x] WS3.5 E2E 8 项全绿 → CW9
 - 完成记录:**2026-07-23,提交 `7c7ba2df`;实机截图目检通过(满屏网格/沉浸态/chrome 自动隐)**
 ### WS4 响应式管线
-- [ ] WS4.1 ResizeObserver→key→重排→锚定还原(防抖 250ms)
-- [ ] WS4.2 滚轮/键盘/触控板映射
-- [ ] WS4.3 三断点+旋转/缩放 E2E → CW11
-- 完成记录:____
+- [x] WS4.1 ResizeObserver→key→重排→锚定还原(防抖 250ms;liveBlockRef 实时锚)
+- [x] WS4.2 滚轮/键盘/触控板映射(WS3 已实装,本步验收)
+- [x] WS4.3 三断点+旋转/缩放 E2E → CW11(三断点以几何断言锁定,golden 由单测层承担以降 E2E 脆性;宽度封顶 §8.1 一并实装)
+- 完成记录:**2026-07-23,提交 `ba1d08b4`,E2E 12 项+单测 44 项全绿**
 ### WS5 设置/进度/入口
 - [ ] WS5.1 `verticalSettings.ts`(schema §9)
 - [ ] WS5.2 书页悬浮入口按钮+chrome 设置弹层(W12)

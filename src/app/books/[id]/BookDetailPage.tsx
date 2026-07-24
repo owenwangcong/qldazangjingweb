@@ -1,6 +1,9 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useContext } from 'react';
+import React, { useState, useEffect, useRef, useContext, useMemo, useCallback } from 'react';
+import VerticalReaderOverlay, { type ReadingMode } from '@/app/components/vertical/VerticalReaderOverlay';
+import { readProgress, readStoredMode, writeStoredMode } from '@/app/components/vertical/verticalSettings';
+import { parseBookData } from '@/lib/vertical/models';
 import { useParams, useSearchParams } from 'next/navigation';
 import Header from '@/app/components/Header';
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
@@ -76,6 +79,46 @@ const BookDetailPage: React.FC = () => {
 
   const recogitoContainerRef = useRef<HTMLDivElement>(null); // Existing ref
   const { annotations, addAnnotation, removeAnnotation } = useAnnotations();
+
+  // ---- 竖排入口(web-vertical-reader-plan W12/§5.2) -------------------------
+  const [verticalMode, setVerticalMode] = useState<ReadingMode | null>(null);
+  const verticalBook = useMemo(() => (book ? parseBookData(book) : null), [book]);
+
+  /** 横→竖锚点:视口内第一个可见 juan 元素的块索引(§5.2)。 */
+  const firstVisibleBlock = useCallback((): number => {
+    if (!book?.juans) return 0;
+    for (let b = 0; b < book.juans.length; b++) {
+      const el = document.getElementById(book.juans[b].id);
+      if (el && el.getBoundingClientRect().bottom > 90) return b;
+    }
+    return 0;
+  }, [book]);
+
+  const [verticalInitialBlock, setVerticalInitialBlock] = useState(0);
+  const openVertical = useCallback(() => {
+    const visible = firstVisibleBlock();
+    const saved = readProgress(String(id));
+    // 横排已翻读 → 以可见位置为准;停在卷首 → 还原上次竖排进度(§9)。
+    setVerticalInitialBlock(visible > 0 ? visible : saved ?? 0);
+    const stored = readStoredMode();
+    const mode = stored === 'horizontal' ? 'verticalPaged' : stored;
+    writeStoredMode(mode);
+    setVerticalMode(mode);
+  }, [firstVisibleBlock, id]);
+
+  const closeVertical = useCallback(
+    (blockIndex: number) => {
+      setVerticalMode(null);
+      // 竖→横交接:body 解锁后按块锚滚到原位。
+      const anchorId = book?.juans?.[blockIndex]?.id;
+      if (anchorId) {
+        setTimeout(() => {
+          document.getElementById(anchorId)?.scrollIntoView({ block: 'start' });
+        }, 0);
+      }
+    },
+    [book],
+  );
 
   const { addToBrowserHistory, currentPartId, setCurrentPartId } = useMyStudy();
   
@@ -1101,6 +1144,25 @@ const BookDetailPage: React.FC = () => {
       {/* Intro Tour */}
       <IntroTour enabled={showTour} onExit={handleTourExit} />
 
+      {/* 竖排入口(W12):悬浮按钮,进入沉浸竖排 */}
+      {verticalBook && verticalMode === null && (
+        <button
+          data-ventry
+          onClick={openVertical}
+          aria-label="古籍竖排阅读"
+          className="fixed bottom-6 right-6 z-40 rounded-full border border-border bg-background/90 px-4 py-3 text-sm shadow-lg backdrop-blur hover:bg-primary-hover transition"
+        >
+          竖排
+        </button>
+      )}
+      {verticalBook && verticalMode !== null && (
+        <VerticalReaderOverlay
+          book={verticalBook}
+          initialMode={verticalMode}
+          initialBlockIndex={verticalInitialBlock}
+          onExit={closeVertical}
+        />
+      )}
     </main>
   );
 };

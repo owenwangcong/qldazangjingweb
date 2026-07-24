@@ -24,7 +24,9 @@ import { paginateVertical, type VerticalPaginationResult } from '@/lib/vertical/
 import type { BookData } from '@/lib/vertical/models';
 import VerticalChrome from './VerticalChrome';
 import VerticalColumn from './VerticalColumn';
+import VerticalSettingsPanel from './VerticalSettingsPanel';
 import { maxOffset, readOffset, setOffset } from './scrollOffset';
+import { useVerticalSettings, writeProgress, writeStoredMode } from './verticalSettings';
 
 export type ReadingMode = 'verticalPaged' | 'verticalScroll';
 
@@ -34,14 +36,6 @@ export interface VerticalReaderOverlayProps {
   initialBlockIndex?: number;
   onExit: (blockIndex: number) => void;
   onModeChange?: (mode: ReadingMode) => void;
-  /** WS5 接入 verticalSettings;当前为默认值占位(W7:竖排独立字号 26)。 */
-  settings?: {
-    fontSize?: number;
-    linePitch?: number;
-    charGapEm?: number;
-    showRules?: boolean;
-    baiwen?: boolean;
-  };
 }
 
 const BASE_PAD = 16;
@@ -67,10 +61,10 @@ export default function VerticalReaderOverlay({
   initialBlockIndex = 0,
   onExit,
   onModeChange,
-  settings,
 }: VerticalReaderOverlayProps) {
   const { fontFamily, selectedWidth } = useContext(FontContext);
   const { convertText, isSimplified } = useLanguage();
+  const { settings, update: updateSettings } = useVerticalSettings();
 
   const rootRef = useRef<HTMLDivElement>(null);
   const scrollerRef = useRef<HTMLDivElement>(null);
@@ -78,13 +72,10 @@ export default function VerticalReaderOverlay({
   const [mode, setMode] = useState<ReadingMode>(initialMode);
   const [size, setSize] = useState<{ w: number; h: number } | null>(null);
   const [chromeVisible, setChromeVisible] = useState(true);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [scrollState, setScrollState] = useState({ offset: 0, max: 0 });
 
-  const fs = settings?.fontSize ?? 26;
-  const linePitch = settings?.linePitch ?? 1.75;
-  const charGapEm = settings?.charGapEm ?? 0;
-  const showRules = settings?.showRules ?? true;
-  const baiwen = settings?.baiwen ?? false;
+  const { fontSize: fs, linePitch, charGapEm, showRules, baiwen } = settings;
 
   // ---- 尺寸测量与重排管线(§8.1/A7):初测同步;变化→防抖 250ms→重排 --------
   useLayoutEffect(() => {
@@ -207,10 +198,18 @@ export default function VerticalReaderOverlay({
       const el = scrollerRef.current;
       if (el && metrics) anchorItemRef.current = metrics.itemAtOffset(readOffset(el) + 0.5);
       setMode(m);
+      writeStoredMode(m); // §9:记忆上次竖排模式
       onModeChange?.(m);
     },
     [mode, metrics, onModeChange],
   );
+
+  /** 统一退出:落进度 + 交回锚定块(§9 进度交接)。 */
+  const exit = useCallback(() => {
+    const b = currentBlock();
+    writeProgress(book.meta.id, b);
+    onExit(b);
+  }, [currentBlock, book.meta.id, onExit]);
 
   // ---- chrome 显隐(W13:自动隐去 + 点按切换) --------------------------------
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -254,8 +253,13 @@ export default function VerticalReaderOverlay({
       if (el && pending !== null && Math.abs(readOffset(el) - (pageOffsets[pending] ?? 0)) >= 2) {
         pendingPageRef.current = null;
       }
+      // 滚动停驻即落进度(§9,停驻粒度天然节流)。
+      writeProgress(bookIdRef.current, liveBlockRef.current);
     }, 250);
   }, [pageOffsets]);
+
+  const bookIdRef = useRef(book.meta.id);
+  bookIdRef.current = book.meta.id;
 
   const currentPage = useMemo(() => {
     if (pageOffsets.length === 0) return 0;
@@ -361,7 +365,7 @@ export default function VerticalReaderOverlay({
       if (!el) return;
       switch (e.key) {
         case 'Escape':
-          onExit(currentBlock());
+          exit();
           break;
         case 'ArrowLeft': // 视觉左 = 前进
           e.preventDefault();
@@ -393,7 +397,7 @@ export default function VerticalReaderOverlay({
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [mode, stepPage, stepColumn, currentBlock, onExit]);
+  }, [mode, stepPage, stepColumn, exit]);
 
   // ---- 沉浸态:锁 body 滚动(W13) -------------------------------------------
   useEffect(() => {
@@ -490,7 +494,7 @@ export default function VerticalReaderOverlay({
               </a>
             )}
             <button
-              onClick={() => onExit(currentBlock())}
+              onClick={exit}
               style={{
                 marginTop: 8,
                 padding: '6px 16px',
@@ -509,7 +513,7 @@ export default function VerticalReaderOverlay({
       }
     });
     return nodes;
-  }, [result, mode, showRules, book.meta, convertText, onExit, currentBlock]);
+  }, [result, mode, showRules, book.meta, convertText, exit]);
 
   const progress = scrollState.max > 0 ? Math.min(scrollState.offset / scrollState.max, 1) : 0;
 
@@ -570,15 +574,38 @@ export default function VerticalReaderOverlay({
         )}
       </div>
       <VerticalChrome
-        visible={chromeVisible}
+        visible={chromeVisible || settingsOpen}
         title={convertText(book.meta.title)}
         mode={mode}
         page={currentPage}
         pageCount={result ? result.pages.length : 0}
         progress={progress}
-        onExit={() => onExit(currentBlock())}
+        onExit={exit}
         onModeChange={switchMode}
+        onToggleSettings={() => {
+          setSettingsOpen((open) => {
+            if (!open) {
+              // 弹层期间挂起自动隐藏,关闭后恢复。
+              if (hideTimer.current) clearTimeout(hideTimer.current);
+              setChromeVisible(true);
+            } else {
+              showChrome(true);
+            }
+            return !open;
+          });
+        }}
       />
+      {settingsOpen && (
+        <VerticalSettingsPanel
+          settings={settings}
+          update={updateSettings}
+          showFeedbackRow={mode === 'verticalScroll'}
+          onClose={() => {
+            setSettingsOpen(false);
+            showChrome(true);
+          }}
+        />
+      )}
     </div>
   );
 }
