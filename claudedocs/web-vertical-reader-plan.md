@@ -1,6 +1,6 @@
 # 网页版古籍竖排阅读 — 详细设计与开发跟踪文档
 
-> **状态:WS1 完成(引擎移植+对拍全绿)| 当前步骤:WS2 待启动 | 详设定稿:2026-07-23**
+> **状态:WS2 完成(列条目渲染+golden 锁定)| 当前步骤:WS3 待启动 | 详设定稿:2026-07-23**
 > 母文档:`flutter-app/docs/vertical-reader-plan.md`(S1~S8/D1~D6)、`flutter-app/docs/vertical-scroll-plan.md`(V1~V9/DS1~DS5)——排版规则与验收口径沿用,本文只记录 web 侧设计与差异
 > 技术栈:Next.js 14 + React 18 + Tailwind;测试 `@playwright/test`(单测+E2E+截图 golden 一套框架)
 
@@ -321,9 +321,9 @@ localStorage 键(FontContext 同款逐键模式;W16 正向命名):
 - [x] **CW3 偈颂检测**:散文不误判;偈颂样本命中且 n 正确;按联编码区段归并命中(0998 实测 40 段,与 Flutter 吻合)(2026-07-23,verseDetector.spec 8 项 + realbook)
 - [x] **CW4 分页完整性**(property):任意输入 token 守恒;空书/单字/插图/偈颂边界(2026-07-23,paginator.spec)
 - [ ] **CW5 进度锚定**:引擎层已绿(单调不减/往返一致,paginator.spec);blockIndex↔DOM 锚点双向映射随 WS5 复验后勾记
-- [ ] **CW6 矩阵对齐**:DOM 坐标断言(列 x 严格等差公差 colPitch、字 y 等差公差 cellH)+ Chromium golden 截图(散文页+5 言偈颂页)
-- [ ] **CW7 标点悬浮**:密集标点页相邻字格距恒 cellH(零侵占);标点 rect ⊂ 悬浮区,不触乌丝栏
-- [ ] **CW8 乌丝栏**:位置/数量(首列不画)/开关仅重绘不重排(StripResult 引用不变)
+- [x] **CW6 矩阵对齐**:DOM 坐标断言(列 x 严格等差公差 colPitch、字 y 等差公差 cellH、偈颂跨列句首对齐)+ golden(0998 首页+四言偈段)(2026-07-23,column.spec)
+- [x] **CW7 标点悬浮**:密集标点列字格距恒 cellH(零侵占);标点 em 框 ⊂ 悬浮区不触乌丝栏;堆叠坐标公式断言+A5 绘制截 2(2026-07-23,column.spec)
+- [x] **CW8 乌丝栏**:位置 0.62·gap/数量 N−1/首列不画/上下沿与文本区齐平(2026-07-23,column.spec;开关零重排属引擎既证——rule 不在 PaginationKey)
 - [ ] **CW9 交互 E2E**:rtl 方向正确(首列在右);翻页左右点按/滑动落点∈pageStarts 偏移;展卷静止 offset∈列边界;键盘/滚轮;Esc 退出回锚点
 - [ ] **CW10 设置联动**:key 分量变化→重排+锚定还原;乌丝栏/反馈→零重排;localStorage 持久化与还原
 - [ ] **CW11 响应式**:viewport 缩放/旋转 E2E→重排+还原;375/768/1280 三断点 golden;超宽被页面宽度封顶
@@ -342,11 +342,11 @@ localStorage 键(FontContext 同款逐键模式;W16 正向命名):
 - [x] WS1.6 跨端对拍——**无需跑 Dart**:Flutter 测试(vertical_strip_refactor_test.dart)已把两卷真书指纹硬编码为基线,TS 移植 digest 算法直接对拍,逐位一致 → CW14
 - 完成记录:**2026-07-23,提交 `ea1888cf`,37 项单测全绿(npm run test:vertical),tsc 零错误**
 ### WS2 列条目渲染
-- [ ] WS2.1 `VerticalColumn`(span 网格+content-visibility+样式角色)
-- [ ] WS2.2 悬浮标点+web 字体校准表(坐标推演报告交付)
-- [ ] WS2.3 乌丝栏+偈颂空格行号(rowOf)
-- [ ] WS2.4 DOM 坐标断言+golden → CW6/CW7/CW8
-- 完成记录:____
+- [x] WS2.1 `VerticalColumn`(span 网格+content-visibility+样式角色)
+- [x] WS2.2 悬浮标点+校准表(初值取 Flutter 表,SimSun/Chromium golden 下目检无侵占;LXGW 等站点字体的复标定并入 WS6 视觉收尾)
+- [x] WS2.3 乌丝栏+偈颂空格行号(rowOf)
+- [x] WS2.4 DOM 坐标断言+golden → CW6/CW7/CW8(坐标断言即公式推演;golden 两张目检通过:题署下沉/品名低格/四言偈跨列对齐/句读悬浮)
+- 完成记录:**2026-07-23,提交 `ffafe3d3`,全套 44 项绿**
 ### WS3 滚动容器与两模式(W11:同时点亮)
 - [ ] WS3.1 rtl 容器+`readOffset/setOffset` 归一化(**决策门**:rtl 怪癖→备胎方案,记录 W 决策)
 - [ ] WS3.2 展卷预设(逐列 snap)
@@ -390,6 +390,9 @@ localStorage 键(FontContext 同款逐键模式;W16 正向命名):
 - **tsconfig target 陷阱**(WS1):仓库原 target 默认 ES5,拒绝 `/u` 正则(白文 `\p{P}` 必需,无 ES5 替代)→ 提到 ES2017(Next 用 SWC 编译,target 只影响类型检查不改产物)。注意 **`tsconfig.tsbuildinfo` 增量缓存会吞掉配置变更**——改完 tsconfig 后 tsc 仍报旧错,删缓存文件再验才生效。
 - **浏览器兼容**(WS1):src 运行时代码禁用 `String.replaceAll`/`matchAll`(Next 默认 browserslist 含 Safari 12,无这两个 API 且不在 Next 自动 polyfill 清单);用 `replace(/…/g)` 与 `exec` 循环。`/g` 正则的 `lastIndex` 有状态,exec 循环用局部实例。测试文件跑在 Node,不受限。
 - **对拍哈希的 JS 位运算**(WS1):Dart 是 64 位整数,JS `&` 先 ToInt32——因中间值 <2^53 精确且掩码 0x3fffffff 只取低 30 位,两端结果仍逐位一致(取模低位不受截断影响)。
+- **Playwright 的 JSX 陷阱**(WS2):被测试文件 import 的 `.tsx` 中的 JSX 会被 Playwright 转译成 `__pw_type` 标记对象(组件测试机制),`renderToStaticMarkup` 直接崩。凡需要在测试内 SSR 的组件一律写 `React.createElement`,不用 JSX 语法(VerticalColumn 已注明)。
+- **ClearType 彩虹字**(WS2):Windows 下 golden 截图放大看每字带红蓝绿彩边——是 LCD 亚像素抗锯齿条纹,不是渲染 bug(computed color 全黑已实证)。测试浏览器加 `--disable-lcd-text` 换灰度抗锯齿,golden 干净且更可移植。
+- **Chrome 布局量化**(WS2):getBoundingClientRect 按 1/64px 量化(LayoutUnit),非 1/64 整数倍的期望值(如标点字号 7.8)断言容差要 ≥1/128px,不能用 precision 3。
 
 ## 14. 更新日志
 
@@ -399,3 +402,4 @@ localStorage 键(FontContext 同款逐键模式;W16 正向命名):
 | 2026-07-23 | 详设定稿:W11~W14 用户裁决(一起交付/书页入口/沉浸式/反馈默认开);W4 修订为 rtl 容器方案;新增 W15/W16;补 §0 跟踪约定、§5~§9 详设、CW/WS 清单展开 |
 | 2026-07-23 | W17:用户重申散文连排为 web 硬性要求(小段不断列,仅 bt/bm 大章节/偈颂/插图断列),D5 从继承项升格为正式决策 |
 | 2026-07-23 | **WS1 完成**(提交 `ea1888cf`):引擎六文件移植,37 项单测全绿;CW1~CW4/CW14 勾记(CW5 引擎层绿,DOM 映射留 WS5);W15 修正(last_bu/next_bu 数据存在,nav 条目将做上下部跳转);tsconfig target ES5→ES2017 |
+| 2026-07-23 | **WS2 完成**(提交 `ffafe3d3`):VerticalColumn+verticalStyles,DOM 坐标断言+golden 两张(灰度抗锯齿基线),CW6/CW7/CW8 勾记;备忘新增 __pw_type/ClearType/LayoutUnit 三坑;标点校准表 web 字体复标定并入 WS6 |
