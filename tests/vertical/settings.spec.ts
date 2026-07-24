@@ -112,11 +112,33 @@ test('持久化:字号跨加载保留;竖排模式记忆(§9)', async ({ page })
   await expect(page.locator('[data-vreader]')).toHaveAttribute('data-mode', 'verticalScroll');
 });
 
+test('W19 刷新保持竖排:reload 后自动恢复模式与进度;退出后刷新回横排', async ({ page }) => {
+  await page.goto('/books/0998');
+  await page.waitForSelector('[data-ventry]');
+  await page.locator('[data-ventry]').click();
+  await page.waitForSelector('[data-vstrip]');
+  await page.keyboard.press('PageDown');
+  await page.keyboard.press('PageDown');
+  await page.waitForTimeout(500); // 停驻落进度
+
+  await page.reload();
+  await page.waitForSelector('[data-vstrip]'); // 刷新自动恢复竖排
+  await expect(page.locator('[data-vreader]')).toHaveAttribute('data-mode', 'verticalPaged');
+  expect(await attr(page, 'data-block')).toBeGreaterThan(0); // 进度还原
+
+  await page.keyboard.press('Escape'); // 退出 → 写回横排
+  await page.waitForSelector('[data-ventry]');
+  await page.reload();
+  await page.waitForSelector('[data-ventry]');
+  await expect(page.locator('[data-vreader]')).toHaveCount(0); // 不再自动进竖排
+});
+
 test('CW13 SSR 不回归:书页服务端输出不含竖排 overlay/入口,元数据完整(W9)', async ({ page }) => {
   const res = await page.request.get('/books/0998');
   expect(res.status()).toBe(200);
   const html = await res.text();
   expect(html).toContain('地藏菩萨本愿经');
+  // overlay 零痕迹;入口「竖」按钮已并入 Header 栈(W12 修订),
+  // 与藏/签/存一样随栈 SSR,属预期。
   expect(html).not.toContain('data-vreader');
-  expect(html).not.toContain('data-ventry');
 });

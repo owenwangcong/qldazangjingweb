@@ -611,6 +611,24 @@ const Header: React.FC = () => {
                 </Tooltip>
               )}
 
+              {isBookPage && book && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      data-ventry
+                      onClick={() => window.dispatchEvent(new CustomEvent('qldzj:open-vertical'))}
+                      className="w-10 h-10 bg-card rounded-full shadow-md hover:shadow-lg focus:outline-none hover:bg-primary-hover hover:text-primary-foreground-hover transition-all duration-200"
+                      aria-label="古籍竖排阅读"
+                    >
+                      <div data-nosnippet="true" className="w-full h-full flex items-center justify-center text-base">竖</div>
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <Text>古籍竖排沉浸阅读</Text>
+                  </TooltipContent>
+                </Tooltip>
+              )}
+
           </>
         )}
         </TooltipProvider>

@@ -59,8 +59,12 @@ test('WB1 rtl 初始:offset=0,卷首(书名列)贴右缘于 padTotal 内缩处',
 
   const firstCol = page.locator('[data-vcol]').first();
   const box = (await firstCol.boundingBox())!;
+  // 页窗收窄(07-24):卷首列贴的是滚动容器(封顶居中)右缘,非视口右缘。
+  const scrollerRight = await page.evaluate(
+    () => document.querySelector('[data-vscroller]')!.getBoundingClientRect().right,
+  );
   // 滚动位置/盒尺寸按整数像素量化,容差 1.5px。
-  expect(Math.abs(box.x + box.width - (1280 - info.padTotal))).toBeLessThanOrEqual(1.5);
+  expect(Math.abs(box.x + box.width - (scrollerRight - info.padTotal))).toBeLessThanOrEqual(1.5);
   // 首列是书名列。
   await expect(firstCol).toHaveAttribute('data-vcol', 'title');
 });

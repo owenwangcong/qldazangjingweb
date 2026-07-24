@@ -97,6 +97,7 @@ export function useVerticalSettings(): {
 // ---- 阅读模式与进度(imperative 读写:入口在横排页,避免双 hook 状态漂移) ----
 
 const MODE_KEY = 'readingMode';
+const LAST_VERTICAL_KEY = 'verticalLastMode';
 
 export function readStoredMode(): StoredReadingMode {
   if (typeof window === 'undefined') return 'horizontal';
@@ -104,8 +105,21 @@ export function readStoredMode(): StoredReadingMode {
   return raw === 'verticalPaged' || raw === 'verticalScroll' ? raw : 'horizontal';
 }
 
+/**
+ * W19:readingMode 是**当前状态**(刷新书页按它自动恢复竖排);
+ * verticalLastMode 记住最后用过的竖排预设(退出写回 horizontal 后,
+ * 再进竖排仍还原上次偏好)。
+ */
 export function writeStoredMode(mode: StoredReadingMode): void {
-  if (typeof window !== 'undefined') localStorage.setItem(MODE_KEY, mode);
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(MODE_KEY, mode);
+  if (mode !== 'horizontal') localStorage.setItem(LAST_VERTICAL_KEY, mode);
+}
+
+export function readLastVerticalMode(): 'verticalPaged' | 'verticalScroll' {
+  if (typeof window === 'undefined') return 'verticalPaged';
+  const raw = localStorage.getItem(LAST_VERTICAL_KEY);
+  return raw === 'verticalScroll' ? raw : 'verticalPaged';
 }
 
 export function readProgress(bookId: string): number | null {

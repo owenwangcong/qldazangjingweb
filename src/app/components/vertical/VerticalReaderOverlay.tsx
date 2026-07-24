@@ -130,7 +130,12 @@ export default function VerticalReaderOverlay({
     [result],
   );
 
-  const padTotal = result && size ? (size.w - result.grid.gridW) / 2 : BASE_PAD;
+  // 页窗收窄(用户 07-24 反馈"翻半页"修复):滚动容器 = 封顶宽居中,
+  // 列带在容器外被裁剪——翻页推进的一页与肉眼所见的一页严格相等,
+  // 相邻页的列不再从两侧留白外溢。
+  const scrollerW = size ? Math.min(size.w, WIDTH_CAP[selectedWidth] ?? Number.POSITIVE_INFINITY) : 0;
+  const sideVoid = size ? (size.w - scrollerW) / 2 : 0;
+  const padTotal = result && scrollerW > 0 ? (scrollerW - result.grid.gridW) / 2 : BASE_PAD;
 
   // ---- 锚定与跳转(CW5:blockIndex 是唯一进度锚) ----------------------------
   // 实时进度锚:随滚动更新;result 变化(尺寸/设置重排)后据此还原(A7/W3)。
@@ -346,15 +351,17 @@ export default function VerticalReaderOverlay({
     [result],
   );
 
-  // ---- 点按分区(§7.3) -------------------------------------------------------
+  // ---- 点按分区(§7.3;挂根元素,页窗收窄后两侧留白仍可点按) ----------------
   const onTap = useCallback(
     (e: React.MouseEvent) => {
-      if ((e.target as HTMLElement).closest('a, button, [data-vnav]')) return;
+      if ((e.target as HTMLElement).closest('a, button, [data-vnav], [data-vchrome], [data-vsettings]')) {
+        return;
+      }
       if (mode === 'verticalScroll') {
         toggleChrome();
         return;
       }
-      const el = scrollerRef.current;
+      const el = rootRef.current;
       if (!el) return;
       const rect = el.getBoundingClientRect();
       const ratio = (e.clientX - rect.left) / rect.width;
@@ -367,8 +374,9 @@ export default function VerticalReaderOverlay({
 
   // ---- 滚轮(§8.2:deltaY→水平前进;翻页整页步进,展卷跟手+落列) -------------
   useEffect(() => {
+    const root = rootRef.current; // 挂根元素:页窗收窄后两侧留白也响应滚轮
     const el = scrollerRef.current;
-    if (!el || !result) return;
+    if (!root || !el || !result) return;
     let cooldownUntil = 0;
     const onWheel = (e: WheelEvent) => {
       if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return; // 横向交给原生(rtl 方向天然正确)
@@ -382,8 +390,8 @@ export default function VerticalReaderOverlay({
       }
       el.scrollLeft -= e.deltaY; // 向下滚 = 前进;停驻吸附由 settle 定时器统一处理(W18)
     };
-    el.addEventListener('wheel', onWheel, { passive: false });
-    return () => el.removeEventListener('wheel', onWheel);
+    root.addEventListener('wheel', onWheel, { passive: false });
+    return () => root.removeEventListener('wheel', onWheel);
   }, [result, mode, stepPage]);
 
   // ---- 键盘(§8.2) -----------------------------------------------------------
@@ -569,15 +577,17 @@ export default function VerticalReaderOverlay({
         fontFamily,
         overflow: 'hidden',
       }}
+      onClick={onTap}
     >
       <div
         ref={scrollerRef}
         data-vscroller
-        onClick={onTap}
         onScroll={onScroll}
         onPointerDown={() => feedbackRef.current.unlock()}
         style={{
           direction: 'rtl',
+          width: scrollerW > 0 ? scrollerW : '100%',
+          marginInline: 'auto',
           height: '100%',
           overflowX: 'auto',
           overflowY: 'hidden',
@@ -614,7 +624,7 @@ export default function VerticalReaderOverlay({
             position: 'absolute',
             top: 0,
             bottom: 0,
-            left: 0,
+            left: sideVoid, // 页窗左缘(容器居中收窄后)
             width: 44,
             zIndex: 1,
             pointerEvents: 'none',

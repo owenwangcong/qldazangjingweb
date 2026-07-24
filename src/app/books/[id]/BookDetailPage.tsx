@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, useContext, useMemo, useCallback } from 'react';
 import type { ReadingMode } from '@/app/components/vertical/VerticalReaderOverlay';
-import { readProgress, readStoredMode, writeStoredMode } from '@/app/components/vertical/verticalSettings';
+import { readLastVerticalMode, readProgress, readStoredMode, writeStoredMode } from '@/app/components/vertical/verticalSettings';
 import { parseBookData } from '@/lib/vertical/models';
 import dynamicImport from 'next/dynamic';
 
@@ -108,7 +108,8 @@ const BookDetailPage: React.FC = () => {
     // 横排已翻读 → 以可见位置为准;停在卷首 → 还原上次竖排进度(§9)。
     setVerticalInitialBlock(visible > 0 ? visible : saved ?? 0);
     const stored = readStoredMode();
-    const mode = stored === 'horizontal' ? 'verticalPaged' : stored;
+    // W19:优先当前状态,否则还原上次竖排偏好。
+    const mode = stored === 'horizontal' ? readLastVerticalMode() : stored;
     writeStoredMode(mode);
     setVerticalMode(mode);
   }, [firstVisibleBlock, id]);
@@ -116,6 +117,7 @@ const BookDetailPage: React.FC = () => {
   const closeVertical = useCallback(
     (blockIndex: number) => {
       setVerticalMode(null);
+      writeStoredMode('horizontal'); // W19:退出即回横排状态,刷新不再自动进竖排
       // 竖→横交接:body 解锁后按块锚滚到原位。
       const anchorId = book?.juans?.[blockIndex]?.id;
       if (anchorId) {
@@ -126,6 +128,24 @@ const BookDetailPage: React.FC = () => {
     },
     [book],
   );
+
+  // W19:刷新/直链进入书页时,readingMode 为竖排 → 自动恢复(含进度)。
+  useEffect(() => {
+    if (!book || verticalMode !== null) return;
+    const stored = readStoredMode();
+    if (stored !== 'horizontal') {
+      setVerticalInitialBlock(readProgress(String(id)) ?? 0);
+      setVerticalMode(stored);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [book, id]);
+
+  // W12 修订:入口并入 Header 右侧按钮栈(「竖」),经自定义事件触发。
+  useEffect(() => {
+    const onOpen = () => openVertical();
+    window.addEventListener('qldzj:open-vertical', onOpen);
+    return () => window.removeEventListener('qldzj:open-vertical', onOpen);
+  }, [openVertical]);
 
   const { addToBrowserHistory, currentPartId, setCurrentPartId } = useMyStudy();
   
@@ -1151,17 +1171,7 @@ const BookDetailPage: React.FC = () => {
       {/* Intro Tour */}
       <IntroTour enabled={showTour} onExit={handleTourExit} />
 
-      {/* 竖排入口(W12):悬浮按钮,进入沉浸竖排 */}
-      {verticalBook && verticalMode === null && (
-        <button
-          data-ventry
-          onClick={openVertical}
-          aria-label="古籍竖排阅读"
-          className="fixed bottom-6 right-6 z-40 rounded-full border border-border bg-background/90 px-4 py-3 text-sm shadow-lg backdrop-blur hover:bg-primary-hover transition"
-        >
-          竖排
-        </button>
-      )}
+      {/* 竖排 overlay(入口按钮在 Header 按钮栈,W12 修订) */}
       {verticalBook && verticalMode !== null && (
         <VerticalReaderOverlay
           book={verticalBook}
