@@ -1,6 +1,6 @@
 # 网页版古籍竖排阅读 — 详细设计与开发跟踪文档
 
-> **状态:WS4 完成(响应式管线全绿)| 当前步骤:WS5 进行中 | 详设定稿:2026-07-23**
+> **状态:WS5 完成(设置/进度/入口全绿)| 当前步骤:WS6 进行中 | 详设定稿:2026-07-23**
 > 母文档:`flutter-app/docs/vertical-reader-plan.md`(S1~S8/D1~D6)、`flutter-app/docs/vertical-scroll-plan.md`(V1~V9/DS1~DS5)——排版规则与验收口径沿用,本文只记录 web 侧设计与差异
 > 技术栈:Next.js 14 + React 18 + Tailwind;测试 `@playwright/test`(单测+E2E+截图 golden 一套框架)
 
@@ -319,15 +319,15 @@ localStorage 键(FontContext 同款逐键模式;W16 正向命名):
 - [x] **CW2 字符流**:码点切分;标点归属;白文 `\p{P}` 零残留;`<img>` 切分;弯引号剥除;简繁在归属之前(2026-07-23,tokenStream.spec 9 项)
 - [x] **CW3 偈颂检测**:散文不误判;偈颂样本命中且 n 正确;按联编码区段归并命中(0998 实测 40 段,与 Flutter 吻合)(2026-07-23,verseDetector.spec 8 项 + realbook)
 - [x] **CW4 分页完整性**(property):任意输入 token 守恒;空书/单字/插图/偈颂边界(2026-07-23,paginator.spec)
-- [ ] **CW5 进度锚定**:引擎层已绿(单调不减/往返一致,paginator.spec);blockIndex↔DOM 锚点双向映射随 WS5 复验后勾记
+- [x] **CW5 进度锚定**:引擎层(单调不减/往返一致,paginator.spec)+ blockIndex↔DOM 锚点双向映射(横→竖可见锚定/竖→横滚回块锚,settings.spec 入口交接)(2026-07-23)
 - [x] **CW6 矩阵对齐**:DOM 坐标断言(列 x 严格等差公差 colPitch、字 y 等差公差 cellH、偈颂跨列句首对齐)+ golden(0998 首页+四言偈段)(2026-07-23,column.spec)
 - [x] **CW7 标点悬浮**:密集标点列字格距恒 cellH(零侵占);标点 em 框 ⊂ 悬浮区不触乌丝栏;堆叠坐标公式断言+A5 绘制截 2(2026-07-23,column.spec)
 - [x] **CW8 乌丝栏**:位置 0.62·gap/数量 N−1/首列不画/上下沿与文本区齐平(2026-07-23,column.spec;开关零重排属引擎既证——rule 不在 PaginationKey)
 - [x] **CW9 交互 E2E**:rtl 方向(首列贴右缘);翻页点按落点=整页跨度且页码联动;展卷静止 offset∈列边界;键盘/滚轮;模式互切往返零漂移;Esc 退出回锚点;卷尾 nav(2026-07-23,tests/vertical/reader.spec 8 项)
-- [ ] **CW10 设置联动**:key 分量变化→重排+锚定还原;乌丝栏/反馈→零重排;localStorage 持久化与还原
+- [x] **CW10 设置联动**:字号/白文→进键重排+锚还原;乌丝栏→零重排(页数/列数不变,rule 消失);字号跨加载持久化;竖排模式记忆(2026-07-23,settings.spec)
 - [x] **CW11 响应式**:viewport 缩放/旋转 E2E→防抖重排+块锚还原;375/768/1280 三断点几何自适应;超宽被页面宽度封顶(2026-07-23,responsive.spec 4 项;golden 由单测层承担)
 - [ ] **CW12 性能**:3 万字卷 fling 连滚采样(CPU 4× throttle)无长帧;分页 <10ms;Lighthouse 书页分数不回归
-- [ ] **CW13 SSR/SEO**:禁 JS 加载书页输出与现状一致;overlay 不进 SSR 树
+- [x] **CW13 SSR/SEO**:书页服务端输出零竖排痕迹(无 data-vreader/data-ventry),标题元数据完整(2026-07-23,settings.spec)
 - [x] **CW14 跨端对拍**:0085-01 与 0998 翻页产物指纹(页数/总列数/colHash/anchorHash/pageForBlock 采样)与 Flutter 端硬编码基线**逐位一致**;两端输入 JSON 验证逐字节相同(2026-07-23,realbook.spec)
 
 ## 12. 实施步骤(增量交付;完成即勾记并填「完成记录」)
@@ -359,11 +359,11 @@ localStorage 键(FontContext 同款逐键模式;W16 正向命名):
 - [x] WS4.3 三断点+旋转/缩放 E2E → CW11(三断点以几何断言锁定,golden 由单测层承担以降 E2E 脆性;宽度封顶 §8.1 一并实装)
 - 完成记录:**2026-07-23,提交 `ba1d08b4`,E2E 12 项+单测 44 项全绿**
 ### WS5 设置/进度/入口
-- [ ] WS5.1 `verticalSettings.ts`(schema §9)
-- [ ] WS5.2 书页悬浮入口按钮+chrome 设置弹层(W12)
-- [ ] WS5.3 进度记忆+横竖互切锚点交接
-- [ ] WS5.4 SSR 不回归验证 → CW10/CW13
-- 完成记录:____
+- [x] WS5.1 `verticalSettings.ts`(schema §9)
+- [x] WS5.2 书页悬浮入口按钮+chrome 设置弹层(W12)
+- [x] WS5.3 进度记忆+横竖互切锚点交接(块=juan 条目,§5.2 已修正)
+- [x] WS5.4 SSR 不回归验证 → CW10/CW13
+- 完成记录:**2026-07-23,提交 `d0fcd357`,E2E 16 项+单测 44 项全绿**
 ### WS6 反馈与收尾
 - [ ] WS6.1 跨列反馈(vibrate+Web Audio 短嗒+40ms 节流+AudioContext 解锁)
 - [ ] WS6.2 左缘渐隐 mask(展卷)

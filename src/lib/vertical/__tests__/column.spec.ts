@@ -42,7 +42,11 @@ function result0998() {
 }
 
 /** 列带切片 → 静态页(flex row-reverse:DOM 序 = 阅读序,视觉右→左)。 */
-function stripHtml(columns: VColumn[], grid: VerticalGridSpec): string {
+function stripHtml(
+  columns: VColumn[],
+  grid: VerticalGridSpec,
+  opts: { fontCss?: string; fontFamily?: string } = {},
+): string {
   const inner = renderToStaticMarkup(
     React.createElement(
       'div',
@@ -67,9 +71,10 @@ function stripHtml(columns: VColumn[], grid: VerticalGridSpec): string {
     ),
   );
   return `<!doctype html><html><head><meta charset="utf-8"><style>
+    ${opts.fontCss ?? ''}
     :root { --foreground: 0 0% 3.9%; --muted-foreground: 0 0% 45.1%; }
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { background: #f7f3e9; font-family: SimSun, serif; padding: 24px; }
+    body { background: #f7f3e9; font-family: ${opts.fontFamily ?? 'SimSun, serif'}; padding: 24px; }
   </style></head><body>${inner}</body></html>`;
 }
 
@@ -259,4 +264,44 @@ test('golden:0998 偈颂段(按句折列+句间空格+乌丝栏)', async ({ page
   const cols = all.slice(Math.max(vi - 1, 0), vi + r.grid.colsPerPage - 1);
   await page.setContent(stripHtml(cols, r.grid));
   await expect(page.locator('#strip')).toHaveScreenshot('0998-verse.png');
+});
+
+test('CW7 站点字体复标定:LXGW 下标点仍居悬浮区不触乌丝栏 + golden(WS6)', async ({ page }) => {
+  const woff = readFileSync(
+    join(process.cwd(), 'public', 'website_fonts', 'lxgw_website_text.woff'),
+  ).toString('base64');
+  const fontCss = `@font-face { font-family: 'LXGWTest';
+    src: url(data:font/woff;base64,${woff}) format('woff'); }`;
+
+  const r = result0998();
+  const grid = r.grid;
+  const all = stripColumns(r);
+  const dense = [...all]
+    .filter((c) => c.role === 'body')
+    .sort(
+      (a, b) =>
+        b.tokens.filter((t) => t.trailingPunct !== '').length -
+        a.tokens.filter((t) => t.trailingPunct !== '').length,
+    )[0];
+  const vi = all.findIndex((c) => c.verseClauseLen !== undefined);
+  const cols = [dense, ...all.slice(vi, vi + 4)];
+  await page.setContent(
+    stripHtml(cols, grid, { fontCss, fontFamily: "'LXGWTest', serif" }),
+  );
+  await page.evaluate(() => document.fonts.ready);
+
+  const m = await measure(page);
+  for (const col of m) {
+    const ruleLeft = col.left + grid.cellW + grid.gap * RULE_GAP - RULE_W / 2;
+    for (const p of col.puncts) {
+      expect(p.x).toBeGreaterThanOrEqual(col.left + grid.cellW - 0.001);
+      expect(p.x + p.w).toBeLessThan(ruleLeft);
+    }
+    // 字面框矩阵不受字体度量影响(公式定位):字格恒 cellW×cellH。
+    for (const ch of col.chars) {
+      expect(ch.w).toBeCloseTo(grid.cellW, 3);
+      expect(ch.h).toBeCloseTo(grid.cellH, 3);
+    }
+  }
+  await expect(page.locator('#strip')).toHaveScreenshot('lxgw-verse.png');
 });

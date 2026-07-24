@@ -34,16 +34,19 @@ const offset = (page: Page) =>
 
 /** 等待平滑滚动停稳后返回稳定 offset。 */
 async function settledOffset(page: Page): Promise<number> {
+  // 连续两次稳定采样(跨度 >360ms):覆盖 W18 的 160ms 停驻吸附窗口,
+  // 避免在吸附动画启动前误判"已停稳"。
   let prev = await offset(page);
+  let stableCount = 0;
   await expect
     .poll(
       async () => {
         const cur = await offset(page);
-        const stable = Math.abs(cur - prev) < 0.5;
+        stableCount = Math.abs(cur - prev) < 0.5 ? stableCount + 1 : 0;
         prev = cur;
-        return stable;
+        return stableCount >= 2;
       },
-      { timeout: 8000, intervals: [120] },
+      { timeout: 8000, intervals: [180] },
     )
     .toBe(true);
   return prev;

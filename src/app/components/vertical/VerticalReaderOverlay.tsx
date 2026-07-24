@@ -25,6 +25,7 @@ import type { BookData } from '@/lib/vertical/models';
 import VerticalChrome from './VerticalChrome';
 import VerticalColumn from './VerticalColumn';
 import VerticalSettingsPanel from './VerticalSettingsPanel';
+import { ScrollFeedback } from './feedback';
 import { maxOffset, readOffset, setOffset } from './scrollOffset';
 import { useVerticalSettings, writeProgress, writeStoredMode } from './verticalSettings';
 
@@ -234,32 +235,72 @@ export default function VerticalReaderOverlay({
   // ---- 滚动状态(页码/进度) --------------------------------------------------
   const rafRef = useRef(0);
   const settleRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastStateAtRef = useRef(0);
   const onScroll = useCallback(() => {
     cancelAnimationFrame(rafRef.current);
     rafRef.current = requestAnimationFrame(() => {
       const el = scrollerRef.current;
       if (!el) return;
       const off = readOffset(el);
-      setScrollState({ offset: off, max: maxOffset(el) });
       const r = resultRef.current;
       const m = metricsRef.current;
-      if (r && m) liveBlockRef.current = r.blockForStripItem(m.itemAtOffset(off + 0.5));
+      if (r && m) {
+        liveBlockRef.current = r.blockForStripItem(m.itemAtOffset(off + 0.5));
+        // 跨列反馈(§7.5):仅展卷 + 开关开;其余场景 rebase 防重入连响。
+        const lead = m.columnsAdvanced(off);
+        if (modeRef.current === 'verticalScroll' && feedbackOnRef.current) {
+          feedbackRef.current.onLead(lead);
+        } else {
+          feedbackRef.current.rebase(lead);
+        }
+      }
+      // React 状态更新节流 120ms(页码/进度是低频 UI,逐帧 setState 是
+      // CW12 实测长帧来源之一);停驻时由 settle 定时器精确补一次。
+      const now = performance.now();
+      if (now - lastStateAtRef.current >= 120) {
+        lastStateAtRef.current = now;
+        setScrollState({ offset: off, max: maxOffset(el) });
+      }
     });
-    // 兜底:滚动停驻在非 pending 目标处(如手动拖走)→ 作废 pending 基准。
+    // 停驻定时器:pending 作废兜底 + 状态尾帧 + 落进度 + JS 吸附(W18)。
     if (settleRef.current) clearTimeout(settleRef.current);
     settleRef.current = setTimeout(() => {
       const el = scrollerRef.current;
+      if (!el) return;
       const pending = pendingPageRef.current;
-      if (el && pending !== null && Math.abs(readOffset(el) - (pageOffsets[pending] ?? 0)) >= 2) {
+      if (pending !== null && Math.abs(readOffset(el) - (pageOffsets[pending] ?? 0)) >= 2) {
         pendingPageRef.current = null;
       }
-      // 滚动停驻即落进度(§9,停驻粒度天然节流)。
+      // W18 展卷吸附:停驻后就近落列边缘(原生惯性不动,只管终点;
+      // 自身 smooth 动画结束时 nearest≈当前 → no-op,不成环)。
+      const m = metricsRef.current;
+      if (modeRef.current === 'verticalScroll' && m) {
+        const off = readOffset(el);
+        const i = m.itemAtOffset(off);
+        const a = m.offsetOfItem(i);
+        const b = m.offsetOfItem(i + 1);
+        const nearest = off - a <= b - off ? a : b;
+        if (Math.abs(nearest - off) > 1) setOffset(el, nearest, 'smooth');
+      }
+      // 停驻:精确补一次状态(节流跳过的尾帧)+ 落进度(§9)。
+      setScrollState({ offset: readOffset(el), max: maxOffset(el) });
       writeProgress(bookIdRef.current, liveBlockRef.current);
-    }, 250);
+    }, 160);
   }, [pageOffsets]);
 
   const bookIdRef = useRef(book.meta.id);
   bookIdRef.current = book.meta.id;
+
+  // ---- 跨列反馈(WS6.1) ------------------------------------------------------
+  const feedbackRef = useRef<ScrollFeedback>(new ScrollFeedback());
+  const modeRef = useRef(mode);
+  modeRef.current = mode;
+  const feedbackOnRef = useRef(settings.scrollFeedback);
+  feedbackOnRef.current = settings.scrollFeedback;
+  useEffect(() => {
+    const fb = feedbackRef.current;
+    return () => fb.dispose();
+  }, []);
 
   const currentPage = useMemo(() => {
     if (pageOffsets.length === 0) return 0;
@@ -328,7 +369,6 @@ export default function VerticalReaderOverlay({
   useEffect(() => {
     const el = scrollerRef.current;
     if (!el || !result) return;
-    let settle: ReturnType<typeof setTimeout> | null = null;
     let cooldownUntil = 0;
     const onWheel = (e: WheelEvent) => {
       if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return; // 横向交给原生(rtl 方向天然正确)
@@ -340,22 +380,10 @@ export default function VerticalReaderOverlay({
         stepPage(e.deltaY > 0 ? 1 : -1);
         return;
       }
-      el.scrollLeft -= e.deltaY; // 向下滚 = 前进 = offset 增大
-      if (settle) clearTimeout(settle);
-      settle = setTimeout(() => {
-        const m = result.metricsScroll;
-        const off = readOffset(el);
-        const i = m.itemAtOffset(off);
-        const a = m.offsetOfItem(i);
-        const b = m.offsetOfItem(i + 1);
-        setOffset(el, off - a <= b - off ? a : b, 'smooth'); // 就近落列边缘
-      }, 140);
+      el.scrollLeft -= e.deltaY; // 向下滚 = 前进;停驻吸附由 settle 定时器统一处理(W18)
     };
     el.addEventListener('wheel', onWheel, { passive: false });
-    return () => {
-      el.removeEventListener('wheel', onWheel);
-      if (settle) clearTimeout(settle);
-    };
+    return () => el.removeEventListener('wheel', onWheel);
   }, [result, mode, stepPage]);
 
   // ---- 键盘(§8.2) -----------------------------------------------------------
@@ -424,7 +452,7 @@ export default function VerticalReaderOverlay({
         }
       }
       if (item.kind === 'column') {
-        const snap = paged ? pageStartSet!.has(idx) : true;
+        const snap = paged ? pageStartSet!.has(idx) : false; // W18:展卷走 JS 吸附
         nodes.push(
           <VerticalColumn
             key={idx}
@@ -547,12 +575,16 @@ export default function VerticalReaderOverlay({
         data-vscroller
         onClick={onTap}
         onScroll={onScroll}
+        onPointerDown={() => feedbackRef.current.unlock()}
         style={{
           direction: 'rtl',
           height: '100%',
           overflowX: 'auto',
           overflowY: 'hidden',
-          scrollSnapType: 'x mandatory',
+          // W18:CSS snap 仅翻页(页首 snap 点少)。展卷的列级 mandatory
+          // 是 O(n) 逐帧热点(800 列实测 p50 70ms→19ms @CPU4×),改为
+          // JS 停驻吸附(settle 160ms 就近落列,SnapMetrics 同表驱动)。
+          scrollSnapType: mode === 'verticalPaged' ? 'x mandatory' : undefined,
           scrollPaddingInline: padTotal,
           scrollbarWidth: 'none',
         }}
@@ -573,6 +605,24 @@ export default function VerticalReaderOverlay({
           </div>
         )}
       </div>
+      {mode === 'verticalScroll' && (
+        // 左缘渐隐(W5):叠加渐变层而非 mask——mask 会让滚动容器逐帧
+        // 重光栅化(CW12 实测长帧来源之一),叠加层纯合成零重绘。
+        <div
+          aria-hidden="true"
+          style={{
+            position: 'absolute',
+            top: 0,
+            bottom: 0,
+            left: 0,
+            width: 44,
+            zIndex: 1,
+            pointerEvents: 'none',
+            background:
+              'linear-gradient(to right, hsl(var(--background)), hsl(var(--background) / 0))',
+          }}
+        />
+      )}
       <VerticalChrome
         visible={chromeVisible || settingsOpen}
         title={convertText(book.meta.title)}

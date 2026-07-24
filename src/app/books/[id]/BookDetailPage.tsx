@@ -1,9 +1,16 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useContext, useMemo, useCallback } from 'react';
-import VerticalReaderOverlay, { type ReadingMode } from '@/app/components/vertical/VerticalReaderOverlay';
+import type { ReadingMode } from '@/app/components/vertical/VerticalReaderOverlay';
 import { readProgress, readStoredMode, writeStoredMode } from '@/app/components/vertical/verticalSettings';
 import { parseBookData } from '@/lib/vertical/models';
+import dynamicImport from 'next/dynamic';
+
+// 按需 chunk(W9/CW12):竖排代码不进书页首屏 bundle,点入口才加载。
+const VerticalReaderOverlay = dynamicImport(
+  () => import('@/app/components/vertical/VerticalReaderOverlay'),
+  { ssr: false },
+);
 import { useParams, useSearchParams } from 'next/navigation';
 import Header from '@/app/components/Header';
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
