@@ -51,6 +51,7 @@ Flutter 因视图层限制用了 PageView/ListView 两套 widget;web 的 scroll-
 | W15 | 卷尾条目(**WS1 修正**) | 原判断"无上下卷数据"有误——书 JSON `meta.last_bu/next_bu` 齐全(0998 核实),仅横排页面未渲染。卷尾 nav 条目提供**上一部/下一部跳转 + 返回目录 + 退出竖排**,WS3 实装;引擎 hasNav 判定与 Flutter 同源(lastBuId/nextBuId 非空) | 07-23 |
 | W16 | 白文/乌丝栏存储 | web 用 localStorage,无 isar 回填陷阱→**正向命名**:`showColumnRules` 默认 true、`baiwen` 默认 false(与 Flutter 的反转存储决策不同,勿照搬) | 07-23 |
 | W17 | 散文连排(用户重申) | **D5 在 web 端为硬性要求**:小段落(散文)之间不断列、连续填列求紧凑,句读即天然分隔;断列仅发生在 bt/bm 大章节(如"第一/第二"品名)、偈颂区段、插图。实施与验收(CW4/CW6)必须按此口径,严禁按段落断列 | 07-23 |
+| W20 | 版面宽度用户可调(07-24 需求) | 竖排设置新增 `widthPct` 滑杆(50%~100%,默认 50,步进 5):页窗宽 = 视口 × pct,小屏 560px 绝对下限、不超视口;**取代**原 §8.1 挂在横排「页面宽度」上的固定封顶(竖排设置全面独立,口径对齐 W7)。进分页键 → 重排+锚还原 | 07-24 |
 | W19 | 用户实测三修(07-24 反馈) | ①**页窗收窄**:滚动容器=「页面宽度」封顶宽居中,列带容器外裁剪——修"翻半页"(宽屏下邻页列从留白外溢,所见 ≠ 一页);交互挂根元素,留白区仍响应。②**刷新保持竖排**:readingMode 语义改为「当前状态」,进书页为竖排值即自动恢复(含进度),退出写回 horizontal;`verticalLastMode` 单独记忆预设偏好(推翻原 §9"进书页不自动打开")。③**入口并入 Header 右侧按钮栈**(「竖」同款圆钮,藏/签/存后;CustomEvent 解耦;**book 就绪才显示**——过早出现会使横→竖锚定失效) | 07-24 |
 | W18 | 展卷吸附实现(**WS6 性能修订**) | 列级 CSS `mandatory` snap 是 O(n) 逐帧热点(800 snap 区域实测 p50 70ms→关后 19ms @CPU4×,特性二分定位)→ **展卷改 JS 停驻吸附**:滚动静默 160ms 后就近落列(SnapMetrics 同表驱动,原生惯性保留,smooth 归位;自身动画终点 nearest≈当前不成环);**翻页保留 CSS mandatory**(仅页首 snap 点,数量小)。§7.3 的"每列 snap 标注"按此修订 | 07-23 |
 
@@ -294,6 +295,7 @@ localStorage 键(FontContext 同款逐键模式;W16 正向命名):
 | `verticalFontSize` | number,默认 `26`(范围 18~40) | 进 key 重排 |
 | `verticalCharGapEm` | number,默认 `0`(0~0.4) | 进 key 重排 |
 | `verticalLinePitch` | number,默认 `1.75`(1.35~3.0) | 进 key 重排 |
+| `verticalWidthPct` | number,默认 `50`(50~100;W20 版面宽度) | 进 key 重排(页窗宽=视口×pct,小屏 560px 下限) |
 | `verticalShowRules` | bool,默认 `true` | 仅重绘(CSS 类切换) |
 | `verticalBaiwen` | bool,默认 `false` | 进 key 重排 |
 | `verticalScrollFeedback` | bool,默认 `true` | 仅挂/卸监听 |
@@ -424,3 +426,4 @@ localStorage 键(FontContext 同款逐键模式;W16 正向命名):
 | 2026-07-23 | **WS5 完成**(提交 `d0fcd357`):设置 schema/弹层/书页入口/进度交接/SSR 零痕迹,CW5/CW10/CW13 勾记;§5.2 blockIndex 定义修正(块=juan 条目) |
 | 2026-07-23 | **WS6 完成**(提交 `f9866ee4`):跨列反馈+左缘渐隐+性能收尾;**W18** 展卷改 JS 停驻吸附(snap O(n) 热点,特性二分定位);CW12 达标(1× p90 18.0ms);LXGW 复标定通过;风险表复盘。**全部 WS/CW 收官** |
 | 2026-07-24 | **W19 用户实测三修**(提交 `af61ce4d`):页窗收窄修"翻半页"、刷新保持竖排(readingMode 语义修订+verticalLastMode)、入口并入 Header 按钮栈(book 就绪条件);E2E 17 项全绿(新增刷新保持用例);实机验证翻整页 865px≈864.5、刷新恢复模式+进度 |
+| 2026-07-24 | **W20 版面宽度滑杆**(提交 `8bfd7cc1`):widthPct 50~100 可调,取代横排「页面宽度」固定封顶;实机 1920 视口:50%=960px/20 列,90%=1728px/37 列;E2E 17 项+单测 47 项全绿 |
