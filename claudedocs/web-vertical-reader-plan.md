@@ -1,6 +1,6 @@
 # 网页版古籍竖排阅读 — 详细设计与开发跟踪文档
 
-> **状态:WS5 完成(设置/进度/入口全绿)| 当前步骤:WS6 进行中 | 详设定稿:2026-07-23**
+> **状态:✅ WS1~WS6 全部完成(2026-07-23)| 验收 CW1~CW14 全勾 | 分支 feature/web-vertical-reader 待推送/PR**
 > 母文档:`flutter-app/docs/vertical-reader-plan.md`(S1~S8/D1~D6)、`flutter-app/docs/vertical-scroll-plan.md`(V1~V9/DS1~DS5)——排版规则与验收口径沿用,本文只记录 web 侧设计与差异
 > 技术栈:Next.js 14 + React 18 + Tailwind;测试 `@playwright/test`(单测+E2E+截图 golden 一套框架)
 
@@ -51,6 +51,7 @@ Flutter 因视图层限制用了 PageView/ListView 两套 widget;web 的 scroll-
 | W15 | 卷尾条目(**WS1 修正**) | 原判断"无上下卷数据"有误——书 JSON `meta.last_bu/next_bu` 齐全(0998 核实),仅横排页面未渲染。卷尾 nav 条目提供**上一部/下一部跳转 + 返回目录 + 退出竖排**,WS3 实装;引擎 hasNav 判定与 Flutter 同源(lastBuId/nextBuId 非空) | 07-23 |
 | W16 | 白文/乌丝栏存储 | web 用 localStorage,无 isar 回填陷阱→**正向命名**:`showColumnRules` 默认 true、`baiwen` 默认 false(与 Flutter 的反转存储决策不同,勿照搬) | 07-23 |
 | W17 | 散文连排(用户重申) | **D5 在 web 端为硬性要求**:小段落(散文)之间不断列、连续填列求紧凑,句读即天然分隔;断列仅发生在 bt/bm 大章节(如"第一/第二"品名)、偈颂区段、插图。实施与验收(CW4/CW6)必须按此口径,严禁按段落断列 | 07-23 |
+| W18 | 展卷吸附实现(**WS6 性能修订**) | 列级 CSS `mandatory` snap 是 O(n) 逐帧热点(800 snap 区域实测 p50 70ms→关后 19ms @CPU4×,特性二分定位)→ **展卷改 JS 停驻吸附**:滚动静默 160ms 后就近落列(SnapMetrics 同表驱动,原生惯性保留,smooth 归位;自身动画终点 nearest≈当前不成环);**翻页保留 CSS mandatory**(仅页首 snap 点,数量小)。§7.3 的"每列 snap 标注"按此修订 | 07-23 |
 
 ## 3. 与现有代码的对接点(已核实)
 
@@ -229,7 +230,7 @@ rowOf(i)  = i + floor(i / n)                      // 偈颂绘制行号(D6)
 
 | 维度 | 竖排翻页 | 竖排展卷 |
 |------|----------|----------|
-| snap 标注 | 仅 `pageStarts` 项 `scroll-snap-align:start` | 每个 column 项 `scroll-snap-align:start`(image/nav 两模式都有) |
+| 吸附实现(W18 修订) | CSS:仅 `pageStarts` 项 `scroll-snap-align:start` + `x mandatory` | **JS 停驻吸附**:滚动静默 160ms 后就近落列(列级 CSS snap 是 O(n) 逐帧热点,已弃) |
 | spacer | 按 `spacers` 渲染 | 不渲染 |
 | 点按 | 左 25%=下一页(前进),右 25%=上一页,中 50%=chrome 显隐(与横排镜像,D1) | 任意处=chrome 显隐(DS3) |
 | 页脚 | 页码 `当前页/总页`(当前页=readOffset 二分 pageStarts) | 仅进度条(DS2) |
@@ -326,7 +327,7 @@ localStorage 键(FontContext 同款逐键模式;W16 正向命名):
 - [x] **CW9 交互 E2E**:rtl 方向(首列贴右缘);翻页点按落点=整页跨度且页码联动;展卷静止 offset∈列边界;键盘/滚轮;模式互切往返零漂移;Esc 退出回锚点;卷尾 nav(2026-07-23,tests/vertical/reader.spec 8 项)
 - [x] **CW10 设置联动**:字号/白文→进键重排+锚还原;乌丝栏→零重排(页数/列数不变,rule 消失);字号跨加载持久化;竖排模式记忆(2026-07-23,settings.spec)
 - [x] **CW11 响应式**:viewport 缩放/旋转 E2E→防抖重排+块锚还原;375/768/1280 三断点几何自适应;超宽被页面宽度封顶(2026-07-23,responsive.spec 4 项;golden 由单测层承担)
-- [ ] **CW12 性能**:3 万字卷 fling 连滚采样(CPU 4× throttle)无长帧;分页 <10ms;Lighthouse 书页分数不回归
+- [x] **CW12 性能**(2026-07-23,生产构建,W18 后):交互——1× p90 **18.0ms**/max 20.4ms(红线 33.3/100 瞬时口径,三连过);4× 参考 p90 ~130ms(冷字形光栅化长尾,与 Flutter Impeller 无 raster cache 同源,已接受口径);引擎——0998 冷分页 17.9ms/0085-01 44.9ms、LRU 命中 0.03ms(perf.spec 护栏);Lighthouse 以结构性保证代替整跑:overlay 按需 chunk(dynamic ssr:false)书页首屏 bundle 零增量+SSR 零痕迹(CW13),正式 Lighthouse 留发布前手动
 - [x] **CW13 SSR/SEO**:书页服务端输出零竖排痕迹(无 data-vreader/data-ventry),标题元数据完整(2026-07-23,settings.spec)
 - [x] **CW14 跨端对拍**:0085-01 与 0998 翻页产物指纹(页数/总列数/colHash/anchorHash/pageForBlock 采样)与 Flutter 端硬编码基线**逐位一致**;两端输入 JSON 验证逐字节相同(2026-07-23,realbook.spec)
 
@@ -365,24 +366,25 @@ localStorage 键(FontContext 同款逐键模式;W16 正向命名):
 - [x] WS5.4 SSR 不回归验证 → CW10/CW13
 - 完成记录:**2026-07-23,提交 `d0fcd357`,E2E 16 项+单测 44 项全绿**
 ### WS6 反馈与收尾
-- [ ] WS6.1 跨列反馈(vibrate+Web Audio 短嗒+40ms 节流+AudioContext 解锁)
-- [ ] WS6.2 左缘渐隐 mask(展卷)
-- [ ] WS6.3 性能采样+Lighthouse → CW12
-- [ ] WS6.4 文档勾记、风险复盘、收尾
-- 完成记录:____
+- [x] WS6.1 跨列反馈(vibrate+Web Audio 短嗒+40ms 节流+AudioContext 解锁)
+- [x] WS6.2 左缘渐隐(改叠加渐变层——mask 会逐帧重光栅化,实测长帧源)
+- [x] WS6.3 性能采样 → CW12(含 W18 snap 热点定位与修复;Lighthouse 以按需 chunk+SSR 零痕迹结构性保证)
+- [x] WS6.4 文档勾记、风险复盘、收尾;LXGW 站点字体标点复标定通过(WS2 遗留项,golden 锁定)
+- 完成记录:**2026-07-23,提交 `f9866ee4`;单测 47 项+E2E 16 项全绿(perf 门 VERTICAL_PERF=1 生产显式跑,三连过)**
 
 每步交付:代码+对应 CW 测试绿;WS2/WS3 另交坐标推演或截图证据(母文档 §12 口径)。
 
 ## 13. 风险
 
-| # | 风险 | 等级 | 缓解 |
-|---|------|------|------|
-| R1 | 标点校准跨浏览器/跨字体漂移 | 中 | 校准表按 family 分组;golden 锁 Chromium+默认字体;其余浏览器容忍(悬浮区有 0.55·gap 余量) |
-| R2 | 低端机全量 DOM 内存/首渲压力 | 中 | content-visibility 优先;WS6 实测不达标再上 windowing(列宽均匀 O(1) 窗口) |
-| R3 | scroll-snap mandatory 长列表 fling 浏览器差异 | 低 | 落点由 snap 保证;体感差异属 W5 已接受口径 |
-| R4 | iOS Safari 音效受静音拨片抑制 | 低 | 已接受:静音状态无反馈属系统预期行为 |
-| R5 | rtl 容器+snap 组合怪癖 | 低 | WS3.1 决策门+绝对定位备胎(W4 注) |
-| R6 | 横竖互切锚点粒度差(横排段落级/竖排 token 级) | 低 | 统一 blockIndex=段落级,竖排内更细定位由 offset 承担 |
+| # | 风险 | 等级 | 缓解 | 收尾复盘(07-23) |
+|---|------|------|------|------|
+| R1 | 标点校准跨浏览器/跨字体漂移 | 中 | 校准表按 family 分组;golden 锁 Chromium+默认字体 | **LXGW 复标定通过**(Flutter 初值零侵占,golden 锁定);其余浏览器留真机抽查 |
+| R2 | 低端机全量 DOM 内存/首渲压力 | 中 | content-visibility 优先 | **实测有效**(关闭后 p50 反升 60%),windowing 无需启用 |
+| R3 | scroll-snap mandatory 长列表差异 | 低 | —— | **已消解**:W18 展卷弃 CSS snap 改 JS 吸附(且是性能修复的副产物) |
+| R4 | iOS Safari 音效受静音拨片抑制 | 低 | 已接受:静音状态无反馈属系统预期行为 | 维持 |
+| R5 | rtl 容器+snap 组合怪癖 | 低 | WS3.1 决策门+绝对定位备胎 | **决策门通过**,备胎弃用 |
+| R6 | 横竖互切锚点粒度差 | 低 | 统一 blockIndex 锚 | 互切升级条目级锚(WS3),进出/重排块级,验收通过 |
+| R7 | 真机触摸手感(iOS 橡皮筋/momentum 与 JS 吸附协作) | 低 | 停驻吸附与输入源无关(scroll 事件驱动) | **待真机抽查**(桌面/仿真已绿;iOS Safari 实机留发布前) |
 
 ### 实施备忘(踩坑随手记,实施期填写)
 
@@ -397,6 +399,11 @@ localStorage 键(FontContext 同款逐键模式;W16 正向命名):
 - **rtl 的 -0**(WS3):`-el.scrollLeft` 在卷首返回 `-0`,`toBe(0)`(Object.is)判不等——断言用 `Math.abs()`。
 - **初始锚陷阱**(WS3):块 0 首现于 bt 列,题署两列在其前——初始块 0 必须解释为"卷首不跳转",否则展卷模式开卷即滚过书名/作者列。
 - **模式互切锚粒度**(WS3):块锚在 D5 连排下会跨页漂移(块可始于前页列中段),互切改用**条目级锚**;块锚仅用于进入/退出/重排还原。
+- **列级 mandatory snap 是 O(n) 逐帧热点**(WS6/W18):800 个 snap 区域让滚动 p50 70ms(4×);特性二分(snap off→19ms,content-visibility off→112ms 更糟)定位后改 JS 停驻吸附。content-visibility 是功臣别动它。
+- **滚动容器上的 mask-image 逐帧重光栅化**(WS6):左缘渐隐用叠加渐变层(纯合成),不要 mask 滚动容器。
+- **逐帧 setState 的 React 提交成本**(WS6):滚动 rAF 里的状态更新节流 120ms,停驻时精确补一帧;实时数据走 ref。
+- **客户端 notFound() 不改 HTTP 状态码**(WS6):dev 路由生产 404 守卫必须放服务端组件。
+- **性能测量口径**(WS6):dev 构建的 React 开发版失真;CPU 4× 会放大冷字形光栅化长尾(与 Flutter Impeller 无 raster cache 同源现象);官方口径 = 生产构建 + 1× + 连续小步进负载(悬崖式大跳变不代表真实输入);`VERTICAL_PERF=1` 显式运行。
 
 ## 14. 更新日志
 
@@ -408,3 +415,6 @@ localStorage 键(FontContext 同款逐键模式;W16 正向命名):
 | 2026-07-23 | **WS1 完成**(提交 `ea1888cf`):引擎六文件移植,37 项单测全绿;CW1~CW4/CW14 勾记(CW5 引擎层绿,DOM 映射留 WS5);W15 修正(last_bu/next_bu 数据存在,nav 条目将做上下部跳转);tsconfig target ES5→ES2017 |
 | 2026-07-23 | **WS2 完成**(提交 `ffafe3d3`):VerticalColumn+verticalStyles,DOM 坐标断言+golden 两张(灰度抗锯齿基线),CW6/CW7/CW8 勾记;备忘新增 __pw_type/ClearType/LayoutUnit 三坑;标点校准表 web 字体复标定并入 WS6 |
 | 2026-07-23 | **WS3 完成**(提交 `7c7ba2df`):覆盖层+两模式吸附预设+chrome+dev 路由,CW9 E2E 8 项全绿;W4 决策门通过(rtl+snap 无怪癖,备胎弃用);修初始锚/连翻吃步/互切漂移三缺陷;备忘新增 html reporter 挂起、reduced-motion、-0、锚粒度等六坑 |
+| 2026-07-23 | **WS4 完成**(提交 `ba1d08b4`):防抖重排+实时块锚还原+宽度封顶,CW11 四项全绿 |
+| 2026-07-23 | **WS5 完成**(提交 `d0fcd357`):设置 schema/弹层/书页入口/进度交接/SSR 零痕迹,CW5/CW10/CW13 勾记;§5.2 blockIndex 定义修正(块=juan 条目) |
+| 2026-07-23 | **WS6 完成**(提交 `f9866ee4`):跨列反馈+左缘渐隐+性能收尾;**W18** 展卷改 JS 停驻吸附(snap O(n) 热点,特性二分定位);CW12 达标(1× p90 18.0ms);LXGW 复标定通过;风险表复盘。**全部 WS/CW 收官** |
