@@ -43,18 +43,8 @@ const BASE_PAD = 16;
 const CHROME_AUTOHIDE_MS = 3000;
 const REFLOW_DEBOUNCE_MS = 250;
 
-/** 「页面宽度」设置 → 竖排内容宽上限 px(§8.1:超宽桌面屏不出巨页)。 */
-const WIDTH_CAP: Record<string, number> = {
-  'max-w-xl': 576,
-  'max-w-2xl': 672,
-  'max-w-3xl': 768,
-  'max-w-4xl': 896,
-  'max-w-5xl': 1024,
-  'max-w-6xl': 1152,
-  'max-w-7xl': 1280,
-  'max-w-screen-xl': 1280,
-  'max-w-full': Number.POSITIVE_INFINITY,
-};
+/** 页窗绝对下限 px(W20):小屏上百分比再低也保持可读宽度(不超视口)。 */
+const MIN_WINDOW_W = 560;
 
 export default function VerticalReaderOverlay({
   book,
@@ -63,7 +53,7 @@ export default function VerticalReaderOverlay({
   onExit,
   onModeChange,
 }: VerticalReaderOverlayProps) {
-  const { fontFamily, selectedWidth } = useContext(FontContext);
+  const { fontFamily } = useContext(FontContext);
   const { convertText, isSimplified } = useLanguage();
   const { settings, update: updateSettings } = useVerticalSettings();
 
@@ -76,7 +66,7 @@ export default function VerticalReaderOverlay({
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [scrollState, setScrollState] = useState({ offset: 0, max: 0 });
 
-  const { fontSize: fs, linePitch, charGapEm, showRules, baiwen } = settings;
+  const { fontSize: fs, linePitch, charGapEm, widthPct, showRules, baiwen } = settings;
 
   // ---- 尺寸测量与重排管线(§8.1/A7):初测同步;变化→防抖 250ms→重排 --------
   useLayoutEffect(() => {
@@ -102,13 +92,17 @@ export default function VerticalReaderOverlay({
   }, []);
 
   // ---- 排版(同键缓存,翻页⇄展卷互切零重排) ---------------------------------
+  // 页窗宽(W20 用户可调):视口 × widthPct,小屏下限保护、不超视口。
+  const windowW = size
+    ? Math.min(size.w, Math.max((size.w * widthPct) / 100, Math.min(size.w, MIN_WINDOW_W)))
+    : 0;
+
   const result: VerticalPaginationResult | null = useMemo(() => {
-    if (!size) return null;
-    const cap = WIDTH_CAP[selectedWidth] ?? Number.POSITIVE_INFINITY;
+    if (!size || windowW <= 0) return null;
     return paginateVertical({
       key: {
         bookId: book.meta.id,
-        contentW: Math.max(Math.min(size.w, cap) - 2 * BASE_PAD, 1),
+        contentW: Math.max(windowW - 2 * BASE_PAD, 1),
         contentH: Math.max(size.h - 2 * BASE_PAD, 1),
         fontFamily,
         fontSize: fs,
@@ -121,7 +115,7 @@ export default function VerticalReaderOverlay({
       display: convertText,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [book, size, selectedWidth, fontFamily, fs, linePitch, charGapEm, isSimplified, baiwen]);
+  }, [book, size, windowW, fontFamily, fs, linePitch, charGapEm, isSimplified, baiwen]);
 
   const metrics = result ? result.metricsFor(mode === 'verticalPaged' ? 'paged' : 'scroll') : null;
 
@@ -130,10 +124,10 @@ export default function VerticalReaderOverlay({
     [result],
   );
 
-  // 页窗收窄(用户 07-24 反馈"翻半页"修复):滚动容器 = 封顶宽居中,
+  // 页窗收窄(用户 07-24 反馈"翻半页"修复):滚动容器 = 页窗宽居中,
   // 列带在容器外被裁剪——翻页推进的一页与肉眼所见的一页严格相等,
-  // 相邻页的列不再从两侧留白外溢。
-  const scrollerW = size ? Math.min(size.w, WIDTH_CAP[selectedWidth] ?? Number.POSITIVE_INFINITY) : 0;
+  // 相邻页的列不再从两侧留白外溢。宽度由 widthPct 滑杆控制(W20)。
+  const scrollerW = windowW;
   const sideVoid = size ? (size.w - scrollerW) / 2 : 0;
   const padTotal = result && scrollerW > 0 ? (scrollerW - result.grid.gridW) / 2 : BASE_PAD;
 

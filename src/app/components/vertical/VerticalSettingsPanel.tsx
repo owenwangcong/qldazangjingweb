@@ -97,6 +97,18 @@ export default function VerticalSettingsPanel({
         />
       </label>
       <label style={row}>
+        <span>版面宽度 {settings.widthPct}%</span>
+        <input
+          data-set-widthpct
+          type="range"
+          min={50}
+          max={100}
+          step={5}
+          value={settings.widthPct}
+          onChange={(e) => update({ widthPct: Number(e.target.value) })}
+        />
+      </label>
+      <label style={row}>
         <span>乌丝栏</span>
         <input
           data-set-rules

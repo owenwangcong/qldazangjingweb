@@ -15,6 +15,8 @@ export interface VerticalSettings {
   charGapEm: number;
   /** 行间(列距倍率,1.35~3.0,默认 1.75)。 */
   linePitch: number;
+  /** 版面宽度(页窗占视口百分比,50~100,默认 50;W20)。 */
+  widthPct: number;
   /** 乌丝栏(默认开;只重绘不重排)。 */
   showRules: boolean;
   /** 白文(默认关;进分页键)。 */
@@ -27,6 +29,7 @@ export const VERTICAL_DEFAULTS: VerticalSettings = {
   fontSize: 26,
   charGapEm: 0,
   linePitch: 1.75,
+  widthPct: 50,
   showRules: true,
   baiwen: false,
   scrollFeedback: true,
@@ -36,6 +39,7 @@ const KEYS: Record<keyof VerticalSettings, string> = {
   fontSize: 'verticalFontSize',
   charGapEm: 'verticalCharGapEm',
   linePitch: 'verticalLinePitch',
+  widthPct: 'verticalWidthPct',
   showRules: 'verticalShowRules',
   baiwen: 'verticalBaiwen',
   scrollFeedback: 'verticalScrollFeedback',
@@ -48,6 +52,7 @@ function sanitize(s: VerticalSettings): VerticalSettings {
     fontSize: clamp(Number.isFinite(s.fontSize) ? s.fontSize : 26, 18, 40),
     charGapEm: clamp(Number.isFinite(s.charGapEm) ? s.charGapEm : 0, 0, 0.4),
     linePitch: clamp(Number.isFinite(s.linePitch) ? s.linePitch : 1.75, 1.35, 3.0),
+    widthPct: clamp(Number.isFinite(s.widthPct) ? s.widthPct : 50, 50, 100),
     showRules: s.showRules,
     baiwen: s.baiwen,
     scrollFeedback: s.scrollFeedback,
@@ -68,6 +73,7 @@ export function loadVerticalSettings(): VerticalSettings {
     fontSize: num(KEYS.fontSize, VERTICAL_DEFAULTS.fontSize),
     charGapEm: num(KEYS.charGapEm, VERTICAL_DEFAULTS.charGapEm),
     linePitch: num(KEYS.linePitch, VERTICAL_DEFAULTS.linePitch),
+    widthPct: num(KEYS.widthPct, VERTICAL_DEFAULTS.widthPct),
     showRules: bool(KEYS.showRules, VERTICAL_DEFAULTS.showRules),
     baiwen: bool(KEYS.baiwen, VERTICAL_DEFAULTS.baiwen),
     scrollFeedback: bool(KEYS.scrollFeedback, VERTICAL_DEFAULTS.scrollFeedback),

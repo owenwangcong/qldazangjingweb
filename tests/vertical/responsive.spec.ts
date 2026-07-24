@@ -80,18 +80,18 @@ test('三断点:列数随宽度自适应递增,初始皆于卷首吸附位', asy
   expect(cols[1]).toBeLessThan(cols[2]);
 });
 
-test('超宽封顶:2000px 视口被「页面宽度」默认档(max-w-4xl=896)封顶,页窗居中', async ({ page }) => {
+test('版面宽度默认 50%:2000px 视口页窗 1000 居中(W20)', async ({ page }) => {
   await page.setViewportSize({ width: 2000, height: 900 });
   await openReader(page, 'verticalPaged');
-  // fs26/lp1.75:contentW = 896−32 = 864 → colsPerPage = ⌊(864+19.5)/45.5⌋ = 19。
-  expect(await attr(page, 'data-colsperpage')).toBe(19);
-  // 页窗收窄(07-24):滚动容器 = 封顶宽居中,邻页列被容器裁剪(翻半页修复)。
+  // fs26/lp1.75:contentW = 1000−32 = 968 → colsPerPage = ⌊(968+19.5)/45.5⌋ = 21。
+  expect(await attr(page, 'data-colsperpage')).toBe(21);
+  // 页窗收窄(07-24):滚动容器 = 页窗宽居中,邻页列被容器裁剪(翻半页修复)。
   const rect = await page.evaluate(() => {
     const r = document.querySelector('[data-vscroller]')!.getBoundingClientRect();
     return { w: r.width, left: r.left };
   });
-  expect(rect.w).toBeCloseTo(896, 0);
-  expect(rect.left).toBeCloseTo((2000 - 896) / 2, 0);
+  expect(rect.w).toBeCloseTo(1000, 0);
+  expect(rect.left).toBeCloseTo(500, 0);
 });
 
 test('旋转(宽高互换):重排后展卷静止仍在列边界', async ({ page }) => {

@@ -83,6 +83,14 @@ test('CW10 设置联动:字号→重排;白文→重排;乌丝栏→仅重绘', 
   await expect.poll(() => page.locator('.v-rule').count(), { timeout: 3000 }).toBe(0);
   expect(await attr(page, 'data-pages')).toBe(pages);
   expect(await attr(page, 'data-colsperpage')).toBe(cols);
+
+  // 版面宽度(W20):50%→100%,页窗铺满视口、列数增加(进键重排)。
+  await page.locator('[data-set-widthpct]').fill('100');
+  await expect.poll(() => attr(page, 'data-colsperpage'), { timeout: 5000 }).toBeGreaterThan(cols);
+  const w = await page.evaluate(
+    () => document.querySelector('[data-vscroller]')!.getBoundingClientRect().width,
+  );
+  expect(w).toBeCloseTo(1280, 0);
 });
 
 test('持久化:字号跨加载保留;竖排模式记忆(§9)', async ({ page }) => {
