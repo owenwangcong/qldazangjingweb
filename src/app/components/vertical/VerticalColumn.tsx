@@ -40,7 +40,9 @@ export interface VerticalColumnProps {
   showRule: boolean;
   /** 乌丝栏线宽 px(容器按 1/devicePixelRatio 计算后传入;默认 1)。 */
   ruleWidthPx?: number;
-  /** 容器附加类(WS3 吸附预设用:页首列/每列 scroll-snap-align)。 */
+  /** 吸附标注(§7.3 预设差异):展卷=每列;翻页=仅页首列。 */
+  snap?: boolean;
+  /** 容器附加类。 */
   className?: string;
 }
 
@@ -52,6 +54,7 @@ export default function VerticalColumn({
   grid,
   showRule,
   ruleWidthPx = 1,
+  snap = false,
   className,
 }: VerticalColumnProps) {
   const rcss = roleCss(column.role);
@@ -155,6 +158,9 @@ export default function VerticalColumn({
         flex: '0 0 auto',
         width: grid.colPitch,
         height: bottom,
+        // rtl 滚动容器内文本子树回到 ltr(W4:rtl 只管滚动轴,不进文字)。
+        direction: 'ltr',
+        scrollSnapAlign: snap ? 'start' : undefined,
         contentVisibility: 'auto',
         containIntrinsicSize: `${grid.colPitch}px ${bottom}px`,
       } as CSSProperties,
