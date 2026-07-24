@@ -46,6 +46,20 @@ export interface VerticalReaderOverlayProps {
 
 const BASE_PAD = 16;
 const CHROME_AUTOHIDE_MS = 3000;
+const REFLOW_DEBOUNCE_MS = 250;
+
+/** 「页面宽度」设置 → 竖排内容宽上限 px(§8.1:超宽桌面屏不出巨页)。 */
+const WIDTH_CAP: Record<string, number> = {
+  'max-w-xl': 576,
+  'max-w-2xl': 672,
+  'max-w-3xl': 768,
+  'max-w-4xl': 896,
+  'max-w-5xl': 1024,
+  'max-w-6xl': 1152,
+  'max-w-7xl': 1280,
+  'max-w-screen-xl': 1280,
+  'max-w-full': Number.POSITIVE_INFINITY,
+};
 
 export default function VerticalReaderOverlay({
   book,
@@ -55,7 +69,7 @@ export default function VerticalReaderOverlay({
   onModeChange,
   settings,
 }: VerticalReaderOverlayProps) {
-  const { fontFamily } = useContext(FontContext);
+  const { fontFamily, selectedWidth } = useContext(FontContext);
   const { convertText, isSimplified } = useLanguage();
 
   const rootRef = useRef<HTMLDivElement>(null);
@@ -72,28 +86,37 @@ export default function VerticalReaderOverlay({
   const showRules = settings?.showRules ?? true;
   const baiwen = settings?.baiwen ?? false;
 
-  // ---- 尺寸测量(WS4 补防抖重排管线;此处保证初始与变化可用) ----------------
+  // ---- 尺寸测量与重排管线(§8.1/A7):初测同步;变化→防抖 250ms→重排 --------
   useLayoutEffect(() => {
     const el = rootRef.current;
     if (!el) return;
-    const update = () =>
-      setSize((prev) => {
-        const next = { w: el.clientWidth, h: el.clientHeight };
-        return prev && prev.w === next.w && prev.h === next.h ? prev : next;
-      });
-    update();
-    const ro = new ResizeObserver(update);
+    let last = { w: el.clientWidth, h: el.clientHeight };
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    setSize(last);
+    const ro = new ResizeObserver(() => {
+      const next = { w: el.clientWidth, h: el.clientHeight };
+      if (next.w === last.w && next.h === last.h) return;
+      last = next;
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => {
+        setSize((prev) => (prev && prev.w === last.w && prev.h === last.h ? prev : last));
+      }, REFLOW_DEBOUNCE_MS);
+    });
     ro.observe(el);
-    return () => ro.disconnect();
+    return () => {
+      ro.disconnect();
+      if (timer) clearTimeout(timer);
+    };
   }, []);
 
   // ---- 排版(同键缓存,翻页⇄展卷互切零重排) ---------------------------------
   const result: VerticalPaginationResult | null = useMemo(() => {
     if (!size) return null;
+    const cap = WIDTH_CAP[selectedWidth] ?? Number.POSITIVE_INFINITY;
     return paginateVertical({
       key: {
         bookId: book.meta.id,
-        contentW: Math.max(size.w - 2 * BASE_PAD, 1),
+        contentW: Math.max(Math.min(size.w, cap) - 2 * BASE_PAD, 1),
         contentH: Math.max(size.h - 2 * BASE_PAD, 1),
         fontFamily,
         fontSize: fs,
@@ -106,7 +129,7 @@ export default function VerticalReaderOverlay({
       display: convertText,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [book, size, fontFamily, fs, linePitch, charGapEm, isSimplified, baiwen]);
+  }, [book, size, selectedWidth, fontFamily, fs, linePitch, charGapEm, isSimplified, baiwen]);
 
   const metrics = result ? result.metricsFor(mode === 'verticalPaged' ? 'paged' : 'scroll') : null;
 
@@ -118,9 +141,10 @@ export default function VerticalReaderOverlay({
   const padTotal = result && size ? (size.w - result.grid.gridW) / 2 : BASE_PAD;
 
   // ---- 锚定与跳转(CW5:blockIndex 是唯一进度锚) ----------------------------
-  // 块 0 首现于 bt 列(题署两列之前无块),初始块 0 = 卷首,不跳转——
+  // 实时进度锚:随滚动更新;result 变化(尺寸/设置重排)后据此还原(A7/W3)。
+  // 块 0 首现于 bt 列(题署两列之前无块),块 0 = 卷首,不跳转——
   // 否则展卷模式会滚过书名/作者列(E2E 实证的 136.5 偏移事故)。
-  const anchorRef = useRef<number | null>(initialBlockIndex > 0 ? initialBlockIndex : null);
+  const liveBlockRef = useRef<number>(initialBlockIndex);
   /** 模式互切用条目级锚(比块锚更细,翻页⇄展卷往返零漂移)。 */
   const anchorItemRef = useRef<number | null>(null);
   /** 连续翻页的目标页(滚动动画期间页码状态滞后,以此避免吃步)。 */
@@ -165,12 +189,17 @@ export default function VerticalReaderOverlay({
       } else {
         setOffset(el, result.metricsScroll.offsetOfItem(item));
       }
-    } else if (anchorRef.current !== null) {
-      jumpToBlock(anchorRef.current);
-      anchorRef.current = null;
+    } else if (liveBlockRef.current > 0) {
+      jumpToBlock(liveBlockRef.current);
     }
     if (el) setScrollState({ offset: readOffset(el), max: maxOffset(el) });
   }, [result, mode, jumpToBlock, pageOffsets]);
+
+  // 回调内读取最新排版(onScroll 的闭包不随每次滚动重建)。
+  const resultRef = useRef(result);
+  const metricsRef = useRef(metrics);
+  resultRef.current = result;
+  metricsRef.current = metrics;
 
   const switchMode = useCallback(
     (m: ReadingMode) => {
@@ -211,7 +240,11 @@ export default function VerticalReaderOverlay({
     rafRef.current = requestAnimationFrame(() => {
       const el = scrollerRef.current;
       if (!el) return;
-      setScrollState({ offset: readOffset(el), max: maxOffset(el) });
+      const off = readOffset(el);
+      setScrollState({ offset: off, max: maxOffset(el) });
+      const r = resultRef.current;
+      const m = metricsRef.current;
+      if (r && m) liveBlockRef.current = r.blockForStripItem(m.itemAtOffset(off + 0.5));
     });
     // 兜底:滚动停驻在非 pending 目标处(如手动拖走)→ 作废 pending 基准。
     if (settleRef.current) clearTimeout(settleRef.current);
@@ -487,6 +520,11 @@ export default function VerticalReaderOverlay({
       data-mode={mode}
       data-pages={result ? result.pages.length : 0}
       data-page={currentPage}
+      data-block={
+        result && metrics
+          ? result.blockForStripItem(metrics.itemAtOffset(scrollState.offset + 0.5))
+          : 0
+      }
       data-colpitch={result ? result.grid.colPitch : 0}
       data-colsperpage={result ? result.grid.colsPerPage : 0}
       data-padtotal={padTotal}
