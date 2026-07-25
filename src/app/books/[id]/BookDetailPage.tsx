@@ -1,6 +1,16 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useContext } from 'react';
+import React, { useState, useEffect, useRef, useContext, useMemo, useCallback } from 'react';
+import type { ReadingMode } from '@/app/components/vertical/VerticalReaderOverlay';
+import { readLastVerticalMode, readProgress, readStoredMode, writeStoredMode } from '@/app/components/vertical/verticalSettings';
+import { parseBookData } from '@/lib/vertical/models';
+import dynamicImport from 'next/dynamic';
+
+// 按需 chunk(W9/CW12):竖排代码不进书页首屏 bundle,点入口才加载。
+const VerticalReaderOverlay = dynamicImport(
+  () => import('@/app/components/vertical/VerticalReaderOverlay'),
+  { ssr: false },
+);
 import { useParams, useSearchParams } from 'next/navigation';
 import Header from '@/app/components/Header';
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
@@ -76,6 +86,66 @@ const BookDetailPage: React.FC = () => {
 
   const recogitoContainerRef = useRef<HTMLDivElement>(null); // Existing ref
   const { annotations, addAnnotation, removeAnnotation } = useAnnotations();
+
+  // ---- 竖排入口(web-vertical-reader-plan W12/§5.2) -------------------------
+  const [verticalMode, setVerticalMode] = useState<ReadingMode | null>(null);
+  const verticalBook = useMemo(() => (book ? parseBookData(book) : null), [book]);
+
+  /** 横→竖锚点:视口内第一个可见 juan 元素的块索引(§5.2)。 */
+  const firstVisibleBlock = useCallback((): number => {
+    if (!book?.juans) return 0;
+    for (let b = 0; b < book.juans.length; b++) {
+      const el = document.getElementById(book.juans[b].id);
+      if (el && el.getBoundingClientRect().bottom > 90) return b;
+    }
+    return 0;
+  }, [book]);
+
+  const [verticalInitialBlock, setVerticalInitialBlock] = useState(0);
+  const openVertical = useCallback(() => {
+    const visible = firstVisibleBlock();
+    const saved = readProgress(String(id));
+    // 横排已翻读 → 以可见位置为准;停在卷首 → 还原上次竖排进度(§9)。
+    setVerticalInitialBlock(visible > 0 ? visible : saved ?? 0);
+    const stored = readStoredMode();
+    // W19:优先当前状态,否则还原上次竖排偏好。
+    const mode = stored === 'horizontal' ? readLastVerticalMode() : stored;
+    writeStoredMode(mode);
+    setVerticalMode(mode);
+  }, [firstVisibleBlock, id]);
+
+  const closeVertical = useCallback(
+    (blockIndex: number) => {
+      setVerticalMode(null);
+      writeStoredMode('horizontal'); // W19:退出即回横排状态,刷新不再自动进竖排
+      // 竖→横交接:body 解锁后按块锚滚到原位。
+      const anchorId = book?.juans?.[blockIndex]?.id;
+      if (anchorId) {
+        setTimeout(() => {
+          document.getElementById(anchorId)?.scrollIntoView({ block: 'start' });
+        }, 0);
+      }
+    },
+    [book],
+  );
+
+  // W19:刷新/直链进入书页时,readingMode 为竖排 → 自动恢复(含进度)。
+  useEffect(() => {
+    if (!book || verticalMode !== null) return;
+    const stored = readStoredMode();
+    if (stored !== 'horizontal') {
+      setVerticalInitialBlock(readProgress(String(id)) ?? 0);
+      setVerticalMode(stored);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [book, id]);
+
+  // W12 修订:入口并入 Header 右侧按钮栈(「竖」),经自定义事件触发。
+  useEffect(() => {
+    const onOpen = () => openVertical();
+    window.addEventListener('qldzj:open-vertical', onOpen);
+    return () => window.removeEventListener('qldzj:open-vertical', onOpen);
+  }, [openVertical]);
 
   const { addToBrowserHistory, currentPartId, setCurrentPartId } = useMyStudy();
   
@@ -1101,6 +1171,15 @@ const BookDetailPage: React.FC = () => {
       {/* Intro Tour */}
       <IntroTour enabled={showTour} onExit={handleTourExit} />
 
+      {/* 竖排 overlay(入口按钮在 Header 按钮栈,W12 修订) */}
+      {verticalBook && verticalMode !== null && (
+        <VerticalReaderOverlay
+          book={verticalBook}
+          initialMode={verticalMode}
+          initialBlockIndex={verticalInitialBlock}
+          onExit={closeVertical}
+        />
+      )}
     </main>
   );
 };

@@ -49,3 +49,6 @@ app.pid
 
 # Exclude logs folder
 /public
+# Playwright
+/test-results/
+/playwright-report/
