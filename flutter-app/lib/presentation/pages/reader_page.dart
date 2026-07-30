@@ -381,6 +381,7 @@ class _ReaderPageState extends ConsumerState<ReaderPage> {
                           highlight: widget.highlightText,
                           colors: colors,
                           ink: ink,
+                          strokeWidthEm: settings.fontWeightStrokeEm,
                         );
                       },
                     ),
@@ -833,6 +834,7 @@ class _BlockView extends StatelessWidget {
     required this.display,
     required this.colors,
     required this.ink,
+    required this.strokeWidthEm,
     this.highlight,
   });
 
@@ -842,6 +844,9 @@ class _BlockView extends StatelessWidget {
   final String Function(String) display;
   final AppColors colors;
   final InkTokens ink;
+
+  /// 字重描边宽（em，FQ1）；0 = 标准档。
+  final double strokeWidthEm;
   final String? highlight;
 
   @override
@@ -853,13 +858,16 @@ class _BlockView extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 20),
           child: Column(
             children: [
-              Text(
-                display(block.paragraphs.join().trim()),
-                textAlign: TextAlign.center,
-                style: baseStyle.copyWith(
-                  fontSize: baseStyle.fontSize! * 1.2,
-                  fontWeight: FontWeight.w700,
+              weightedReaderText(
+                TextSpan(
+                  text: display(block.paragraphs.join().trim()),
+                  style: baseStyle.copyWith(
+                    fontSize: baseStyle.fontSize! * 1.2,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
+                strokeWidthEm: strokeWidthEm,
+                textAlign: TextAlign.center,
               ),
               const SizedBox(height: 10),
               BrushUnderline(width: 72, thickness: 2.8, seed: 13),
@@ -869,10 +877,13 @@ class _BlockView extends StatelessWidget {
       case JuanBlockType.bm:
         return Padding(
           padding: const EdgeInsets.symmetric(vertical: 12),
-          child: Text(
-            display(block.paragraphs.join().trim()),
+          child: weightedReaderText(
+            TextSpan(
+              text: display(block.paragraphs.join().trim()),
+              style: baseStyle.copyWith(fontWeight: FontWeight.w600),
+            ),
+            strokeWidthEm: strokeWidthEm,
             textAlign: TextAlign.center,
-            style: baseStyle.copyWith(fontWeight: FontWeight.w600),
           ),
         );
       case JuanBlockType.p:
@@ -933,7 +944,9 @@ class _BlockView extends StatelessWidget {
       highlightBackground: ink.sealRed.withValues(alpha: 0.22),
       foreground: colors.foreground,
     );
-    if (span == null) return Text(shown, style: baseStyle);
-    return Text.rich(span);
+    return weightedReaderText(
+      span ?? TextSpan(text: shown, style: baseStyle),
+      strokeWidthEm: strokeWidthEm,
+    );
   }
 }

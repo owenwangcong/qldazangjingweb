@@ -177,6 +177,24 @@ void main() {
       expect(paras.single.tokens.every((t) => t.trailingPunct.isEmpty), isTrue);
     });
 
+    test('单弯引号映射为竖排直角引号 ﹁﹂，独立占格、白文剥除（FQ2）', () {
+      expect(mapVerticalQuotes('曰‘如是’云'), '曰﹁如是﹂云');
+
+      final book = bookOf(const [
+        JuanBlock(id: 'b', type: JuanBlockType.p, paragraphs: ['佛言：‘善哉。’']),
+      ]);
+      final paras =
+          buildTokenStream(book: book, display: identity, baiwen: false);
+      // ﹁﹂ 不在悬浮表 → 独立占格；全角冒号/句号仍悬浮附着前一字。
+      expect(paras.single.tokens.map((t) => t.char).join(), '佛言﹁善哉﹂');
+      expect(paras.single.tokens[1].trailingPunct, '：');
+      expect(paras.single.tokens[4].trailingPunct, '。');
+
+      final baiwen =
+          buildTokenStream(book: book, display: identity, baiwen: true);
+      expect(baiwen.single.tokens.map((t) => t.char).join(), '佛言善哉');
+    });
+
     test('blockIndex/paragraphIndex 锚定正确', () {
       final book = bookOf(const [
         JuanBlock(id: 'b0', type: JuanBlockType.bt, paragraphs: ['题']),

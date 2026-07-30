@@ -16,8 +16,9 @@ const Set<String> trailingFloatingPunctuation = {
   '.', ',', ';', ':', '!', '?', ')', ']', '}',
 };
 
-/// 前置标点（开括引）：v1 并入前一字悬浮堆（藏经语料中极罕，
-/// 弯引号已在上游 cleanParagraph 剥除）。
+/// 前置标点（开括引）：v1 并入前一字悬浮堆（藏经语料中极罕；
+/// 双弯引号已在上游 cleanParagraph 剥除，单弯引号经 mapVerticalQuotes
+/// 映射为 ﹁﹂ 独立占格，见 token_stream.dart）。
 const Set<String> leadingFloatingPunctuation = {
   '「', '『', '《', '〈', '（', '〔', '【', '〖',
   '(', '[', '{',

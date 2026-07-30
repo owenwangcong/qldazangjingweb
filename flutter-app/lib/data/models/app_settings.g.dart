@@ -42,63 +42,68 @@ const AppSettingsSchema = CollectionSchema(
       name: r'fontSize',
       type: IsarType.double,
     ),
-    r'hasSeenReaderTips': PropertySchema(
+    r'fontWeightGear': PropertySchema(
       id: 5,
+      name: r'fontWeightGear',
+      type: IsarType.string,
+    ),
+    r'hasSeenReaderTips': PropertySchema(
+      id: 6,
       name: r'hasSeenReaderTips',
       type: IsarType.bool,
     ),
     r'hideColumnRules': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'hideColumnRules',
       type: IsarType.bool,
     ),
     r'isSimplified': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'isSimplified',
       type: IsarType.bool,
     ),
     r'letterSpacingEm': PropertySchema(
-      id: 8,
+      id: 9,
       name: r'letterSpacingEm',
       type: IsarType.double,
     ),
     r'lineHeight': PropertySchema(
-      id: 9,
+      id: 10,
       name: r'lineHeight',
       type: IsarType.double,
     ),
     r'muteScrollFeedback': PropertySchema(
-      id: 10,
+      id: 11,
       name: r'muteScrollFeedback',
       type: IsarType.bool,
     ),
     r'paragraphSpacing': PropertySchema(
-      id: 11,
+      id: 12,
       name: r'paragraphSpacing',
       type: IsarType.double,
     ),
     r'readingMode': PropertySchema(
-      id: 12,
+      id: 13,
       name: r'readingMode',
       type: IsarType.string,
     ),
     r'themeKey': PropertySchema(
-      id: 13,
+      id: 14,
       name: r'themeKey',
       type: IsarType.string,
     ),
     r'verticalCharGapEm': PropertySchema(
-      id: 14,
+      id: 15,
       name: r'verticalCharGapEm',
       type: IsarType.double,
     ),
     r'verticalColumnPitch': PropertySchema(
-      id: 15,
+      id: 16,
       name: r'verticalColumnPitch',
       type: IsarType.double,
     ),
     r'verticalFontSize': PropertySchema(
-      id: 16,
+      id: 17,
       name: r'verticalFontSize',
       type: IsarType.double,
     ),
@@ -127,6 +132,7 @@ int _appSettingsEstimateSize(
   var bytesCount = offsets.last;
   bytesCount += 3 + object.classicsActiveTab.length * 3;
   bytesCount += 3 + object.fontFamily.length * 3;
+  bytesCount += 3 + object.fontWeightGear.length * 3;
   bytesCount += 3 + object.readingMode.length * 3;
   bytesCount += 3 + object.themeKey.length * 3;
   return bytesCount;
@@ -143,18 +149,19 @@ void _appSettingsSerialize(
   writer.writeBool(offsets[2], object.classicsVisible);
   writer.writeString(offsets[3], object.fontFamily);
   writer.writeDouble(offsets[4], object.fontSize);
-  writer.writeBool(offsets[5], object.hasSeenReaderTips);
-  writer.writeBool(offsets[6], object.hideColumnRules);
-  writer.writeBool(offsets[7], object.isSimplified);
-  writer.writeDouble(offsets[8], object.letterSpacingEm);
-  writer.writeDouble(offsets[9], object.lineHeight);
-  writer.writeBool(offsets[10], object.muteScrollFeedback);
-  writer.writeDouble(offsets[11], object.paragraphSpacing);
-  writer.writeString(offsets[12], object.readingMode);
-  writer.writeString(offsets[13], object.themeKey);
-  writer.writeDouble(offsets[14], object.verticalCharGapEm);
-  writer.writeDouble(offsets[15], object.verticalColumnPitch);
-  writer.writeDouble(offsets[16], object.verticalFontSize);
+  writer.writeString(offsets[5], object.fontWeightGear);
+  writer.writeBool(offsets[6], object.hasSeenReaderTips);
+  writer.writeBool(offsets[7], object.hideColumnRules);
+  writer.writeBool(offsets[8], object.isSimplified);
+  writer.writeDouble(offsets[9], object.letterSpacingEm);
+  writer.writeDouble(offsets[10], object.lineHeight);
+  writer.writeBool(offsets[11], object.muteScrollFeedback);
+  writer.writeDouble(offsets[12], object.paragraphSpacing);
+  writer.writeString(offsets[13], object.readingMode);
+  writer.writeString(offsets[14], object.themeKey);
+  writer.writeDouble(offsets[15], object.verticalCharGapEm);
+  writer.writeDouble(offsets[16], object.verticalColumnPitch);
+  writer.writeDouble(offsets[17], object.verticalFontSize);
 }
 
 AppSettings _appSettingsDeserialize(
@@ -169,19 +176,20 @@ AppSettings _appSettingsDeserialize(
   object.classicsVisible = reader.readBool(offsets[2]);
   object.fontFamily = reader.readString(offsets[3]);
   object.fontSize = reader.readDouble(offsets[4]);
-  object.hasSeenReaderTips = reader.readBool(offsets[5]);
-  object.hideColumnRules = reader.readBool(offsets[6]);
+  object.fontWeightGear = reader.readString(offsets[5]);
+  object.hasSeenReaderTips = reader.readBool(offsets[6]);
+  object.hideColumnRules = reader.readBool(offsets[7]);
   object.id = id;
-  object.isSimplified = reader.readBool(offsets[7]);
-  object.letterSpacingEm = reader.readDouble(offsets[8]);
-  object.lineHeight = reader.readDouble(offsets[9]);
-  object.muteScrollFeedback = reader.readBool(offsets[10]);
-  object.paragraphSpacing = reader.readDouble(offsets[11]);
-  object.readingMode = reader.readString(offsets[12]);
-  object.themeKey = reader.readString(offsets[13]);
-  object.verticalCharGapEm = reader.readDouble(offsets[14]);
-  object.verticalColumnPitch = reader.readDouble(offsets[15]);
-  object.verticalFontSize = reader.readDouble(offsets[16]);
+  object.isSimplified = reader.readBool(offsets[8]);
+  object.letterSpacingEm = reader.readDouble(offsets[9]);
+  object.lineHeight = reader.readDouble(offsets[10]);
+  object.muteScrollFeedback = reader.readBool(offsets[11]);
+  object.paragraphSpacing = reader.readDouble(offsets[12]);
+  object.readingMode = reader.readString(offsets[13]);
+  object.themeKey = reader.readString(offsets[14]);
+  object.verticalCharGapEm = reader.readDouble(offsets[15]);
+  object.verticalColumnPitch = reader.readDouble(offsets[16]);
+  object.verticalFontSize = reader.readDouble(offsets[17]);
   return object;
 }
 
@@ -203,28 +211,30 @@ P _appSettingsDeserializeProp<P>(
     case 4:
       return (reader.readDouble(offset)) as P;
     case 5:
-      return (reader.readBool(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 6:
       return (reader.readBool(offset)) as P;
     case 7:
       return (reader.readBool(offset)) as P;
     case 8:
-      return (reader.readDouble(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 9:
       return (reader.readDouble(offset)) as P;
     case 10:
-      return (reader.readBool(offset)) as P;
-    case 11:
       return (reader.readDouble(offset)) as P;
+    case 11:
+      return (reader.readBool(offset)) as P;
     case 12:
-      return (reader.readString(offset)) as P;
+      return (reader.readDouble(offset)) as P;
     case 13:
       return (reader.readString(offset)) as P;
     case 14:
-      return (reader.readDouble(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 15:
       return (reader.readDouble(offset)) as P;
     case 16:
+      return (reader.readDouble(offset)) as P;
+    case 17:
       return (reader.readDouble(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -703,6 +713,147 @@ extension AppSettingsQueryFilter
 
           epsilon: epsilon,
         ),
+      );
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+  fontWeightGearEqualTo(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'fontWeightGear',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+  fontWeightGearGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'fontWeightGear',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+  fontWeightGearLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'fontWeightGear',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+  fontWeightGearBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'fontWeightGear',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+  fontWeightGearStartsWith(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'fontWeightGear',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+  fontWeightGearEndsWith(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'fontWeightGear',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+  fontWeightGearContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'fontWeightGear',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+  fontWeightGearMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'fontWeightGear',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+  fontWeightGearIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'fontWeightGear', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+  fontWeightGearIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'fontWeightGear', value: ''),
       );
     });
   }
@@ -1609,6 +1760,19 @@ extension AppSettingsQuerySortBy
     });
   }
 
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy> sortByFontWeightGear() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'fontWeightGear', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+  sortByFontWeightGearDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'fontWeightGear', Sort.desc);
+    });
+  }
+
   QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
   sortByHasSeenReaderTips() {
     return QueryBuilder.apply(this, (query) {
@@ -1834,6 +1998,19 @@ extension AppSettingsQuerySortThenBy
     });
   }
 
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy> thenByFontWeightGear() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'fontWeightGear', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+  thenByFontWeightGearDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'fontWeightGear', Sort.desc);
+    });
+  }
+
   QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
   thenByHasSeenReaderTips() {
     return QueryBuilder.apply(this, (query) {
@@ -2045,6 +2222,17 @@ extension AppSettingsQueryWhereDistinct
     });
   }
 
+  QueryBuilder<AppSettings, AppSettings, QDistinct> distinctByFontWeightGear({
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(
+        r'fontWeightGear',
+        caseSensitive: caseSensitive,
+      );
+    });
+  }
+
   QueryBuilder<AppSettings, AppSettings, QDistinct>
   distinctByHasSeenReaderTips() {
     return QueryBuilder.apply(this, (query) {
@@ -2166,6 +2354,12 @@ extension AppSettingsQueryProperty
   QueryBuilder<AppSettings, double, QQueryOperations> fontSizeProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'fontSize');
+    });
+  }
+
+  QueryBuilder<AppSettings, String, QQueryOperations> fontWeightGearProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'fontWeightGear');
     });
   }
 

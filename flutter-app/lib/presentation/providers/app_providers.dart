@@ -101,6 +101,7 @@ class SettingsController extends StateNotifier<AppSettings> {
     ..verticalColumnPitch = state.verticalColumnPitch
     ..verticalFontSize = state.verticalFontSize
     ..muteScrollFeedback = state.muteScrollFeedback
+    ..fontWeightGear = state.fontWeightGear
     ..hasSeenReaderTips = state.hasSeenReaderTips
     ..classicsActiveTab = state.classicsActiveTab
     ..classicsVisible = state.classicsVisible;
@@ -131,6 +132,8 @@ class SettingsController extends StateNotifier<AppSettings> {
       _persist(_copy()..verticalFontSize = v);
   Future<void> setMuteScrollFeedback(bool v) =>
       _persist(_copy()..muteScrollFeedback = v);
+  Future<void> setFontWeightGear(String v) =>
+      _persist(_copy()..fontWeightGear = v);
   Future<void> markReaderTipsSeen() =>
       _persist(_copy()..hasSeenReaderTips = true);
   Future<void> setClassicsTab(String tab) =>

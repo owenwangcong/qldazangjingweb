@@ -239,6 +239,7 @@ class _VerticalReaderState extends ConsumerState<VerticalReader> {
         gap: result.grid.gap,
         foreground: colors.foreground,
         muted: colors.mutedForeground,
+        strokeWidthEm: settings.fontWeightStrokeEm,
       );
       final dpr = MediaQuery.devicePixelRatioOf(context);
 

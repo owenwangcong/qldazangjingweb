@@ -99,6 +99,26 @@ class AppSettings {
     return v.isFinite && v > 0 ? v.clamp(14.0, 40.0).toDouble() : 26.0;
   }
 
+  /// 字重三档 'normal' | 'medium' | 'bold'(claudedocs/font-weight-quotes-plan.md
+  /// FQ1/FQ3):8 款字体全是单字重,描边合成粗化;仅经文正文,横竖排共用,
+  /// 与 web localStorage `fontWeightGear` 对齐。isar 旧行非空 String 回填
+  /// **空串**(同 [readingMode] 陷阱)——读取一律走 [effectiveFontWeightGear]。
+  String fontWeightGear = 'normal';
+
+  @ignore
+  String get effectiveFontWeightGear => switch (fontWeightGear) {
+        'medium' || 'bold' => fontWeightGear,
+        _ => 'normal',
+      };
+
+  /// 档位 → 描边宽(em,乘以字号得像素;与 web FONT_WEIGHT_STROKE 一致)。
+  @ignore
+  double get fontWeightStrokeEm => switch (effectiveFontWeightGear) {
+        'medium' => 0.02,
+        'bold' => 0.04,
+        _ => 0.0,
+      };
+
   /// Web: hasSeenBookTour.
   bool hasSeenReaderTips = false;
 

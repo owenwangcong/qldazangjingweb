@@ -31,6 +31,23 @@ void main() {
       expect(s.isPaged, isFalse);
     });
 
+    test('字重档默认标准；isar 空串回填与非法值走 effective 兜底（FQ1）', () {
+      final s = AppSettings();
+      expect(s.fontWeightGear, 'normal');
+      expect(s.effectiveFontWeightGear, 'normal');
+      expect(s.fontWeightStrokeEm, 0);
+      // isar 旧行非空 String 回填空串（同 readingMode 陷阱）→ 兜底标准档。
+      s.fontWeightGear = '';
+      expect(s.effectiveFontWeightGear, 'normal');
+      expect(s.fontWeightStrokeEm, 0);
+      s.fontWeightGear = 'medium';
+      expect(s.fontWeightStrokeEm, 0.02);
+      s.fontWeightGear = 'bold';
+      expect(s.fontWeightStrokeEm, 0.04);
+      s.fontWeightGear = 'garbage';
+      expect(s.effectiveFontWeightGear, 'normal');
+    });
+
     test('readingMode=vertical 时 isVertical 与 isPaged 互斥', () {
       final s = AppSettings()..readingMode = 'vertical';
       expect(s.isVertical, isTrue);
@@ -48,6 +65,7 @@ void main() {
       await c.setReadingMode('vertical');
       await c.setBaiwenMode(true);
       await c.setShowColumnRules(false);
+      await c.setFontWeightGear('bold');
       // 无关 setter 走 _copy()——若漏抄新字段，此处会被静默重置。
       await c.setMuteScrollFeedback(true);
       await c.setVerticalCharGap(0.2);
@@ -64,6 +82,7 @@ void main() {
       expect(c.state.verticalColumnPitch, 2.1);
       expect(c.state.verticalFontSize, 30);
       expect(c.state.fontSize, 28, reason: '竖排/横排字号互不覆盖');
+      expect(c.state.fontWeightGear, 'bold', reason: '_copy 漏抄会被静默重置');
     });
 
     test('竖排间距默认值、哨兵与 NaN 安全语义', () {
