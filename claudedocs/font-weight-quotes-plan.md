@@ -121,5 +121,11 @@
   与本次改动无关;perf.spec 按台账只认生产构建未跑)。
   golden 仅 0998-verse 变化(90px,恰为 4 处引号),目检通过后重录;
   0998 首页/LXGW 复标定 golden 未变。验收 CQ1/CQ3/CW 设置持久化与
-  分页不溢出(描边不改度量)均由上述测试覆盖;CQ2(8 字体补充字体命中)
-  与 Flutter 竖排翻页真机 raster 复测留待真机/浏览器实测。
+  分页不溢出(描边不改度量)均由上述测试覆盖。
+- 2026-07-30 **CQ2 实机浏览器验证通过**(chrome-devtools,dev server):
+  0998 竖排下 8 款字体逐一切换,补充面 FontFace(`custom-font-*`,
+  `U+FE41-FE44`)全部 status=loaded 且网络层实抓对应
+  `{family}_vquotes.woff` 200;列带含 ﹁﹂ 无残留 ‘’;aaKaiTi 截图目检
+  直角引号与正文同族同风格、独立占格直立。反向:0085-01(无引号)
+  竖排渲染完成后补充面保持 unloaded、零 vquotes 请求(unicode-range
+  按需加载语义成立)。**遗留待验仅剩** Flutter 竖排翻页真机 raster 复测。
