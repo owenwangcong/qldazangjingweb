@@ -14,7 +14,7 @@ const VerticalReaderOverlay = dynamicImport(
 import { useParams, useSearchParams } from 'next/navigation';
 import Header from '@/app/components/Header';
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
-import { FontContext } from '@/app/context/FontContext';
+import { FontContext, FONT_WEIGHT_STROKE } from '@/app/context/FontContext';
 import Text from '@/app/components/Text';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
@@ -43,6 +43,18 @@ import dynamic from 'next/dynamic';
 const IntroTour = dynamic(() => import('@/app/components/IntroTour'), {
   ssr: false,
 });
+
+// 字体 CSS 变量 → 字体文件名前缀(book_fonts/quote_fonts 共用)。
+const FONT_FILE_MAP: { [key: string]: string } = {
+  '--font-aakai': 'aaKaiTi',
+  '--font-aakaiSong': 'aaKaiSong',
+  '--font-lxgw': 'lxgw',
+  '--font-hyfs': 'hyFangSong',
+  '--font-qnlb': 'qnBianLi',
+  '--font-rzykt': 'rzyKaiTi',
+  '--font-twzk': 'twZhengKai',
+  '--font-wqwh': 'wqwMiHei',
+};
 
 // Define the MenuItem enum
 enum MenuItem {
@@ -75,7 +87,7 @@ const BookDetailPage: React.FC = () => {
   const [selectedText, setSelectedText] = useState<string>('');
   const [contextMenuPosition, setContextMenuPosition] = useState<{ x: number, y: number } | null>(null);
   const contextMenuRef = useRef<HTMLDivElement>(null);
-  const { selectedFont, fontSize, selectedWidth, lineHeight, paragraphSpacing, letterSpacing } = useContext(FontContext);
+  const { selectedFont, fontSize, selectedWidth, lineHeight, paragraphSpacing, letterSpacing, fontWeightGear } = useContext(FontContext);
   const { fontFamily, setFontFamily } = useContext(FontContext);
  
   const [menuLevel, setMenuLevel] = useState('main');
@@ -177,18 +189,7 @@ const BookDetailPage: React.FC = () => {
   const fetchFontData = async (selectedFontFamilyName: string, bookId: string) => {
     try {
       // Dynamically import the font file based on the fontId and bookId.
-      const fontMapping: { [key: string]: string } = {
-        '--font-aakai': 'aaKaiTi',
-        '--font-aakaiSong': 'aaKaiSong',
-        '--font-lxgw': 'lxgw',
-        '--font-hyfs': 'hyFangSong',
-        '--font-qnlb': 'qnBianLi',
-        '--font-rzykt': 'rzyKaiTi',
-        '--font-twzk': 'twZhengKai',
-        '--font-wqwh': 'wqwMiHei',
-      };
-
-      const selectedFontName = fontMapping[selectedFontFamilyName] || 'lxgw';
+      const selectedFontName = FONT_FILE_MAP[selectedFontFamilyName] || 'lxgw';
       const response = await fetch(`/data/book_fonts/${selectedFontName}_${bookId}.woff`);
       if (!response.ok) {
         throw new Error(`Failed to fetch font: ${response.statusText}`);
@@ -210,12 +211,24 @@ const BookDetailPage: React.FC = () => {
         if (fontUrl) {
           const fontName = `custom-font-${selectedFont}-${id}`;
           const newStyle = document.createElement('style');
+          // 补充面:书级子集字体不含竖排直角引号 ﹁﹂﹃﹄(U+FE41-FE44,
+          // 竖排管线把 ‘’ 映射为 ﹁﹂,见 lib/vertical/tokenStream.ts),
+          // 从同族全量字体子集出的微型 woff 以 unicode-range 兜底;
+          // 后声明者对区间内码点优先,书内无引号时浏览器不会下载。
+          const fontFile = FONT_FILE_MAP[selectedFont as string] || 'lxgw';
           newStyle.innerHTML = `
             @font-face {
               font-family: '${fontName}';
               src: url('${fontUrl}') format('woff');
               font-weight: normal;
               font-style: normal;
+            }
+            @font-face {
+              font-family: '${fontName}';
+              src: url('/data/quote_fonts/${fontFile}_vquotes.woff') format('woff');
+              font-weight: normal;
+              font-style: normal;
+              unicode-range: U+FE41-FE44;
             }
           `;
           document.head.appendChild(newStyle);
@@ -975,7 +988,16 @@ const BookDetailPage: React.FC = () => {
           <h1 className="text-3xl"><Text>{book.meta.title}</Text></h1>
           <h2 className="text-xl text-center p-6"><Text>{book.meta.Arthur}</Text></h2>
         </header>
-        <article className={`${fontSize} ${selectedWidth}`} style={{ fontFamily, lineHeight, letterSpacing }}>
+        <article
+          className={`${fontSize} ${selectedWidth}`}
+          style={{
+            fontFamily,
+            lineHeight,
+            letterSpacing,
+            // 字重三档(FQ1/FQ3):描边合成粗化,仅经文正文;颜色默认 currentColor。
+            WebkitTextStrokeWidth: FONT_WEIGHT_STROKE[fontWeightGear],
+          }}
+        >
           {book.juans.map((juan: any) => {
             if (juan.type === 'bt') {
               return (
@@ -999,7 +1021,7 @@ const BookDetailPage: React.FC = () => {
                   {juan.content.map((content: any, index: number) => (
                     <React.Fragment key={index}>
                       <p id={`part-${juan.id}-${index}`} className="inline-block pt-3" style={{ marginBottom: paragraphSpacing }}>
-                        {content.replace("“", '').replace("”", '').split(/(<img[^>]*>)/g).map((part: any, idx: number) => (
+                        {content.replace(/“/g, '').replace(/”/g, '').split(/(<img[^>]*>)/g).map((part: any, idx: number) => (
                           part.match(/<img[^>]*>/) ? (
                             <img
                               key={idx}

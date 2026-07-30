@@ -18,7 +18,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { FontContext } from '@/app/context/FontContext';
+import { FontContext, FONT_WEIGHT_STROKE } from '@/app/context/FontContext';
 import { useLanguage } from '@/app/context/LanguageContext';
 import { paginateVertical, type VerticalPaginationResult } from '@/lib/vertical/paginator';
 import type { BookData } from '@/lib/vertical/models';
@@ -53,7 +53,7 @@ export default function VerticalReaderOverlay({
   onExit,
   onModeChange,
 }: VerticalReaderOverlayProps) {
-  const { fontFamily } = useContext(FontContext);
+  const { fontFamily, fontWeightGear } = useContext(FontContext);
   const { convertText, isSimplified } = useLanguage();
   const { settings, update: updateSettings } = useVerticalSettings();
 
@@ -603,6 +603,9 @@ export default function VerticalReaderOverlay({
               height: '100%',
               width: 'max-content',
               paddingInline: padTotal,
+              // 字重三档(FQ1/FQ3):描边只挂列带,不波及 chrome/设置面板;
+              // em 单位 → 悬浮句读(0.45×fs)按比例同步变细。
+              WebkitTextStrokeWidth: FONT_WEIGHT_STROKE[fontWeightGear],
             }}
           >
             {items}

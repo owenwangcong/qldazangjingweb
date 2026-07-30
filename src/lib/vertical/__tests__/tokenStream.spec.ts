@@ -6,6 +6,7 @@ import { anyPunctOrSymbol, stripForBaiwen } from '../punctuation';
 import {
   buildTokenStream,
   cleanParagraph,
+  mapVerticalQuotes,
   splitParagraphSegments,
   stripTokensForBaiwen,
   tokenizeText,
@@ -75,6 +76,24 @@ test('cleanParagraph 剥弯引号;splitParagraphSegments 切 <img>', () => {
   expect(splitParagraphSegments('无图段落')).toEqual([{ text: '无图段落' }]);
   const only = splitParagraphSegments("<img src='/y.jpg'>");
   expect(only).toEqual([{ imageUrl: '/y.jpg' }]);
+});
+
+test('mapVerticalQuotes:‘’→﹁﹂(FQ2);占格直立、白文剥除', () => {
+  expect(mapVerticalQuotes('曰‘如是’云')).toBe('曰﹁如是﹂云');
+
+  const book: BookData = {
+    meta: { id: 't', bu: '', title: '', author: '' },
+    blocks: [{ id: 'p0', type: 'p', paragraphs: ['佛言:‘善哉。’'] }],
+  };
+  const paras = buildTokenStream({ book, display: (s) => s, baiwen: false });
+  expect(paras).toHaveLength(1);
+  // ﹁﹂ 不在悬浮表 → 独立占格;全角冒号/句号仍悬浮附着前一字。
+  expect(chars(paras[0].tokens)).toBe('佛言﹁善哉﹂');
+  expect(paras[0].tokens[1].trailingPunct).toBe(':');
+  expect(paras[0].tokens[4].trailingPunct).toBe('。');
+
+  const baiwen = buildTokenStream({ book, display: (s) => s, baiwen: true });
+  expect(chars(baiwen[0].tokens)).toBe('佛言善哉');
 });
 
 const miniBook = (): BookData => ({
