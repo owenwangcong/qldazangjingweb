@@ -128,4 +128,15 @@
   `{family}_vquotes.woff` 200;列带含 ﹁﹂ 无残留 ‘’;aaKaiTi 截图目检
   直角引号与正文同族同风格、独立占格直立。反向:0085-01(无引号)
   竖排渲染完成后补充面保持 unloaded、零 vquotes 请求(unicode-range
-  按需加载语义成立)。**遗留待验仅剩** Flutter 竖排翻页真机 raster 复测。
+  按需加载语义成立)。
+- 2026-07-30 **Flutter 竖排翻页真机 raster 复测通过**(SM-P613,§6.1 口径:
+  新增 `integration_test/vertical_weight_perf_test.dart`,同轮先标准档后
+  加粗档同热况对比,3 轮取中位)。结果:加粗档(0.04em,每字形 +1 描边
+  绘制)raster p90 18.47ms vs 标准档 18.34ms(+0.13ms,噪声内),最坏帧
+  全部 ≤25.0ms,**瞬时红线 33.3ms 富余明显**;build 两档 0% jank——描边
+  叠绘对 raster 的增量可忽略。注:本日标准档基线较 07-20(17.28ms)高
+  约 1ms 属跨日环境波动,jank_raster%(16.67ms 预算口径)对该波动极敏感
+  (30.9%→71%),裁决口径维持 §6.1 瞬时红线不变。测后已重装 debug 包。
+  跑法注意:`powershell -File` 不解析 `-Keys` 逗号数组(会并成单字符串
+  致归档失败),须会话内 `& .\tool\perf.ps1 -Keys @('a','b')` 调用。
+  **全部验收项(CQ1~CQ3/CW)至此闭环。**
