@@ -140,3 +140,12 @@
   跑法注意:`powershell -File` 不解析 `-Keys` 逗号数组(会并成单字符串
   致归档失败),须会话内 `& .\tool\perf.ps1 -Keys @('a','b')` 调用。
   **全部验收项(CQ1~CQ3/CW)至此闭环。**
+- 2026-07-30 **坑3 扩展(drive 后重装包入口错误)**:perf 测完用
+  `flutter install --debug` 重装,装上的 debug APK 复用了构建产物里
+  **integration_test 入口**的 kernel(VM service 实抓 rootLib=
+  `flutter_test_listener…/listener.dart`,扩展只有 ext.flutter.integrationTest)
+  ——启动后等测试 driver 连入,首帧永不渲染,现象为**停在系统启动画面**、
+  主 isolate 空栈空转、数据目录无 Isar 文件。修复:显式
+  `flutter build apk --debug -t lib/main.dart` 重编后 `adb install -r`,
+  首页真机目检正常。规矩:**drive 之后重装必须显式按 lib/main.dart 重编**,
+  不能直接 `flutter install`;辨认手法=VM service 查 rootLib。
