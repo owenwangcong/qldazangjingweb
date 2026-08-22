@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Header from './components/Header';
 import { ClassicTextsContent, loadClassicTexts, ClassicTexts as ClassicTextsType } from './components/ClassicTexts';
+import AppDownload from './components/AppDownload';
 import Link from 'next/link';
 import { FontContext } from './context/FontContext';
 import Text from '@/app/components/Text';
@@ -247,7 +248,7 @@ export default function Home() {
           ))}
         </main>
         <footer className="flex gap-6 flex-wrap items-center justify-center">
-          {/* Footer content */}
+          <AppDownload variant="compact" />
         </footer>
       </div>
     </>
