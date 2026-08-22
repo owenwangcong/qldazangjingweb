@@ -18,6 +18,7 @@ class VerticalPageStyles {
     required double gap,
     required Color foreground,
     required Color muted,
+    this.strokeWidthEm = 0,
   })  : body = TextStyle(
           fontFamily: fontFamily,
           fontSize: fontSize,
@@ -69,6 +70,12 @@ class VerticalPageStyles {
   final TextStyle author;
   final TextStyle punct;
 
+  /// 字重描边宽（em，×各角色字号得像素；font-weight-quotes-plan.md FQ1）。
+  /// 0 = 标准档。描边不改变字形 advance 度量，网格几何/分页键不感知。
+  final double strokeWidthEm;
+
+  final _strokeCache = <String, TextStyle?>{};
+
   TextStyle forRole(VColumnRole role) => switch (role) {
         VColumnRole.title => title,
         VColumnRole.author => author,
@@ -77,6 +84,25 @@ class VerticalPageStyles {
         VColumnRole.body => body,
       };
 
+  /// 角色的描边变体（标准档返回 null，不叠绘）。按 key 缓存——
+  /// 逐字绘制路径上不得每字新建 TextStyle/Paint。
+  TextStyle? strokeFor(String key, TextStyle base) {
+    if (strokeWidthEm <= 0) return null;
+    return _strokeCache.putIfAbsent(
+      key,
+      () => TextStyle(
+        fontFamily: base.fontFamily,
+        fontSize: base.fontSize,
+        height: base.height,
+        fontWeight: base.fontWeight,
+        foreground: Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = base.fontSize! * strokeWidthEm
+          ..color = base.color!,
+      ),
+    );
+  }
+
   /// 缓存失效签名：任一分量变化都必须重建字形缓存。
   String get signature => [
         body.fontFamily,
@@ -84,6 +110,7 @@ class VerticalPageStyles {
         punct.fontSize,
         body.color?.toARGB32(),
         author.color?.toARGB32(),
+        strokeWidthEm,
       ].join('|');
 }
 
@@ -154,6 +181,9 @@ void paintColumnGlyphs(
 ) {
   final style = styles.forRole(col.role);
   final roleKey = col.role.name;
+  // 字重描边层（FQ1）：同色 stroke 叠于填充之上使笔画增粗；
+  // 仅非标准档存在，每字形 +1 次绘制（raster 预算见台账验收 CW）。
+  final strokeStyle = styles.strokeFor(roleKey, style);
   final verseN = col.verseClauseLen;
   for (var ti = 0; ti < col.tokens.length; ti++) {
     final token = col.tokens[ti];
@@ -164,6 +194,11 @@ void paintColumnGlyphs(
     final dx = originX + (grid.cellW - tp.width) / 2;
     final dy = grid.cellY(row) + (grid.cellH - tp.height) / 2;
     tp.paint(canvas, Offset(dx, dy));
+    if (strokeStyle != null) {
+      glyphs
+          .painterFor('S:$roleKey', token.char, strokeStyle)
+          .paint(canvas, Offset(dx, dy));
+    }
 
     if (token.trailingPunct.isNotEmpty) {
       _paintPunctAt(canvas, grid, styles, glyphs, originX, row,
@@ -185,6 +220,7 @@ void _paintPunctAt(
 ) {
   final baseX = originX + grid.cellW + grid.gap * 0.06;
   final cellBottom = grid.cellY(row) + grid.cellH;
+  final strokeStyle = styles.strokeFor('punct', styles.punct);
   var drawn = 0;
   for (final rune in puncts.runes) {
     if (drawn >= _maxPunctGlyphs) break;
@@ -198,6 +234,9 @@ void _paintPunctAt(
         nudge.dy * em;
     py = math.min(py, grid.gridBottom - pp.height);
     pp.paint(canvas, Offset(px, py));
+    if (strokeStyle != null) {
+      glyphs.painterFor('S:punct', ch, strokeStyle).paint(canvas, Offset(px, py));
+    }
     drawn++;
   }
 }

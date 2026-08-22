@@ -5,6 +5,7 @@ import { Search as SearchIcon } from 'lucide-react';
 import classNames from 'classnames';
 import Text from '@/app/components/Text';
 import Header from '@/app/components/Header';
+import AppDownload from '@/app/components/AppDownload';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@radix-ui/react-dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { useTheme } from '@/app/context/ThemeContext';
@@ -207,6 +208,8 @@ const IntroPageClient: React.FC = () => {
         <div className="w-full max-w-4xl">
             <Text>在我的书房页面中，您可以查看您的收藏、阅读历史、书签和注释。点击任意一条记录即可进入相应的经书阅读页面。您也可以删除不需要的记录。</Text>
         </div>
+
+        <AppDownload variant="full" />
 
         <h2 id="authorDescription" className="w-full max-w-4xl text-2xl font-bold flex justify-center p-2 m-2 bg-secondary"><Text>其他</Text></h2>
         <div className="w-full max-w-4xl">

@@ -242,6 +242,25 @@ class _ReaderSettingsSheet extends ConsumerWidget {
                 ),
               ],
             ),
+            // 字重三档（FQ1/FQ3，font-weight-quotes-plan.md）：8 款字体全是
+            // 单字重，描边合成粗化；仅经文正文，横竖排四模式共用。
+            Row(
+              children: [
+                TText('字重',
+                    style: TextStyle(fontSize: 15, color: colors.foreground)),
+                const Spacer(),
+                InkToggle(
+                  options: const ['标准', '中粗', '加粗'],
+                  selectedIndex: switch (settings.effectiveFontWeightGear) {
+                    'medium' => 1,
+                    'bold' => 2,
+                    _ => 0,
+                  },
+                  onSelect: (i) => controller.setFontWeightGear(
+                      switch (i) { 2 => 'bold', 1 => 'medium', _ => 'normal' }),
+                ),
+              ],
+            ),
             Row(
               children: [
                 TText('简繁转换',

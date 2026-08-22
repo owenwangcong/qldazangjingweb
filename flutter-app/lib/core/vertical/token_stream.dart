@@ -7,10 +7,12 @@ import 'vertical_models.dart';
 /// 竖排字符流构建器（实施方案 §4/§7，验收 C2/C3）。
 ///
 /// 与 scroll/paged 两模式共享同一段落预处理准源（paragraph_text.dart）：
-/// cleanParagraph 剥弯引号 → splitParagraphSegments 切 <img> →
-/// display() 按段简繁转换 → tokenize（带标点）→ 偈颂**区段归并**检测 →
-/// （白文时）剥除标点。处理次序不可调换：标点归属必须在转换之后，
-/// 偈颂检测必须在白文剥除之前（剥后无句读可切）。
+/// cleanParagraph 剥双弯引号 → splitParagraphSegments 切 <img> →
+/// mapVerticalQuotes 单弯引号→竖排直角引号 → display() 按段简繁转换 →
+/// tokenize（带标点）→ 偈颂**区段归并**检测 →（白文时）剥除标点。
+/// 处理次序不可调换：标点归属必须在转换之后，偈颂检测必须在白文剥除
+/// 之前（剥后无句读可切）；引号映射是竖排独占（横排保持弯引号原样），
+/// 按文本段应用，绝不触碰 <img> 标签属性。
 ///
 /// 区段归并（2026-07-20 漏检修复）：藏经数据常把偈颂按「联」编码
 /// （两句一段），单段句数不足 4；故先做段级候选（等长 n、句读收束、
@@ -32,7 +34,7 @@ List<TokenParagraph> buildTokenStream({
         continue;
       }
       final punctuated = tokenizeText(
-        display(segment.text!),
+        display(mapVerticalQuotes(segment.text!)),
         blockIndex: b,
         paragraphIndex: p,
         baiwen: false, // 恒带标点——偈颂检测的唯一可靠输入。
@@ -114,6 +116,13 @@ List<TokenParagraph> buildTokenStream({
   }
   return paragraphs;
 }
+
+/// 单弯引号 → 竖排直角引号（claudedocs/font-weight-quotes-plan.md FQ2，
+/// 竖排管线独占）：‘（U+2018）→﹁（U+FE41）、’（U+2019）→﹂（U+FE42）。
+/// ﹁﹂ 不在悬浮表内 → 独立占格直立居中；白文随 \p{P} 剥除。
+/// 与 web tokenStream.ts 的 mapVerticalQuotes 逐位一致（CW14 指纹对拍）。
+String mapVerticalQuotes(String text) =>
+    text.replaceAll('‘', '﹁').replaceAll('’', '﹂');
 
 /// 归并期的可变条目（文本或插图二选一）。
 class _RawEntry {

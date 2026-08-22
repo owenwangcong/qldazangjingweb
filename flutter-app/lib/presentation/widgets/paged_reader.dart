@@ -374,6 +374,7 @@ class _PagedReaderState extends ConsumerState<PagedReader> {
                   ink: ink,
                   display: display,
                   onTapZone: _handleTapZone,
+                  strokeWidthEm: settings.fontWeightStrokeEm,
                 );
               },
             ),
@@ -434,6 +435,7 @@ class _PageContent extends StatelessWidget {
     required this.ink,
     required this.display,
     required this.onTapZone,
+    required this.strokeWidthEm,
   });
 
   final ReaderPageModel page;
@@ -446,6 +448,9 @@ class _PageContent extends StatelessWidget {
   final InkTokens ink;
   final String Function(String) display;
   final ValueChanged<int> onTapZone;
+
+  /// 字重描边宽（em，FQ1）；描边不改度量，分页测量无需感知。
+  final double strokeWidthEm;
 
   @override
   Widget build(BuildContext context) {
@@ -539,11 +544,11 @@ class _PageContent extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 20),
           child: Column(
             children: [
-              Text(
-                slice.text!,
+              weightedReaderText(
+                TextSpan(text: slice.text!, style: readerBtStyle(baseStyle)),
+                strokeWidthEm: strokeWidthEm,
                 textAlign: TextAlign.center,
                 textScaler: textScaler,
-                style: readerBtStyle(baseStyle),
               ),
               const SizedBox(height: 10),
               const BrushUnderline(width: 72, thickness: 2.8, seed: 13),
@@ -553,11 +558,11 @@ class _PageContent extends StatelessWidget {
       case PageSliceKind.subtitle:
         return Padding(
           padding: const EdgeInsets.symmetric(vertical: 12),
-          child: Text(
-            slice.text!,
+          child: weightedReaderText(
+            TextSpan(text: slice.text!, style: readerBmStyle(baseStyle)),
+            strokeWidthEm: strokeWidthEm,
             textAlign: TextAlign.center,
             textScaler: textScaler,
-            style: readerBmStyle(baseStyle),
           ),
         );
       case PageSliceKind.text:
@@ -570,9 +575,11 @@ class _PageContent extends StatelessWidget {
           foreground: colors.foreground,
           bold: false, // 加粗会改变折行，偏离分页测量
         );
-        final text = span == null
-            ? Text(shown, style: baseStyle, textScaler: textScaler)
-            : Text.rich(span, textScaler: textScaler);
+        final text = weightedReaderText(
+          span ?? TextSpan(text: shown, style: baseStyle),
+          strokeWidthEm: strokeWidthEm,
+          textScaler: textScaler,
+        );
         return slice.paddingAfter > 0
             ? Padding(
                 padding: EdgeInsets.only(bottom: slice.paddingAfter),

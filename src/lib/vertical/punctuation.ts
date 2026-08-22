@@ -17,7 +17,8 @@ export const trailingFloatingPunctuation: ReadonlySet<string> = new Set([
   '.', ',', ';', ':', '!', '?', ')', ']', '}',
 ]);
 
-/** 前置标点(开括引):v1 并入前一字悬浮堆(藏经语料中极罕,弯引号已在上游剥除)。 */
+/** 前置标点(开括引):v1 并入前一字悬浮堆(藏经语料中极罕;双弯引号上游剥除,
+ * 单弯引号已映射为 ﹁﹂ 独立占格,见 tokenStream.mapVerticalQuotes)。 */
 export const leadingFloatingPunctuation: ReadonlySet<string> = new Set([
   '「', '『', '《', '〈', '（', '〔', '【', '〖',
   '(', '[', '{',

@@ -15,7 +15,7 @@ import { BookContext } from '../context/BookContext';
 import Text from './Text';
 import { useLanguage } from '../context/LanguageContext';
 import { useTheme, Theme } from '../context/ThemeContext';
-import { useFont, FontContext } from '../context/FontContext';
+import { useFont, FontContext, FONT_WEIGHT_STROKE, type FontWeightGear } from '../context/FontContext';
 import { useMyStudy } from '../context/MyStudyContext';
 import { useToast } from '@/hooks/use-toast';
 import classNames from 'classnames';
@@ -24,7 +24,7 @@ import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/comp
 const Header: React.FC = () => {
   const pathname = usePathname();
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
-  const { selectedFont, setSelectedFont, fontSize, setFontSize, selectedWidth, setSelectedWidth, fontFamily, setFontFamily, lineHeight, setLineHeight, paragraphSpacing, setParagraphSpacing, letterSpacing, setLetterSpacing } = useFont();
+  const { selectedFont, setSelectedFont, fontSize, setFontSize, selectedWidth, setSelectedWidth, fontFamily, setFontFamily, lineHeight, setLineHeight, paragraphSpacing, setParagraphSpacing, letterSpacing, setLetterSpacing, fontWeightGear, setFontWeightGear } = useFont();
   const { book } = useContext(BookContext);
   const { favoriteBooks, addFavoriteBook, removeFavoriteBook, addBookmark, currentPartId } = useMyStudy();
 
@@ -377,6 +377,37 @@ const Header: React.FC = () => {
                       </div>
                     </div>
                   </RadioGroup>
+
+                  <div className="mt-4">
+                    <label className="text-xs font-medium mb-1 block">
+                      <Text>字重</Text>
+                    </label>
+                    <RadioGroup
+                      value={fontWeightGear}
+                      onValueChange={(value) => setFontWeightGear(value as FontWeightGear)}
+                      className="flex gap-6"
+                    >
+                      {([
+                        ['normal', '标准'],
+                        ['medium', '中粗'],
+                        ['bold', '加粗'],
+                      ] as [FontWeightGear, string][]).map(([gear, label]) => (
+                        <div key={gear} className="flex items-center space-x-2">
+                          <RadioGroupItem value={gear} id={`font-weight-${gear}`} />
+                          <Label
+                            className="text-xl"
+                            style={{
+                              fontFamily: `var(${selectedFont})`,
+                              WebkitTextStrokeWidth: FONT_WEIGHT_STROKE[gear],
+                            }}
+                            htmlFor={`font-weight-${gear}`}
+                          >
+                            <Text>{label}</Text>
+                          </Label>
+                        </div>
+                      ))}
+                    </RadioGroup>
+                  </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                     <div>

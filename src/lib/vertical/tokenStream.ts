@@ -3,10 +3,11 @@
  * 移植自 flutter-app/lib/core/vertical/token_stream.dart +
  * core/pagination/paragraph_text.dart,处理次序两端一致):
  *
- * cleanParagraph 剥弯引号 → splitParagraphSegments 切 <img> →
- * display() 按段简繁转换 → tokenize(带标点)→ 偈颂**区段归并**检测 →
- * (白文时)剥除标点。次序不可调换:标点归属必须在转换之后,
- * 偈颂检测必须在白文剥除之前(剥后无句读可切)。
+ * cleanParagraph 剥双弯引号 → splitParagraphSegments 切 <img> →
+ * mapVerticalQuotes 单弯引号→竖排直角引号 → display() 按段简繁转换 →
+ * tokenize(带标点)→ 偈颂**区段归并**检测 →(白文时)剥除标点。
+ * 次序不可调换:标点归属必须在转换之后,偈颂检测必须在白文剥除之前
+ * (剥后无句读可切);引号映射按文本段应用,绝不触碰 <img> 标签属性。
  */
 import {
   anyPunctOrSymbol,
@@ -30,9 +31,19 @@ function devAssert(cond: boolean, msg: string): void {
 
 // ---- 段落预处理(paragraph_text.dart 移植) ---------------------------------
 
-/** 剥去弯引号(与横排渲染器对齐)。在简繁转换**之前**调用。 */
+/** 剥去双弯引号(与横排渲染器对齐)。在简繁转换**之前**调用。 */
 export function cleanParagraph(raw: string): string {
   return raw.replace(/“/g, '').replace(/”/g, '');
+}
+
+/**
+ * 单弯引号 → 竖排直角引号(台账 font-weight-quotes-plan.md FQ2,竖排管线独占):
+ * ‘(U+2018)→﹁(U+FE41)、’(U+2019)→﹂(U+FE42)。
+ * ﹁﹂ 不在悬浮表内 → 独立占格直立居中;白文随 \p{P} 剥除。
+ * 与 flutter token_stream.dart 的 mapVerticalQuotes 逐位一致(CW14 指纹对拍)。
+ */
+export function mapVerticalQuotes(text: string): string {
+  return text.replace(/‘/g, '﹁').replace(/’/g, '﹂');
 }
 
 const srcRegex = /src=["']([^"']+)["']/;
@@ -173,7 +184,7 @@ export function buildTokenStream(opts: {
         });
         continue;
       }
-      const punctuated = tokenizeText(display(segment.text), {
+      const punctuated = tokenizeText(display(mapVerticalQuotes(segment.text)), {
         blockIndex: b,
         paragraphIndex: p,
         baiwen: false, // 恒带标点——偈颂检测的唯一可靠输入。
